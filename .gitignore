@@ -1,4 +1,5 @@
 .DS_Store
+.eslintcache
 dist/
 node_modules/
 thumbs.db
