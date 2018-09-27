@@ -6,22 +6,28 @@ module.exports = {
             {
                 test: /\.jsx?$/,
                 loader: 'babel-loader',
-                // include: [path.resolve(__dirname, 'src', 'renderer'), /node_modules[\\/]scratch-[^\\/]+[\\/]src/],
+                resolve: {
+                    symlinks: false
+                },
+                include: [
+                    path.resolve(__dirname, 'src', 'renderer'),
+                    /node_modules[\\/]scratch-[^\\/]+[\\/]src/
+                ],
                 options: {
                     // Explicitly disable babelrc so we don't catch various config
                     // in much lower dependencies.
                     babelrc: false,
+                    cacheDirectory: true,
                     plugins: [
-                        '@babel/proposal-object-rest-spread'
+                        '@babel/proposal-object-rest-spread',
                         // 'syntax-dynamic-import',
                         // 'transform-async-to-generator',
-                        // 'transform-object-rest-spread',
-                        // ['react-intl', {
-                        //     messagesDir: './translations/messages/'
-                        // }]
+                        ['react-intl', {
+                            messagesDir: './translations/messages/'
+                        }]
                     ],
                     presets: [
-                    //     ['env', {targets: {electron: '2.0.7'}}],
+                        ['@babel/env', {targets: {electron: '2.0.7'}}],
                         '@babel/react'
                     ]
                 }
