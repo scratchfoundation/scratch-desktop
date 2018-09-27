@@ -1,7 +1,8 @@
 module.exports = {
     root: true,
     env: {
-        browser: true
+        browser: true,
+        node: true
     },
-    extends: ['scratch', 'scratch/react']
+    extends: ['scratch', 'scratch/es6', 'scratch/react']
 };
