@@ -1,29 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import GUI, {AppStateHOC} from 'scratch-gui/src/index';
+import GUI, {AppStateHOC} from 'scratch-gui/dist/scratch-gui';
+import styles from 'scratch-gui/src/playground/index.css';
 
 // Register "base" page view
 // analytics.pageview('/');
 
-const appTarget = document.createElement('div');
-// appTarget.className = styles.app;
+const appTarget = document.getElementById('app');
+appTarget.className = styles.app || 'app'; // TODO
 document.body.appendChild(appTarget);
 
 GUI.setAppElement(appTarget);
 const WrappedGui = AppStateHOC(GUI);
 
-// TODO a hack for testing the backpack, allow backpack host to be set by url param
-const backpackHostMatches = window.location.href.match(/[?&]backpack_host=([^&]*)&?/);
-const backpackHost = backpackHostMatches ? backpackHostMatches[1] : null;
-
-const backpackOptions = {
-    visible: true,
-    host: backpackHost
-};
 if (process.env.NODE_ENV === 'production' && typeof window === 'object') {
     // Warn before navigating away
     window.onbeforeunload = () => true;
 }
 
-ReactDOM.render(<WrappedGui backpackOptions={backpackOptions} />, appTarget);
+ReactDOM.render(<WrappedGui />, appTarget);

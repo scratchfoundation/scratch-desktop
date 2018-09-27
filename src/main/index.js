@@ -8,7 +8,11 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 let mainWindow;
 
 const createMainWindow = () => {
-    const window = new BrowserWindow();
+    const window = new BrowserWindow({
+        width: 1096,
+        height: 715,
+        useContentSize: true
+    });
 
     if (isDevelopment) {
         window.webContents.openDevTools();
