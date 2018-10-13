@@ -2,6 +2,8 @@ import {app, BrowserWindow} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
 
+import installExtension, {REACT_DEVELOPER_TOOLS} from 'electron-devtools-installer';
+
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
@@ -16,6 +18,10 @@ const createMainWindow = () => {
 
     if (isDevelopment) {
         window.webContents.openDevTools();
+        installExtension(REACT_DEVELOPER_TOOLS);
+        // TODO: add logging package and bring back the lines below
+        // .then(name => console.log(`Added Extension:  ${name}`))
+        // .catch(err => console.log('An error occurred: ', err));
     }
 
     if (isDevelopment) {
