@@ -29,12 +29,17 @@ module.exports = {
                         }]
                     ],
                     presets: [
-                        ['@babel/env', {targets: {electron: '2.0.7'}}],
+                        ['@babel/env', {targets: {electron: '3.0.2'}}],
                         '@babel/react'
                     ]
                 }
             }
         ]
+    },
+    optimization: {
+        splitChunks: {
+            chunks: 'all'
+        }
     },
     plugins: [
         new CopyWebpackPlugin([{
