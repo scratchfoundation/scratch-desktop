@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "electron-webpack dev",
-    "compile": "electron-webpack",
+    "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
+    "compile": "electron-webpack --bail --display-error-details --env.minify=false",
     "dist": "npm run compile && electron-builder",
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
