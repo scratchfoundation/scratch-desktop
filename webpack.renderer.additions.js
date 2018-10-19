@@ -58,10 +58,16 @@ module.exports = {
         }
     },
     plugins: [
-        new CopyWebpackPlugin([{
-            from: path.resolve(__dirname, 'node_modules', 'scratch-gui', 'dist', 'static'),
-            to: 'static'
-        }])
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(__dirname, 'node_modules', 'scratch-gui', 'dist', 'static'),
+                to: 'static'
+            },
+            {
+                from: path.resolve(__dirname, 'src', 'static'),
+                to: 'static'
+            }
+        ])
     ],
     resolve: {
         symlinks: false

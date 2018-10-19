@@ -4,6 +4,9 @@ dist/
 node_modules/
 thumbs.db
 
+# don't store the assets downloaded with the `fetch` script
+/src/static/assets/
+
 # generated translation files
 /translations
 /locale

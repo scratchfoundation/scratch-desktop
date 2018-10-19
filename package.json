@@ -5,6 +5,7 @@
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
     "compile": "electron-webpack --bail --display-error-details --env.minify=false",
+    "fetch": "node ./scripts/fetchMediaLibraryAssets.js",
     "dist": "npm run compile && electron-builder",
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "async": "^2.6.1",
     "babel-eslint": "^10.0.0",
     "babel-plugin-react-intl": "^3.0.1",
     "copy-webpack-plugin": "^4.5.2",
