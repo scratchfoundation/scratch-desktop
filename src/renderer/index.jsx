@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import GUI, {AppStateHOC} from 'scratch-gui/dist/scratch-gui';
+import GUI, {AppStateHOC} from 'scratch-gui';
 import styles from 'scratch-gui/src/playground/index.css';
 
 // Register "base" page view

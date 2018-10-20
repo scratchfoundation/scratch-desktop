@@ -1,6 +1,3 @@
-const path = require('path');
-
-const CopyWebpackPlugin = require('copy-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const babelOptions = {
@@ -10,14 +7,10 @@ const babelOptions = {
     plugins: [
         '@babel/plugin-syntax-dynamic-import',
         '@babel/plugin-transform-async-to-generator',
-        '@babel/plugin-proposal-object-rest-spread',
-        ['react-intl', {
-            messagesDir: './translations/messages/'
-        }]
+        '@babel/plugin-proposal-object-rest-spread'
     ],
     presets: [
-        ['@babel/preset-env', {targets: {electron: '3.0.2'}}],
-        '@babel/preset-react'
+        ['@babel/preset-env', {targets: {electron: '3.0.2'}}]
     ]
 };
 
@@ -32,16 +25,6 @@ module.exports = {
                 exclude: /(node_modules|bower_components)/,
                 loader: 'babel-loader',
                 options: babelOptions
-            },
-            // Add a new rule for the other files we want to run through babel
-            {
-                test: /\.jsx?$/,
-                include: [
-                    path.resolve(__dirname, 'src', 'renderer'),
-                    /node_modules[\\/]scratch-[^\\/]+[\\/]src/
-                ],
-                loader: 'babel-loader',
-                options: babelOptions
             }
         ]
     },
@@ -51,24 +34,12 @@ module.exports = {
         minimizer: [new UglifyJsPlugin({
             cache: true,
             parallel: true,
-            sourceMap: false // disable this if UglifyJSPlugin takes too long and/or runs out of memory
+            sourceMap: true // disable this if UglifyJSPlugin takes too long and/or runs out of memory
         })],
         splitChunks: {
             chunks: 'all'
         }
     },
-    plugins: [
-        new CopyWebpackPlugin([
-            {
-                from: path.resolve(__dirname, 'node_modules', 'scratch-gui', 'dist', 'static'),
-                to: 'static'
-            },
-            {
-                from: path.resolve(__dirname, 'src', 'static'),
-                to: 'static'
-            }
-        ])
-    ],
     resolve: {
         symlinks: false
     }
