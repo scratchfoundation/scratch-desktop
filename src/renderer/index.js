@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom';
 import GUI, {AppStateHOC} from 'scratch-gui';
 import styles from 'scratch-gui/src/playground/index.css';
 
+import ElectronStorageHelper from '../common/ElectronStorageHelper';
+
 // Register "base" page view
 // analytics.pageview('/');
 
@@ -19,5 +21,10 @@ if (process.env.NODE_ENV === 'production' && typeof window === 'object') {
     window.onbeforeunload = () => true;
 }
 
-const wrappedGui = React.createElement(WrappedGui);
+const onStorageInit = storageInstance => {
+    storageInstance.addHelper(new ElectronStorageHelper(storageInstance));
+    // storageInstance.addOfficialScratchWebStores(); // TODO: do we want this?
+};
+
+const wrappedGui = React.createElement(WrappedGui, {onStorageInit});
 ReactDOM.render(wrappedGui, appTarget);
