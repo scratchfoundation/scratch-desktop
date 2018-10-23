@@ -9,6 +9,7 @@ const libraries = require('./lib/libraries');
 
 const ASSET_HOST = 'cdn.assets.scratch.mit.edu';
 const NUM_SIMULTANEOUS_DOWNLOADS = 5;
+const OUT_PATH = path.resolve('static', 'assets');
 
 
 const describe = function (object) {
@@ -72,7 +73,7 @@ const fetchAsset = function (md5, callback) {
             return;
         }
 
-        const stream = fs.createWriteStream(path.resolve('src', 'static', 'assets', md5), {encoding: 'binary'});
+        const stream = fs.createWriteStream(path.resolve(OUT_PATH, md5), {encoding: 'binary'});
         stream.on('error', callback);
         response.on('data', chunk => {
             stream.write(chunk);

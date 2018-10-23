@@ -3,5 +3,6 @@ module.exports = {
     env: {
         node: true
     },
-    extends: ['scratch', 'scratch/es6']
+    extends: ['scratch', 'scratch/es6'],
+    globals: ['__static']
 };
