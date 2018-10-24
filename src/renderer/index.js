@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import GUI, {AppStateHOC} from 'scratch-gui';
+import {defaultProjectId} from 'scratch-gui/src/reducers/project-state';
 import styles from 'scratch-gui/src/playground/index.css';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
@@ -26,5 +27,9 @@ const onStorageInit = storageInstance => {
     // storageInstance.addOfficialScratchWebStores(); // TODO: do we want this?
 };
 
-const wrappedGui = React.createElement(WrappedGui, {onStorageInit});
+const guiProps = {
+    onStorageInit,
+    projectId: defaultProjectId
+};
+const wrappedGui = React.createElement(WrappedGui, guiProps);
 ReactDOM.render(wrappedGui, appTarget);
