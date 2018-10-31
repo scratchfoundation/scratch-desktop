@@ -13,6 +13,10 @@
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
   },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
+  },
   "dependencies": {
     "source-map-support": "^0.5.9"
   },
