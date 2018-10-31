@@ -7,9 +7,10 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
-    "compile": "electron-webpack --bail --display-error-details --env.minify=false",
-    "fetch": "node ./scripts/fetchMediaLibraryAssets.js",
-    "dist": "npm run compile && electron-builder",
+    "clean": "rimraf ./dist/ ./static/assets/",
+    "compile": "rimraf ./dist/ && electron-webpack --bail --display-error-details --env.minify=false",
+    "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
+    "dist": "npm run compile && npm run fetch && electron-builder",
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
   },
@@ -41,11 +42,13 @@
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-react": "^7.5.1",
     "intl": "1.2.5",
+    "mkdirp": "^0.5.1",
     "react": "16.2.0",
     "react-dom": "16.2.0",
     "react-intl": "2.4.0",
     "react-redux": "5.0.7",
     "redux": "3.7.2",
+    "rimraf": "^2.6.2",
     "scratch-gui": "0.1.0-prerelease.20180927141400",
     "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.6.0"
