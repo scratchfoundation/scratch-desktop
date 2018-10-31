@@ -1,6 +1,9 @@
 # Mac OS
 .DS_Store
 
+# Windows
+thumbs.db
+
 # NPM
 /node_modules
 npm-*
@@ -8,8 +11,16 @@ npm-*
 # Testing
 /.nyc_output
 /coverage
+.eslintcache
 
 # Build
 /build
 /dist
 /.opt-in
+
+# don't store the assets downloaded with the `fetch` script
+/static/assets/
+
+# generated translation files
+/translations
+/locale
