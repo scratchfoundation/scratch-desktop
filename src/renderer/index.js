@@ -1,11 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
 import GUI, {AppStateHOC} from 'scratch-gui';
-import {defaultProjectId} from 'scratch-gui/src/reducers/project-state';
-import styles from 'scratch-gui/src/playground/index.css';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
+
+import styles from './app.css';
+
+const defaultProjectId = 0;
 
 // Register "base" page view
 // analytics.pageview('/');
