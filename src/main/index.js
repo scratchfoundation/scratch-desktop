@@ -1,6 +1,11 @@
 import {BrowserWindow, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
+import ScratchDesktopTelemetry from './ScratchDesktopTelemetry';
+
+const telemetry = new ScratchDesktopTelemetry();
+telemetry.appWasOpened();
+
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
@@ -68,6 +73,7 @@ const createMainWindow = () => {
 
 // quit application when all windows are closed
 app.on('window-all-closed', () => {
+    telemetry.appWillClose();
     app.quit();
 });
 
