@@ -2,6 +2,11 @@ const path = require('path');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const webpack = require('webpack');
+
+const isProduction = (process.env.NODE_ENV === 'production');
+
+console.log(`Renderer module building in production mode? ${isProduction}`);
 
 const babelOptions = {
     // Explicitly disable babelrc so we don't catch various config
@@ -22,7 +27,7 @@ const babelOptions = {
 };
 
 module.exports = {
-    devtool: 'cheap-module-source-map',
+    mode: isProduction ? 'production' : 'development',
     module: {
         rules: [
             // Override the *.js defaults from electron-webpack
@@ -42,6 +47,11 @@ module.exports = {
                 ],
                 loader: 'babel-loader',
                 options: babelOptions
+            },
+            {
+                test: /.jsx?$/,
+                loader: 'source-map-loader',
+                enforce: 'pre'
             }
         ]
     },
@@ -51,7 +61,11 @@ module.exports = {
         minimizer: [new UglifyJsPlugin({
             cache: true,
             parallel: true,
-            sourceMap: false // disable this if UglifyJSPlugin takes too long and/or runs out of memory
+            sourceMap: false, // disable this if UglifyJSPlugin takes too long and/or runs out of memory
+            uglifyOptions: {
+                compress: isProduction ? {} : false,
+                mangle: isProduction
+            }
         })],
         splitChunks: {
             chunks: 'all'
@@ -63,7 +77,10 @@ module.exports = {
                 from: path.resolve(__dirname, 'node_modules', 'scratch-gui', 'dist', 'static'),
                 to: 'static'
             }
-        ])
+        ]),
+        new webpack.SourceMapDevToolPlugin({
+            filename: '[file].map'
+        })
     ],
     resolve: {
         symlinks: false
