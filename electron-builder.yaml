@@ -1,0 +1,21 @@
+directories:
+  output: dist
+appId: edu.mit.scratch.scratch-desktop
+productName: "Scratch Desktop"
+mac:
+  category: public.app-category.education
+  entitlements: packaging/entitlements.plist
+  icon: packaging/ScratchDesktop.icns
+  target:
+    - dmg
+    - mas
+mas:
+  type: distribution
+  category: public.app-category.education
+  entitlements: packaging/entitlements.plist
+  icon: packaging/ScratchDesktop.icns
+win:
+  icon: packaging/ScratchDesktop.ico
+  target:
+    - appx
+    - nsis
