@@ -1,4 +1,4 @@
-import {app, BrowserWindow} from 'electron';
+import {BrowserWindow, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
 
@@ -67,4 +67,18 @@ app.on('activate', () => {
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
     mainWindow = createMainWindow();
+    mainWindow.webContents.on('will-prevent-unload', ev => {
+        const choice = dialog.showMessageBox(mainWindow, {
+            type: 'question',
+            buttons: ['Stay', 'Leave'],
+            message: 'Leave Scratch?',
+            cancelId: 0, // closing the dialog means "stay"
+            defaultId: 0, // pressing enter or space without explicitly selecting something means "stay"
+            detail: 'Any unsaved changes will be lost.'
+        });
+        const shouldQuit = (choice === 1);
+        if (shouldQuit) {
+            ev.preventDefault();
+        }
+    });
 });
