@@ -1,9 +1,9 @@
 {
   "name": "scratch-desktop",
-  "productName": "Scratch 3.0 Desktop",
+  "productName": "Scratch Desktop",
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Massachusetts Institute of Technology",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
