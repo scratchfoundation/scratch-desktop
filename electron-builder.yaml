@@ -21,4 +21,6 @@ win:
     - appx
     - nsis
 appx:
-  identityName: ScratchDesktop
+  identityName: ScratchFoundation.ScratchDesktop
+  publisherDisplayName: "Scratch Foundation"
+  publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
