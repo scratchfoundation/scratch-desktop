@@ -5,18 +5,20 @@ appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
 mac:
   category: public.app-category.education
-  entitlements: packaging/entitlements.plist
-  icon: packaging/ScratchDesktop.icns
+  entitlements: buildResources/entitlements.plist
+  icon: buildResources/ScratchDesktop.icns
   target:
     - dmg
     - mas
 mas:
   type: distribution
   category: public.app-category.education
-  entitlements: packaging/entitlements.plist
-  icon: packaging/ScratchDesktop.icns
+  entitlements: buildResources/entitlements.plist
+  icon: buildResources/ScratchDesktop.icns
+  files:
+    - embedded.provisionprofile
 win:
-  icon: packaging/ScratchDesktop.ico
+  icon: buildResources/ScratchDesktop.ico
   target:
     - appx
     - nsis
