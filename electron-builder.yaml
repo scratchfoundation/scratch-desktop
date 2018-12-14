@@ -20,3 +20,5 @@ win:
   target:
     - appx
     - nsis
+appx:
+  identityName: ScratchDesktop
