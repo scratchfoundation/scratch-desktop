@@ -1,4 +1,5 @@
 directories:
+  buildResources: buildResources
   output: dist
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
