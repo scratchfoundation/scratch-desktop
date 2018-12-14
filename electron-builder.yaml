@@ -5,7 +5,6 @@ appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
 mac:
   category: public.app-category.education
-  entitlements: buildResources/entitlements.plist
   icon: buildResources/ScratchDesktop.icns
   target:
     - dmg
