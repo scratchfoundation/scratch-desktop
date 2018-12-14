@@ -56,7 +56,7 @@ if command -v convert >/dev/null 2>&1; then
     resize 44 44 "${SRC}" 'Square44x44Logo.png'
     resize 150 150 "${SRC}" 'Square150x150Logo.png'
     resize 400 400 "${SRC}" 'StoreLogo.png'
-    resize 300 150 "${SRC}" 'Wide300x150Logo.png'
+    resize 310 150 "${SRC}" 'Wide310x150Logo.png'
 else
     echo "ImageMagick is not available - cannot convert icons"
 fi
