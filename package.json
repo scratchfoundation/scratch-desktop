@@ -10,7 +10,7 @@
     "clean": "rimraf ./dist/ ./static/assets/",
     "compile": "rimraf ./dist/ && electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
-    "dist": "npm run compile && npm run fetch && electron-builder",
+    "dist": "npm run fetch && npm run compile && electron-builder",
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
   },
