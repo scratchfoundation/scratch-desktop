@@ -53,10 +53,11 @@ if command -v convert >/dev/null 2>&1; then
     convert "${TMP_ICO}"/icon_*.png -colorspace sRGB -compress Zip "${OUT_ICO}"
 
     # Windows AppX
-    resize 44 44 "${SRC}" 'Square44x44Logo.png'
-    resize 150 150 "${SRC}" 'Square150x150Logo.png'
-    resize 400 400 "${SRC}" 'StoreLogo.png'
-    resize 310 150 "${SRC}" 'Wide310x150Logo.png'
+    mkdir -p "appx"
+    resize 44 44 "${SRC}" 'appx/Square44x44Logo.png'
+    resize 150 150 "${SRC}" 'appx/Square150x150Logo.png'
+    resize 400 400 "${SRC}" 'appx/StoreLogo.png'
+    resize 310 150 "${SRC}" 'appx/Wide310x150Logo.png'
 else
     echo "ImageMagick is not available - cannot convert icons"
 fi
