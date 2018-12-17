@@ -1,16 +1,16 @@
 {
   "name": "scratch-desktop",
-  "productName": "Scratch 3.0 Desktop",
+  "productName": "Scratch Desktop",
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Massachusetts Institute of Technology",
-  "version": "0.1.0",
+  "version": "1.0.3",
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
     "clean": "rimraf ./dist/ ./static/assets/",
     "compile": "rimraf ./dist/ && electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
-    "dist": "npm run compile && npm run fetch && electron-builder",
+    "dist": "npm run fetch && npm run compile && electron-builder",
     "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null",
     "lint": "eslint --cache --color --ext .jsx,.js ."
   },
