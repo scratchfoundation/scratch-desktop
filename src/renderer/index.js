@@ -41,6 +41,7 @@ const onStorageInit = storageInstance => {
 
 const guiProps = {
     onStorageInit,
+    isScratchDesktop: true,
     projectId: defaultProjectId
 };
 const wrappedGui = React.createElement(WrappedGui, guiProps);
