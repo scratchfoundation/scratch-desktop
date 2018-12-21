@@ -1,3 +1,4 @@
+import ElectronStore from 'electron-store';
 import nets from 'nets';
 import uuidv1 from 'uuid/v1'; // semi-persistent client ID
 import uuidv4 from 'uuid/v4'; // random ID
@@ -42,9 +43,10 @@ class TelemetryClient {
      * intervals will begin immediately; if the user has not opted in events will be dropped each interval.
      *
      * @param {object} [options] - optional configuration settings for this client
+     * @property {string} [storeName] - optional name for persistent config/queue storage (default: 'telemetry')
      * @property {string} [clientId] - optional UUID for this client (default: automatically determine a UUID)
      * @property {string} [url] - optional telemetry service endpoint URL (default: automatically choose a server)
-     * @property {boolean} [optIn] - optional flag for whether the user opted into telemetry service (default: false)
+     * @property {boolean} [didOptIn] - optional flag for whether the user opted into telemetry service (default: false)
      * @property {int} [deliveryInterval] - optional number of seconds between delivery attempts (default: 60)
      * @property {int} [networkInterval] - optional number of seconds between connectivity checks (default: 300)
      * @property {int} [queueLimit] - optional limit on the number of queued events (default: 100)
@@ -54,15 +56,27 @@ class TelemetryClient {
         options = options || {};
 
         /**
-         * Has the user explicitly opted into this service?
-         * @type {boolean}
+         * Persistent storage for the client ID, opt in flag, and packet queue.
          */
-        this._optIn = options.optIn || false;
+        this._store = new ElectronStore({
+            name: options.storeName || 'telemetry'
+        });
+        console.log(`Telemetry configuration storage path: ${this._store.path}`);
+
+        if (options.hasOwnProperty('clientID')) {
+            this.clientID = options.clientID;
+        } else if (!this._store.has('clientID')) {
+            this.clientID = uuidv1();
+        }
+
+        if (options.hasOwnProperty('optIn')) {
+            this.didOptIn = options.didOptIn;
+        }
 
         /**
-         * Semi-persistent unique ID for this client
+         * Queue for outgoing event packets
          */
-        this._clientID = options.hasOwnProperty('clientId') ? options.clientId : uuidv1();
+        this._packetQueue = this._store.get('packetQueue', []);
 
         /**
          * Server URL
@@ -73,12 +87,6 @@ class TelemetryClient {
          * Can we currently reach the telemetry service?
          */
         this._networkIsOnline = false;
-
-        /**
-         * Queue for outgoing event packets
-         */
-        // TODO: packet queue persistence
-        this._packetQueue = [];
 
         /**
          * Try to deliver telemetry packets at this interval
@@ -110,15 +118,43 @@ class TelemetryClient {
     }
 
     /**
-     * Stop this client, saving state if appropriate.
-     * Do not use this object after disposal.
+     * Stop this client. Do not use this object after disposal.
      */
     dispose () {
         if (this._deliveryInterval !== null) {
             clearInterval(this._deliveryTimer);
             this._deliveryInterval = null;
         }
-        // TODO: packet queue persistence
+    }
+
+    /**
+     * Has the user explicitly opted into this service?
+     * @type {boolean}
+     */
+    get didOptIn () {
+        return this._store.get('optIn', false);
+    }
+    set didOptIn (value) {
+        this._store.set('optIn', !!value);
+    }
+
+    /**
+     * Semi-persistent unique ID for this client
+     * @type {string}
+     */
+    get clientID () {
+        return this._store.get('clientID');
+    }
+    set clientID (value) {
+        this._store.set('clientID', value);
+    }
+
+    /**
+     * Save the packet queue to the config store.
+     * Call this any time the queue is modified.
+     */
+    saveQueue () {
+        this._store.set('packetQueue', this._packetQueue);
     }
 
     /**
@@ -135,8 +171,8 @@ class TelemetryClient {
         const now = new Date();
 
         const packet = Object.assign({
+            clientID: this.clientID,
             id: packetId,
-            clientID: this._clientID,
             name: eventName,
             timestamp: now.getTime(),
             userTimezone: now.getTimezoneOffset()
@@ -146,6 +182,7 @@ class TelemetryClient {
             packet
         };
         this._packetQueue.push(packetInfo);
+        this.saveQueue();
     }
 
     /**
@@ -159,14 +196,17 @@ class TelemetryClient {
         /**
          * Attempt to deliver one event then asynchronously recurse, reenqueueing the event if delivery fails and the
          * event has not yet reached its retry limit. Sets `this._busy` before doing anything else and clears it once
-         * the queue is empty or `this._optIn` is cleared.
+         * the queue is empty or `this.didOptIn` is cleared.
          */
         const stepDelivery = () => {
             this._busy = true;
-            if (!this._optIn || !this._networkIsOnline || this._packetQueue.length < 1) {
+            if (!this.didOptIn || !this._networkIsOnline || this._packetQueue.length < 1) {
                 this._busy = false;
                 return;
             }
+            // don't saveQueue() here:
+            // - if the app exits or crashes before the network request finishes, we'll lose the packet
+            // - if the request finishes, we'll save at that time (see below)
             const packetInfo = this._packetQueue.shift();
             ++packetInfo.attempts;
             const packet = packetInfo.packet;
@@ -185,6 +225,7 @@ class TelemetryClient {
                         console.warn('Dropping packet which exceeded retry limit', packet);
                     }
                 }
+                this.saveQueue();
                 stepDelivery();
             });
         };
