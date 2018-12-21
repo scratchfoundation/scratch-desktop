@@ -1,3 +1,5 @@
+import {ipcMain} from 'electron';
+
 import TelemetryClient from './telemetry/TelemetryClient';
 
 const info = {
@@ -15,6 +17,13 @@ const info = {
 class ScratchDesktopTelemetry {
     constructor () {
         this._telemetryClient = new TelemetryClient();
+    }
+
+    get didOptIn () {
+        return this._telemetryClient.didOptIn;
+    }
+    set didOptIn (value) {
+        this._telemetryClient.didOptIn = value;
     }
 
     appWasOpened () {
@@ -42,4 +51,14 @@ class ScratchDesktopTelemetry {
     }
 }
 
-export default ScratchDesktopTelemetry;
+// make a singleton so it's easy to share across both Electron processes
+const scratchDesktopTelemetrySingleton = new ScratchDesktopTelemetry();
+
+ipcMain.on('getTelemetryDidOptIn', event => {
+    event.returnValue = scratchDesktopTelemetrySingleton.didOptIn;
+});
+ipcMain.on('setTelemetryDidOptIn', (event, arg) => {
+    scratchDesktopTelemetrySingleton.didOptIn = arg;
+});
+
+export default scratchDesktopTelemetrySingleton;

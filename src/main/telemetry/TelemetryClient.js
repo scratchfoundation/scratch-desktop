@@ -132,7 +132,8 @@ class TelemetryClient {
      * @type {boolean}
      */
     get didOptIn () {
-        return this._store.get('optIn', false);
+        // don't supply a default here: we want to track "opt out" separately from "undecided"
+        return this._store.get('optIn');
     }
     set didOptIn (value) {
         this._store.set('optIn', !!value);

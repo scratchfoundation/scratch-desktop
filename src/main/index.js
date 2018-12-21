@@ -1,9 +1,8 @@
 import {BrowserWindow, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
-import ScratchDesktopTelemetry from './ScratchDesktopTelemetry';
+import telemetry from './ScratchDesktopTelemetry';
 
-const telemetry = new ScratchDesktopTelemetry();
 telemetry.appWasOpened();
 
 
