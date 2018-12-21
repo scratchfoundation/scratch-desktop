@@ -1,18 +1,12 @@
-import {ipcMain} from 'electron';
+import {app, ipcMain} from 'electron';
 
 import TelemetryClient from './telemetry/TelemetryClient';
 
-const info = {
-    projectName: 'fake project data for telemetry client test',
-    language: 'en',
-    scriptCount: 42,
-    spriteCount: 42,
-    variablesCount: 42,
-    blocksCount: 42,
-    costumesCount: 42,
-    listsCount: 42,
-    soundsCount: 42
-};
+const APP_ID = 'scratch-desktop';
+const APP_VERSION = app.getVersion();
+const APP_INFO = Object.freeze({
+    projectName: `${APP_ID} ${APP_VERSION}`
+});
 
 class ScratchDesktopTelemetry {
     constructor () {
@@ -27,27 +21,27 @@ class ScratchDesktopTelemetry {
     }
 
     appWasOpened () {
-        this._telemetryClient.addEvent('app::open', info);
+        this._telemetryClient.addEvent('app::open', APP_INFO);
     }
 
     appWillClose () {
-        this._telemetryClient.addEvent('app::close', info);
+        this._telemetryClient.addEvent('app::close', APP_INFO);
     }
 
-    projectDidLoad () {
-        this._telemetryClient.addEvent('project::load', info);
+    projectDidLoad (metadata = {}) {
+        this._telemetryClient.addEvent('project::load', metadata);
     }
 
-    projectDidSave () {
-        this._telemetryClient.addEvent('project::save', info);
+    projectDidSave (metadata = {}) {
+        this._telemetryClient.addEvent('project::save', metadata);
     }
 
-    projectWasCreated () {
-        this._telemetryClient.addEvent('project::create', info);
+    projectWasCreated (metadata = {}) {
+        this._telemetryClient.addEvent('project::create', metadata);
     }
 
-    projectWasUploaded () {
-        this._telemetryClient.addEvent('project::upload', info);
+    projectWasUploaded (metadata = {}) {
+        this._telemetryClient.addEvent('project::upload', metadata);
     }
 }
 
@@ -59,6 +53,18 @@ ipcMain.on('getTelemetryDidOptIn', event => {
 });
 ipcMain.on('setTelemetryDidOptIn', (event, arg) => {
     scratchDesktopTelemetrySingleton.didOptIn = arg;
+});
+ipcMain.on('projectDidLoad', (event, arg) => {
+    scratchDesktopTelemetrySingleton.projectDidLoad(arg);
+});
+ipcMain.on('projectDidSave', (event, arg) => {
+    scratchDesktopTelemetrySingleton.projectDidSave(arg);
+});
+ipcMain.on('projectWasCreated', (event, arg) => {
+    scratchDesktopTelemetrySingleton.projectWasCreated(arg);
+});
+ipcMain.on('projectWasUploaded', (event, arg) => {
+    scratchDesktopTelemetrySingleton.projectWasUploaded(arg);
 });
 
 export default scratchDesktopTelemetrySingleton;
