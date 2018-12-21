@@ -3,6 +3,7 @@ import {app, ipcMain} from 'electron';
 import TelemetryClient from './telemetry/TelemetryClient';
 
 const EVENT_TEMPLATE = {
+    version: '3.0.0',
     projectName: '',
     language: '',
     scriptCount: -1,
