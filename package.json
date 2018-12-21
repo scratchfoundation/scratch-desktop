@@ -36,6 +36,7 @@
     "electron": "^3.0.10",
     "electron-builder": "^20.38.2",
     "electron-devtools-installer": "^2.2.4",
+    "electron-store": "^2.0.0",
     "electron-webpack": "^2.6.1",
     "eslint": "^5.9.0",
     "eslint-config-scratch": "^5.0.0",
