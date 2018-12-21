@@ -1,3 +1,4 @@
+import {ipcRenderer} from 'electron';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import GUI, {AppStateHOC} from 'scratch-gui';
@@ -42,7 +43,17 @@ const onStorageInit = storageInstance => {
 const guiProps = {
     onStorageInit,
     isScratchDesktop: true,
-    projectId: defaultProjectId
+    projectId: defaultProjectId,
+    showTelemetryModal: (typeof ipcRenderer.sendSync('getTelemetryDidOptIn')) !== 'boolean',
+    onTelemetryModalOptIn: () => {
+        ipcRenderer.send('setTelemetryDidOptIn', true);
+    },
+    onTelemetryModalOptOut: () => {
+        ipcRenderer.send('setTelemetryDidOptIn', false);
+    },
+    onProjectTelemetryEvent: (event, metadata) => {
+        ipcRenderer.send(event, metadata);
+    }
 };
 const wrappedGui = React.createElement(WrappedGui, guiProps);
 ReactDOM.render(wrappedGui, appTarget);
