@@ -1,4 +1,4 @@
-import {ipcRenderer} from 'electron';
+import {ipcRenderer, shell} from 'electron';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import GUI, {AppStateHOC} from 'scratch-gui';
@@ -9,6 +9,12 @@ import styles from './app.css';
 
 const defaultProjectId = 0;
 
+// override window.open so that it uses the OS's default browser, not an electron browser
+window.open = function (url, target) {
+    if (target === '_blank') {
+        shell.openExternal(url);
+    }
+};
 // Register "base" page view
 // analytics.pageview('/');
 
