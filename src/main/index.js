@@ -72,8 +72,11 @@ const createMainWindow = () => {
 
 // quit application when all windows are closed
 app.on('window-all-closed', () => {
-    telemetry.appWillClose();
     app.quit();
+});
+
+app.on('will-quit', () => {
+    telemetry.appWillClose();
 });
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
