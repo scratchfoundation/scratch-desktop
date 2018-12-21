@@ -50,6 +50,9 @@ const guiProps = {
     },
     onTelemetryModalOptOut: () => {
         ipcRenderer.send('setTelemetryDidOptIn', false);
+    },
+    onProjectTelemetryEvent: (event, metadata) => {
+        ipcRenderer.send(event, metadata);
     }
 };
 const wrappedGui = React.createElement(WrappedGui, guiProps);
