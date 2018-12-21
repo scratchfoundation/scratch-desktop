@@ -9,22 +9,6 @@ import styles from './app.css';
 
 const defaultProjectId = 0;
 
-const captureClick = function (ev) {
-    for (const element of ev.path) {
-        if (element.href) {
-            // prevent clicking links
-            // this is a last-resort test: if we get here that means there's work to do in the GUI
-            console.warn(`Suppressing click on link to ${element.href}`);
-            ev.preventDefault();
-            ev.stopPropagation();
-            return false;
-        }
-    }
-};
-document.addEventListener('DOMContentLoaded', () => {
-    document.addEventListener('click', captureClick, true);
-});
-
 // Register "base" page view
 // analytics.pageview('/');
 
