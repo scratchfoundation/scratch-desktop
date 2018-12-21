@@ -41,18 +41,17 @@ module.exports = {
     optimization: {
         // Use `--env.minify=false` to disable the UglifyJsPlugin instance automatically injected by electron-webpack.
         // Otherwise it will do double-duty with this one.
-        minimizer: [new UglifyJsPlugin({
-            cache: true,
-            parallel: true,
-            sourceMap: true, // disable this if UglifyJSPlugin takes too long and/or runs out of memory
-            uglifyOptions: {
-                compress: isProduction ? {} : false,
-                mangle: isProduction
-            }
-        })],
-        splitChunks: {
-            chunks: 'all'
-        }
+        minimizer: [
+            new UglifyJsPlugin({
+                cache: true,
+                parallel: true,
+                sourceMap: true, // disable this if UglifyJSPlugin takes too long and/or runs out of memory
+                uglifyOptions: {
+                    compress: isProduction ? {} : false,
+                    mangle: isProduction
+                }
+            })
+        ]
     },
     plugins: [
         new webpack.SourceMapDevToolPlugin({
