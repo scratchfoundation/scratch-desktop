@@ -2,6 +2,18 @@ import {app, ipcMain} from 'electron';
 
 import TelemetryClient from './telemetry/TelemetryClient';
 
+const EVENT_TEMPLATE = {
+    projectName: '',
+    language: '',
+    scriptCount: -1,
+    spriteCount: -1,
+    variablesCount: -1,
+    blocksCount: -1,
+    costumesCount: -1,
+    listsCount: -1,
+    soundsCount: -1
+};
+
 const APP_ID = 'scratch-desktop';
 const APP_VERSION = app.getVersion();
 const APP_INFO = Object.freeze({
@@ -21,27 +33,27 @@ class ScratchDesktopTelemetry {
     }
 
     appWasOpened () {
-        this._telemetryClient.addEvent('app::open', APP_INFO);
+        this._telemetryClient.addEvent('app::open', {...EVENT_TEMPLATE, ...APP_INFO});
     }
 
     appWillClose () {
-        this._telemetryClient.addEvent('app::close', APP_INFO);
+        this._telemetryClient.addEvent('app::close', {...EVENT_TEMPLATE, ...APP_INFO});
     }
 
     projectDidLoad (metadata = {}) {
-        this._telemetryClient.addEvent('project::load', metadata);
+        this._telemetryClient.addEvent('project::load', {...EVENT_TEMPLATE, ...metadata});
     }
 
     projectDidSave (metadata = {}) {
-        this._telemetryClient.addEvent('project::save', metadata);
+        this._telemetryClient.addEvent('project::save', {...EVENT_TEMPLATE, ...metadata});
     }
 
     projectWasCreated (metadata = {}) {
-        this._telemetryClient.addEvent('project::create', metadata);
+        this._telemetryClient.addEvent('project::create', {...EVENT_TEMPLATE, ...metadata});
     }
 
     projectWasUploaded (metadata = {}) {
-        this._telemetryClient.addEvent('project::upload', metadata);
+        this._telemetryClient.addEvent('project::upload', {...EVENT_TEMPLATE, ...metadata});
     }
 }
 
