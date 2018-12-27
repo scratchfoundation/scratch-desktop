@@ -1,7 +1,8 @@
-import {BrowserWindow, app, dialog} from 'electron';
+import {BrowserWindow, Menu, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
 import telemetry from './ScratchDesktopTelemetry';
+import MacOSMenu from './MacOSMenu';
 
 telemetry.appWasOpened();
 
@@ -19,6 +20,11 @@ const createMainWindow = () => {
         show: false
     });
     const webContents = window.webContents;
+
+    if (process.platform === 'darwin') {
+        const osxMenu = Menu.buildFromTemplate(MacOSMenu(app));
+        Menu.setApplicationMenu(osxMenu);
+    }
 
     if (isDevelopment) {
         webContents.openDevTools();
