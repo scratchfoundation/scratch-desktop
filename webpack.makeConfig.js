@@ -16,7 +16,7 @@ const makeConfig = function (options) {
             '@babel/plugin-proposal-object-rest-spread'
         ],
         presets: [
-            ['@babel/preset-env', {targets: {electron: '3.0.2'}}]
+            ['@babel/preset-env', {targets: {electron: '3.0.13'}}]
         ]
     };
 
