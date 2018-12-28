@@ -33,6 +33,26 @@ other changes which might affect the media libraries.
 
 Node that on macOS this will require installing various certificates.
 
+#### Signing the NSIS installer (Windows, non-store)
+
+*This section is relevant only to members of the Scratch Team.*
+
+By default all Windows installers are unsigned. An APPX package for the Microsoft Store shouldn't be signed: it will
+be signed automatically as part of the store submission process. On the other hand, the non-Store NSIS installer
+should be signed.
+
+To generate a signed NSIS installer:
+
+1. Acquire our latest digital signing certificate and save it on your computer as a `p12` file.
+2. Set `WIN_CSC_LINK` to the path to your certificate file. For maximum compatibility I use forward slashes.
+   - CMD: `set WIN_CSC_LINK=C:/Users/You/Somewhere/Certificate.p12`
+   - PowerShell: `$env:WIN_CSC_LINK = "C:/Users/You/Somewhere/Certificate.p12"`
+3. Set `WIN_CSC_KEY_PASSWORD` to the password string associated with your P12 file.
+   - CMD: `set WIN_CSC_KEY_PASSWORD=superSecret`
+   - PowerShell: `$env:WIN_CSC_KEY_PASSWORD = "superSecret"`
+4. Build the NSIS installer only: building the APPX installer will fail if these environment variables are set.
+   - `npm run dist -- -w nsis`
+
 ### Make a semi-packaged build
 
 This will simulate a packaged build without actually packaging it: instead the files will be copied to a subdirectory
