@@ -10,6 +10,13 @@ telemetry.appWasOpened();
 // const defaultSize = {width: 1096, height: 715}; // minimum
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
+const fileFilters = {
+    '.sb3': {
+        name: 'Scratch 3 Project',
+        extensions: ['sb3']
+    }
+};
+
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const createMainWindow = () => {
@@ -53,6 +60,30 @@ const createMainWindow = () => {
             slashes: true
         }));
     }
+
+    webContents.session.on('will-download', (ev, item) => {
+        const itemPath = item.getFilename();
+        const baseName = path.basename(itemPath);
+        const extName = path.extname(baseName);
+        if (extName) {
+            const extNameNoDot = extName.replace(/^\./, '');
+            const options = {
+                defaultPath: path.join(app.getPath('documents'), baseName),
+                filters: [
+                    fileFilters[extName] || {
+                        name: `${extNameNoDot.toUpperCase()} Files`,
+                        extensions: [extNameNoDot]
+                    }
+                ]
+            };
+            const userChosenPath = dialog.showSaveDialog(window, options);
+            if (userChosenPath) {
+                item.setSavePath(userChosenPath);
+            } else {
+                item.cancel();
+            }
+        }
+    });
 
     webContents.on('will-prevent-unload', ev => {
         const choice = dialog.showMessageBox(window, {
