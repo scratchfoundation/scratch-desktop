@@ -1,7 +1,13 @@
+const childProcess = require('child_process');
+
+const electronPath = require('electron');
 const webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const isProduction = (process.env.NODE_ENV === 'production');
+
+const electronVersion = childProcess.execSync(`${electronPath} --version`, {encoding: 'utf8'}).trim();
+console.log(`Targeting Electron ${electronVersion}`);
 
 const makeConfig = function (options) {
     // eslint-disable-next-line no-console
@@ -16,7 +22,7 @@ const makeConfig = function (options) {
             '@babel/plugin-proposal-object-rest-spread'
         ],
         presets: [
-            ['@babel/preset-env', {targets: {electron: '3.0.13'}}]
+            ['@babel/preset-env', {targets: {electron: electronVersion}}]
         ]
     };
 
