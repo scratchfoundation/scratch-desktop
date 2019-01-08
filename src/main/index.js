@@ -62,7 +62,6 @@ const createMainWindow = () => {
         if (extName) {
             const extNameNoDot = extName.replace(/^\./, '');
             const options = {
-                defaultPath: path.join(app.getPath('documents'), baseName),
                 filters: [getFilterForExtension(extNameNoDot)]
             };
             const userChosenPath = dialog.showSaveDialog(window, options);
