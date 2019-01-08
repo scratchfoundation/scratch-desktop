@@ -1,6 +1,7 @@
 import {BrowserWindow, Menu, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
+import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 
@@ -9,13 +10,6 @@ telemetry.appWasOpened();
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
-
-const fileFilters = {
-    '.sb3': {
-        name: 'Scratch 3 Project',
-        extensions: ['sb3']
-    }
-};
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -69,12 +63,7 @@ const createMainWindow = () => {
             const extNameNoDot = extName.replace(/^\./, '');
             const options = {
                 defaultPath: path.join(app.getPath('documents'), baseName),
-                filters: [
-                    fileFilters[extName] || {
-                        name: `${extNameNoDot.toUpperCase()} Files`,
-                        extensions: [extNameNoDot]
-                    }
-                ]
+                filters: [getFilterForExtension(extNameNoDot)]
             };
             const userChosenPath = dialog.showSaveDialog(window, options);
             if (userChosenPath) {
