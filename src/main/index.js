@@ -1,6 +1,7 @@
 import {BrowserWindow, Menu, app, dialog} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
+import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 
@@ -53,6 +54,24 @@ const createMainWindow = () => {
             slashes: true
         }));
     }
+
+    webContents.session.on('will-download', (ev, item) => {
+        const itemPath = item.getFilename();
+        const baseName = path.basename(itemPath);
+        const extName = path.extname(baseName);
+        if (extName) {
+            const extNameNoDot = extName.replace(/^\./, '');
+            const options = {
+                filters: [getFilterForExtension(extNameNoDot)]
+            };
+            const userChosenPath = dialog.showSaveDialog(window, options);
+            if (userChosenPath) {
+                item.setSavePath(userChosenPath);
+            } else {
+                item.cancel();
+            }
+        }
+    });
 
     webContents.on('will-prevent-unload', ev => {
         const choice = dialog.showMessageBox(window, {
