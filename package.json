@@ -2,7 +2,7 @@
   "name": "scratch-desktop",
   "productName": "Scratch Desktop",
   "description": "Scratch 3.0 as a self-contained desktop application",
-  "author": "Massachusetts Institute of Technology",
+  "author": "Scratch Foundation",
   "version": "1.2.1",
   "license": "BSD-3-Clause",
   "scripts": {
