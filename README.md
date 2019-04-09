@@ -68,7 +68,7 @@ shortcut as Chrome on your platform. This won't work on a packaged build.
 You can debug the main process the same way as any Node.js process. I like to use Visual Studio Code with a
 configuration like this:
 
-```json
+```jsonc
     "launch": {
         "version": "0.2.0",
         "configurations": [
