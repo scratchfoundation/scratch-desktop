@@ -7,7 +7,7 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
-    "build-gui": "cd ./node_modules/scratch-gui && BUILD_MODE=dist STATIC_PATH=static npm run build",
+    "build-gui": "node ./scripts/build-gui.js",
     "clean": "rimraf ./dist/ ./static/assets/",
     "compile": "rimraf ./dist/ && electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
