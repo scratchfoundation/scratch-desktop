@@ -16,7 +16,7 @@ const describe = function (object) {
     return util.inspect(object, false, Infinity, true);
 };
 
-const collectSimple = function (library, debugLabel = 'Item', dest = new Set()) {
+const collectSimple = function (library, dest, debugLabel = 'Item') {
     library.forEach(item => {
         let md5Count = 0;
         if (item.md5) {
@@ -37,10 +37,10 @@ const collectSimple = function (library, debugLabel = 'Item', dest = new Set()) 
     return dest;
 };
 
-const collectAssets = function (dest = new Set()) {
-    collectSimple(libraries.backdrops, 'Backdrop', dest);
-    collectSimple(libraries.costumes, 'Costume', dest);
-    collectSimple(libraries.sounds, 'Sound', dest);
+const collectAssets = function (dest) {
+    collectSimple(libraries.backdrops, dest, 'Backdrop');
+    collectSimple(libraries.costumes, dest, 'Costume');
+    collectSimple(libraries.sounds, dest, 'Sound');
     libraries.sprites.forEach(sprite => {
         if (sprite.md5) {
             dest.add(sprite.md5);
@@ -48,10 +48,10 @@ const collectAssets = function (dest = new Set()) {
             console.warn(`Sprite has no MD5 property:\n${describe(sprite)}`);
         }
         if (sprite.json.costumes) {
-            collectSimple(sprite.json.costumes, `Costume for sprite ${sprite.name}`);
+            collectSimple(sprite.json.costumes, dest, `Costume for sprite ${sprite.name}`);
         }
         if (sprite.json.sounds) {
-            collectSimple(sprite.json.sounds, `Sound for sprite ${sprite.name}`);
+            collectSimple(sprite.json.sounds, dest, `Sound for sprite ${sprite.name}`);
         }
     });
     return dest;
@@ -88,7 +88,7 @@ const fetchAsset = function (md5, callback) {
 };
 
 const fetchAllAssets = function () {
-    const allAssets = collectAssets();
+    const allAssets = collectAssets(new Set());
     console.log(`Total library assets: ${allAssets.size}`);
 
     async.forEachLimit(allAssets, NUM_SIMULTANEOUS_DOWNLOADS, fetchAsset, err => {
