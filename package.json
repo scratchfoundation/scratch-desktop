@@ -7,7 +7,8 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
-    "build-gui": "node ./scripts/build-gui.js",
+    "build-gui": "node ./scripts/run-in-gui.js build",
+    "watch-gui": "node ./scripts/run-in-gui.js watch",
     "clean": "rimraf ./dist/ ./static/assets/",
     "compile": "rimraf ./dist/ && electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",

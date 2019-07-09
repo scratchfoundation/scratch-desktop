@@ -23,7 +23,8 @@ that repository's main development line. For now, though, there's a separate bra
 
 If you have run `npm link scratch-gui` (or equivalent) in the `scratch-desktop` working directory, you may be able to
 accomplish the above by running `npm run build-gui` in the `scratch-desktop` directory instead of using the manual
-steps listed above.
+steps listed above. For active development iteration, try `npm run watch-gui` which will watch for changes and rebuild
+`scratch-gui` incrementally when necessary.
 
 ### Prepare media library assets
 
