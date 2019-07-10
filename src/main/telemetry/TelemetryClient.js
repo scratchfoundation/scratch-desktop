@@ -20,6 +20,14 @@ const TelemetryServerURL = Object.freeze({
     staging: 'http://scratch-telemetry-s.us-east-1.elasticbeanstalk.com/',
     production: 'https://telemetry.scratch.mit.edu/'
 });
+const DefaultServerURL = (
+    process.env.NODE_ENV === 'production' ? TelemetryServerURL.production : TelemetryServerURL.staging
+);
+
+/**
+ * Default name for persistent configuration & queue storage
+ */
+const DefaultStoreName = 'telemetry';
 
 /**
  * Default interval, in seconds, between delivery attempts
@@ -30,6 +38,17 @@ const DefaultDeliveryInterval = 60;
  * Default interval, in seconds, between connectivity checks
  */
 const DefaultNetworkCheckInterval = 300;
+
+/**
+ * Default limit on the number of queued events
+ */
+const DefaultQueueLimit = 100;
+
+/**
+ * Default limit on the number of delivery attempts for each event
+ */
+const DeliveryAttemptLimit = 3;
+
 
 /**
  * Client interface for the Scratch telemetry service.
@@ -45,32 +64,39 @@ class TelemetryClient {
      * @param {object} [options] - optional configuration settings for this client
      * @property {string} [storeName] - optional name for persistent config/queue storage (default: 'telemetry')
      * @property {string} [clientId] - optional UUID for this client (default: automatically determine a UUID)
-     * @property {string} [url] - optional telemetry service endpoint URL (default: automatically choose a server)
+     * @property {string} [serverURL] - optional telemetry service endpoint URL (default: automatically choose a server)
      * @property {boolean} [didOptIn] - optional flag for whether the user opted into telemetry service (default: false)
      * @property {int} [deliveryInterval] - optional number of seconds between delivery attempts (default: 60)
-     * @property {int} [networkInterval] - optional number of seconds between connectivity checks (default: 300)
+     * @property {int} [networkCheckInterval] - optional number of seconds between connectivity checks (default: 300)
      * @property {int} [queueLimit] - optional limit on the number of queued events (default: 100)
-     * @property {int} [attemptLimit] - optional limit on the number of delivery attempts for each event (default: 3)
+     * @property {int} [deliveryAttemptLimit] - optional limit on delivery attempts for each event (default: 3)
      */
-    constructor (options = null) {
-        options = options || {};
-
+    constructor ({
+        storeName = DefaultStoreName,
+        clientID, // undefined = load or create
+        serverURL, // undefined = automatic
+        didOptIn, // undefined = show prompt
+        deliveryInterval = DefaultDeliveryInterval,
+        networkCheckInterval = DefaultNetworkCheckInterval,
+        queueLimit = DefaultQueueLimit,
+        deliveryAttemptLimit = DeliveryAttemptLimit
+    } = {}) {
         /**
          * Persistent storage for the client ID, opt in flag, and packet queue.
          */
         this._store = new ElectronStore({
-            name: options.storeName || 'telemetry'
+            name: storeName
         });
         console.log(`Telemetry configuration storage path: ${this._store.path}`);
 
-        if (options.hasOwnProperty('clientID')) {
-            this.clientID = options.clientID;
+        if (clientID) {
+            this.clientID = clientID;
         } else if (!this._store.has('clientID')) {
             this.clientID = uuidv1();
         }
 
-        if (options.hasOwnProperty('optIn')) {
-            this.didOptIn = options.didOptIn;
+        if (typeof didOptIn !== 'undefined') {
+            this.didOptIn = didOptIn;
         }
 
         /**
@@ -81,7 +107,7 @@ class TelemetryClient {
         /**
          * Server URL
          */
-        this._serverURL = options.url || TelemetryServerURL.staging;
+        this._serverURL = serverURL || DefaultServerURL;
 
         /**
          * Can we currently reach the telemetry service?
@@ -91,13 +117,22 @@ class TelemetryClient {
         /**
          * Try to deliver telemetry packets at this interval
          */
-        this._deliveryInterval = (options.deliveryInterval > 0) ? options.deliveryInterval : DefaultDeliveryInterval;
+        this._deliveryInterval = (deliveryInterval > 0) ? deliveryInterval : DefaultDeliveryInterval;
 
         /**
          * Check for connectivity at this interval
          */
-        this._networkCheckInterval =
-            (options.networkCheckInterval > 0) ? options.networkCheckInterval : DefaultNetworkCheckInterval;
+        this._networkCheckInterval = (networkCheckInterval > 0) ? networkCheckInterval : DefaultNetworkCheckInterval;
+
+        /**
+         * Queue at most this many events
+         */
+        this._queueLimit = (queueLimit > 0) ? queueLimit : DefaultQueueLimit;
+
+        /**
+         * Attempt to deliver an event at most this many times
+         */
+        this._deliveryAttemptLimit = (deliveryAttemptLimit > 0) ? deliveryAttemptLimit : DeliveryAttemptLimit;
 
         /**
          * Bind event handlers
@@ -121,9 +156,13 @@ class TelemetryClient {
      * Stop this client. Do not use this object after disposal.
      */
     dispose () {
-        if (this._deliveryInterval !== null) {
+        if (this._networkTimer !== null) {
+            clearInterval(this._networkTimer);
+            this._networkTimer = null;
+        }
+        if (this._deliveryTimer !== null) {
             clearInterval(this._deliveryTimer);
-            this._deliveryInterval = null;
+            this._deliveryTimer = null;
         }
     }
 
@@ -183,6 +222,7 @@ class TelemetryClient {
             packet
         };
         this._packetQueue.push(packetInfo);
+        this._packetQueue.splice(0, this._packetQueue.length - this._queueLimit); // enforce queue length limit
         this.saveQueue();
     }
 
@@ -220,7 +260,7 @@ class TelemetryClient {
                 // TODO: check if the failure is because there's no Internet connection and if so refund the attempt
                 const packetFailed = err || (res.statusCode !== 200);
                 if (packetFailed) {
-                    if (packetInfo.attempts < this._attemptsLimit) {
+                    if (packetInfo.attempts < this._deliveryAttemptLimit) {
                         this._packetQueue.push(packetInfo);
                     } else {
                         console.warn('Dropping packet which exceeded retry limit', packet);
