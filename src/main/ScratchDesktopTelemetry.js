@@ -1,4 +1,5 @@
 import {app, ipcMain} from 'electron';
+import defaultsDeep from 'lodash.defaultsdeep';
 
 import TelemetryClient from './telemetry/TelemetryClient';
 
@@ -6,13 +7,15 @@ const EVENT_TEMPLATE = {
     version: '3.0.0',
     projectName: '',
     language: '',
-    scriptCount: -1,
-    spriteCount: -1,
-    variablesCount: -1,
-    blocksCount: -1,
-    costumesCount: -1,
-    listsCount: -1,
-    soundsCount: -1
+    metadata: {
+        scriptCount: -1,
+        spriteCount: -1,
+        variablesCount: -1,
+        blocksCount: -1,
+        costumesCount: -1,
+        listsCount: -1,
+        soundsCount: -1
+    }
 };
 
 const APP_ID = 'scratch-desktop';
@@ -42,19 +45,28 @@ class ScratchDesktopTelemetry {
     }
 
     projectDidLoad (metadata = {}) {
-        this._telemetryClient.addEvent('project::load', {...EVENT_TEMPLATE, ...metadata});
+        this._telemetryClient.addEvent('project::load', this._buildMetadata(metadata));
     }
 
     projectDidSave (metadata = {}) {
-        this._telemetryClient.addEvent('project::save', {...EVENT_TEMPLATE, ...metadata});
+        this._telemetryClient.addEvent('project::save', this._buildMetadata(metadata));
     }
 
     projectWasCreated (metadata = {}) {
-        this._telemetryClient.addEvent('project::create', {...EVENT_TEMPLATE, ...metadata});
+        this._telemetryClient.addEvent('project::create', this._buildMetadata(metadata));
     }
 
     projectWasUploaded (metadata = {}) {
-        this._telemetryClient.addEvent('project::upload', {...EVENT_TEMPLATE, ...metadata});
+        this._telemetryClient.addEvent('project::upload', this._buildMetadata(metadata));
+    }
+
+    _buildMetadata (metadata) {
+        const { projectName, language, ...codeMetadata } = metadata;
+        return defaultsDeep({
+            projectName,
+            language,
+            metadata: codeMetadata
+        }, EVENT_TEMPLATE);
     }
 }
 
