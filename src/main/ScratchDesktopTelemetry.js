@@ -49,7 +49,23 @@ class ScratchDesktopTelemetry {
     }
 
     projectDidSave (metadata = {}) {
+        // Since the save dialog appears on the main process the GUI does not wait for the actual save to complete.
+        // That means the GUI sends this event before we know the file name used for the save, which is where the new
+        // project title comes from. Instead, just hold on to this metadata pending a `projectSaveCompleted` event
+        // from the save code on the main process. If the user cancels the save this data will be cleared.
+        this._pendingProjectSave = metadata;
+    }
+
+    projectSaveCompleted (newProjectTitle) {
+        const metadata = this._pendingProjectSave;
+        this._pendingProjectSave = null;
+
+        metadata.projectName = newProjectTitle;
         this._telemetryClient.addEvent('project::save', this._buildMetadata(metadata));
+    }
+
+    projectSaveCanceled () {
+        this._pendingProjectSave = null;
     }
 
     projectWasCreated (metadata = {}) {
