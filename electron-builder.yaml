@@ -25,3 +25,5 @@ appx:
   identityName: ScratchFoundation.ScratchDesktop
   publisherDisplayName: "Scratch Foundation"
   publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
+nsis:
+  oneClick: false # allow user to choose per-user or per-machine
