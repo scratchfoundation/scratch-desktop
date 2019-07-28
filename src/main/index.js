@@ -1,4 +1,4 @@
-import {BrowserWindow, Menu, app, dialog} from 'electron';
+import {BrowserWindow, Menu, app, dialog, ipcMain} from 'electron';
 import * as path from 'path';
 import {format as formatUrl} from 'url';
 import {getFilterForExtension} from './FileFilters';
@@ -13,19 +13,16 @@ const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const createMainWindow = () => {
+// global window references prevent them from being garbage-collected
+const _windows = {};
+
+const createWindow = ({url, ...browserWindowOptions}) => {
     const window = new BrowserWindow({
-        width: defaultSize.width,
-        height: defaultSize.height,
         useContentSize: true,
-        show: false
+        show: false,
+        ...browserWindowOptions
     });
     const webContents = window.webContents;
-
-    if (process.platform === 'darwin') {
-        const osxMenu = Menu.buildFromTemplate(MacOSMenu(app));
-        Menu.setApplicationMenu(osxMenu);
-    }
 
     if (isDevelopment) {
         webContents.openDevTools();
@@ -46,14 +43,37 @@ const createMainWindow = () => {
     });
 
     if (isDevelopment) {
-        window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
+        window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/${url}`);
     } else {
         window.loadURL(formatUrl({
-            pathname: path.join(__dirname, 'index.html'),
+            pathname: path.join(__dirname, url),
             protocol: 'file',
             slashes: true
         }));
     }
+
+    return window;
+};
+
+const createAboutWindow = () => {
+    const window = createWindow({
+        width: 400,
+        height: 400,
+        parent: _windows.main,
+        title: 'About Scratch Desktop',
+        url: 'index.html?route=about'
+    });
+    return window;
+};
+
+const createMainWindow = () => {
+    const window = createWindow({
+        width: defaultSize.width,
+        height: defaultSize.height,
+        title: 'Scratch Desktop',
+        url: 'index.html'
+    });
+    const webContents = window.webContents;
 
     webContents.session.on('will-download', (ev, item) => {
         const itemPath = item.getFilename();
@@ -104,6 +124,11 @@ const createMainWindow = () => {
     return window;
 };
 
+if (process.platform === 'darwin') {
+    const osxMenu = Menu.buildFromTemplate(MacOSMenu(app));
+    Menu.setApplicationMenu(osxMenu);
+}
+
 // quit application when all windows are closed
 app.on('window-all-closed', () => {
     app.quit();
@@ -113,13 +138,19 @@ app.on('will-quit', () => {
     telemetry.appWillClose();
 });
 
-// global reference to mainWindow (necessary to prevent window from being garbage collected)
-let _mainWindow;
-
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
-    _mainWindow = createMainWindow();
-    _mainWindow.on('closed', () => {
-        _mainWindow = null;
+    _windows.main = createMainWindow();
+    _windows.main.on('closed', () => {
+        delete _windows.main;
     });
+    _windows.about = createAboutWindow();
+    _windows.about.on('close', event => {
+        event.preventDefault();
+        _windows.about.hide();
+    });
+});
+
+ipcMain.on('open-about-window', () => {
+    _windows.about.show();
 });
