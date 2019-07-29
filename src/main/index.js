@@ -16,7 +16,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 // global window references prevent them from being garbage-collected
 const _windows = {};
 
-const createWindow = ({url, ...browserWindowOptions}) => {
+const createWindow = ({search = null, url = 'index.html', ...browserWindowOptions}) => {
     const window = new BrowserWindow({
         useContentSize: true,
         show: false,
@@ -48,6 +48,7 @@ const createWindow = ({url, ...browserWindowOptions}) => {
         window.loadURL(formatUrl({
             pathname: path.join(__dirname, url),
             protocol: 'file',
+            search,
             slashes: true
         }));
     }
@@ -60,8 +61,8 @@ const createAboutWindow = () => {
         width: 400,
         height: 400,
         parent: _windows.main,
-        title: 'About Scratch Desktop',
-        url: 'index.html?route=about'
+        search: 'route=about',
+        title: 'About Scratch Desktop'
     });
     return window;
 };
@@ -70,8 +71,7 @@ const createMainWindow = () => {
     const window = createWindow({
         width: defaultSize.width,
         height: defaultSize.height,
-        title: 'Scratch Desktop',
-        url: 'index.html'
+        title: 'Scratch Desktop'
     });
     const webContents = window.webContents;
 
