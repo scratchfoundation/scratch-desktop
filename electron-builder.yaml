@@ -6,6 +6,7 @@ productName: "Scratch Desktop"
 mac:
   category: public.app-category.education
   icon: buildResources/ScratchDesktop.icns
+  provisioningProfile: embedded.provisionprofile
   target:
     - dmg
     - mas
@@ -14,8 +15,6 @@ mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.plist
   icon: buildResources/ScratchDesktop.icns
-  files:
-    - embedded.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:
