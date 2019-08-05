@@ -42,16 +42,22 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
         });
     });
 
-    if (isDevelopment) {
-        window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/${url}`);
-    } else {
-        window.loadURL(formatUrl({
+    const fullUrl = formatUrl(isDevelopment ?
+        { // Webpack Dev Server
+            hostname: 'localhost',
+            pathname: url,
+            port: process.env.ELECTRON_WEBPACK_WDS_PORT,
+            protocol: 'http',
+            search,
+            slashes: true
+        } : { // production / bundled
             pathname: path.join(__dirname, url),
             protocol: 'file',
             search,
             slashes: true
-        }));
-    }
+        }
+    );
+    window.loadURL(fullUrl);
 
     return window;
 };
