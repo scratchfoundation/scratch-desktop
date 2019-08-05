@@ -87,7 +87,6 @@ class TelemetryClient {
         this._store = new ElectronStore({
             name: storeName
         });
-        console.log(`Telemetry configuration storage path: ${this._store.path}`);
 
         if (clientID) {
             this.clientID = clientID;
@@ -263,6 +262,7 @@ class TelemetryClient {
                     if (packetInfo.attempts < this._deliveryAttemptLimit) {
                         this._packetQueue.push(packetInfo);
                     } else {
+                        // eslint-disable-next-line no-console
                         console.warn('Dropping packet which exceeded retry limit', packet);
                     }
                 }

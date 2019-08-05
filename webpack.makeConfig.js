@@ -7,7 +7,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const isProduction = (process.env.NODE_ENV === 'production');
 
 const electronVersion = childProcess.execSync(`${electronPath} --version`, {encoding: 'utf8'}).trim();
-console.log(`Targeting Electron ${electronVersion}`);
+console.log(`Targeting Electron ${electronVersion}`); // eslint-disable-line no-console
 
 const makeConfig = function (options) {
     // eslint-disable-next-line no-console

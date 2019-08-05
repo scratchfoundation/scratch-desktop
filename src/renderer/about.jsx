@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {author, productName, version} from '../../package.json';
+import {productName, version} from '../../package.json';
 
 import logo from '../icon/ScratchDesktop.svg';
 

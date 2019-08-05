@@ -77,7 +77,7 @@ class ScratchDesktopTelemetry {
     }
 
     _buildMetadata (metadata) {
-        const { projectName, language, ...codeMetadata } = metadata;
+        const {projectName, language, ...codeMetadata} = metadata;
         return defaultsDeep({
             projectName,
             language,
