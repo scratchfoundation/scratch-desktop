@@ -1,5 +1,6 @@
 import ElectronStore from 'electron-store';
 import nets from 'nets';
+import * as os from 'os';
 import uuidv1 from 'uuid/v1'; // semi-persistent client ID
 import uuidv4 from 'uuid/v4'; // random ID
 
@@ -17,7 +18,7 @@ import uuidv4 from 'uuid/v4'; // random ID
   * Default telemetry service URLs
   */
 const TelemetryServerURL = Object.freeze({
-    staging: 'http://scratch-telemetry-s.us-east-1.elasticbeanstalk.com/',
+    staging: 'http://scratch-telemetry-staging.us-east-1.elasticbeanstalk.com/',
     production: 'https://telemetry.scratch.mit.edu/'
 });
 const DefaultServerURL = (
@@ -48,6 +49,12 @@ const DefaultQueueLimit = 100;
  * Default limit on the number of delivery attempts for each event
  */
 const DeliveryAttemptLimit = 3;
+
+const platform = [
+    `${os.platform()} ${os.release()}`, // "win32 10.0.18362", "darwin 18.7.0", etc.
+    `Electron ${process.versions.electron}`, // "Electron 4.2.6"
+    `Store=${process.mas || process.windowsStore || false}` // "Store=true" or "Store=false"
+].join(', ');
 
 
 /**
@@ -213,6 +220,7 @@ class TelemetryClient {
             clientID: this.clientID,
             id: packetId,
             name: eventName,
+            platform,
             timestamp: now.getTime(),
             userTimezone: now.getTimezoneOffset()
         }, additionalFields);
