@@ -3,7 +3,7 @@
   "productName": "Scratch Desktop",
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Scratch Foundation",
-  "version": "3.6.0-rc.2",
+  "version": "3.6.0",
   "license": "BSD-3-Clause",
   "scripts": {
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
