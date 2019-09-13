@@ -94,13 +94,15 @@ const createMainWindow = () => {
             const userChosenPath = dialog.showSaveDialog(window, options);
             if (userChosenPath) {
                 item.setSavePath(userChosenPath);
-                const newProjectTitle = path.basename(userChosenPath, extName);
-                webContents.send('setTitleFromSave', {title: newProjectTitle});
+                if (extNameNoDot.toUpperCase() == "SB3") { // when a project is downloaded, not an asset
+                    const newProjectTitle = path.basename(userChosenPath, extName);
+                    webContents.send('setTitleFromSave', {title: newProjectTitle});
 
-                // "setTitleFromSave" will set the project title but GUI has already reported the telemetry event
-                // using the old title. This call lets the telemetry client know that the save was actually completed
-                // and the event should be committed to the event queue with this new title.
-                telemetry.projectSaveCompleted(newProjectTitle);
+                    // "setTitleFromSave" will set the project title but GUI has already reported the telemetry event
+                    // using the old title. This call lets the telemetry client know that the save was actually completed
+                    // and the event should be committed to the event queue with this new title.
+                    telemetry.projectSaveCompleted(newProjectTitle);
+                }
             } else {
                 item.cancel();
                 telemetry.projectSaveCanceled();
