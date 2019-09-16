@@ -1,5 +1,18 @@
+/**
+ * @overview This script runs `electron-builder` with special management of code signing configuration on Windows.
+ * Running this script with no command line parameters should build all targets for the current platform.
+ * On Windows, make sure to set CSC_* or WIN_CSC_* environment variables or the NSIS build will fail.
+ * On Mac, the CSC_* variables are optional but will be respected if present.
+ * See also: https://www.electron.build/code-signing
+ */
+
 const {spawnSync} = require('child_process');
 
+/**
+ * Strip any code signing configuration (CSC) from a set of environment variables.
+ * @param {object} environment - a collection of environment variables which might include code signing configuration.
+ * @returns {object} - a collection of environment variables which does not include code signing configuration.
+ */
 const stripCSC = function (environment) {
     const {
         CSC_LINK: _CSC_LINK,
@@ -11,6 +24,9 @@ const stripCSC = function (environment) {
     return strippedEnvironment;
 };
 
+/**
+ * @returns {string} - an `electron-builder` flag to build for the current platform, based on `process.platform`.
+ */
 const getPlatformFlag = function () {
     switch (process.platform) {
     case 'win32': return '--windows';
@@ -18,8 +34,14 @@ const getPlatformFlag = function () {
     case 'linux': return '--linux';
     }
     throw new Error(`Could not determine platform flag for platform: ${process.platform}`);
-}
+};
 
+/**
+ * Run `electron-builder` once to build one or more target(s).
+ * @param {string} targetGroup - the target(s) to build in this pass.
+ * If the `targetGroup` is `'nsis'` then the environment must contain code-signing config (CSC_* or WIN_CSC_*).
+ * If the `targetGroup` is `'appx'` then code-signing config will be stripped from the environment if present.
+ */
 const runBuilder = function (targetGroup) {
     // the appx build fails if CSC_* or WIN_CSC_* variables are set
     const shouldStripCSC = (targetGroup === 'appx');
@@ -37,6 +59,10 @@ const runBuilder = function (targetGroup) {
     });
 };
 
+/**
+ * @returns {Array.<string>} - the default list of target groups on this platform. Each item in the array represents
+ * one call to `runBuilder` for one or more build target(s).
+ */
 const calculateTargets = function () {
     switch (process.platform) {
     case 'win32':
