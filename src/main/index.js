@@ -73,6 +73,14 @@ const createAboutWindow = () => {
     return window;
 };
 
+const getIsProjectSave = downloadItem => {
+    switch (downloadItem.getMimeType()) {
+    case 'application/x.scratch.sb3':
+        return true;
+    }
+    return false;
+};
+
 const createMainWindow = () => {
     const window = createWindow({
         width: defaultSize.width,
@@ -82,18 +90,21 @@ const createMainWindow = () => {
     const webContents = window.webContents;
 
     webContents.session.on('will-download', (ev, item) => {
+        const isProjectSave = getIsProjectSave(item);
         const itemPath = item.getFilename();
         const baseName = path.basename(itemPath);
         const extName = path.extname(baseName);
+        const options = {
+            defaultPath: baseName
+        };
         if (extName) {
             const extNameNoDot = extName.replace(/^\./, '');
-            const options = {
-                defaultPath: baseName,
-                filters: [getFilterForExtension(extNameNoDot)]
-            };
-            const userChosenPath = dialog.showSaveDialog(window, options);
-            if (userChosenPath) {
-                item.setSavePath(userChosenPath);
+            options.filters = [getFilterForExtension(extNameNoDot)];
+        }
+        const userChosenPath = dialog.showSaveDialog(window, options);
+        if (userChosenPath) {
+            item.setSavePath(userChosenPath);
+            if (isProjectSave) {
                 const newProjectTitle = path.basename(userChosenPath, extName);
                 webContents.send('setTitleFromSave', {title: newProjectTitle});
 
@@ -101,8 +112,10 @@ const createMainWindow = () => {
                 // using the old title. This call lets the telemetry client know that the save was actually completed
                 // and the event should be committed to the event queue with this new title.
                 telemetry.projectSaveCompleted(newProjectTitle);
-            } else {
-                item.cancel();
+            }
+        } else {
+            item.cancel();
+            if (isProjectSave) {
                 telemetry.projectSaveCanceled();
             }
         }
