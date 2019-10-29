@@ -73,8 +73,10 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         render () {
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
             return (<WrappedComponent
+                canEditTitle
                 isScratchDesktop
                 projectId={defaultProjectId}
+                projectTitle={this.state.projectTitle}
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickLogo={this.handleClickLogo}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
