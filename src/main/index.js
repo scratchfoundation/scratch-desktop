@@ -1,6 +1,8 @@
 import {BrowserWindow, Menu, app, dialog, ipcMain} from 'electron';
-import * as path from 'path';
+import path from 'path';
 import {format as formatUrl} from 'url';
+import yargs from 'yargs';
+
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
@@ -12,6 +14,16 @@ telemetry.appWasOpened();
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+
+const args = yargs
+    .command({
+        command: '$0 [project-file]', // "app.exe file.sb3"
+        aliases: ['dev'], // for compatibility with "electron-webpack dev"
+        desc: 'Start Scratch 3.0 standalone application. Optionally, load a project file.'
+    })
+    .strict(false) // ignore args meant for Electron
+    .help()
+    .argv;
 
 // global window references prevent them from being garbage-collected
 const _windows = {};
@@ -170,6 +182,12 @@ app.on('ready', () => {
     });
 });
 
+// let the render process open the "about" window
 ipcMain.on('open-about-window', () => {
     _windows.about.show();
+});
+
+// let the render process retrieve parsed args
+ipcMain.on('get-args', event => {
+    event.returnValue = args;
 });

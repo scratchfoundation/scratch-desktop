@@ -12,6 +12,9 @@ import styles from './app.css';
 
 const defaultProjectId = 0;
 
+// TODO: switch from "sendSync" to "invoke" once we're using Electron 7+
+let oneTimeArgs = ipcRenderer.sendSync('get-args');
+
 // override window.open so that it uses the OS's default browser, not an electron browser
 window.open = function (url, target) {
     if (target === '_blank') {
@@ -65,7 +68,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
         render () {
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
-            return (<WrappedComponent
+            const wrappedComponent = (<WrappedComponent
                 isScratchDesktop
                 projectId={defaultProjectId}
                 showTelemetryModal={shouldShowTelemetryModal}
@@ -76,6 +79,15 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
                 {...this.props}
             />);
+            if (oneTimeArgs) {
+                const projectFileName = oneTimeArgs.projectFile;
+                oneTimeArgs = null;
+
+                process.nextTick(() => {
+                    console.log('I should load:', projectFileName);
+                });
+            }
+            return wrappedComponent;
         }
     }
 
