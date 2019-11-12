@@ -1,5 +1,6 @@
-import {ipcRenderer, shell} from 'electron';
+import {ipcRenderer, remote, shell} from 'electron';
 import bindAll from 'lodash.bindall';
+import fs from 'fs';
 import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -13,7 +14,8 @@ import styles from './app.css';
 const defaultProjectId = 0;
 
 // TODO: switch from "sendSync" to "invoke" once we're using Electron 7+
-let oneTimeArgs = ipcRenderer.sendSync('get-args');
+// note that doing so will require fixing up usage to deal with a promise
+const mainProcessArgs = ipcRenderer.sendSync('get-args');
 
 // override window.open so that it uses the OS's default browser, not an electron browser
 window.open = function (url, target) {
@@ -41,9 +43,32 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleTelemetryModalOptIn',
                 'handleTelemetryModalOptOut'
             ]);
+            this.state = {
+                // projectFileName is used as "do we want to wait for a project file to load?"
+                projectFileName: mainProcessArgs.projectFile,
+                projectData: null
+            };
         }
         componentDidMount () {
             ipcRenderer.on('setTitleFromSave', this.handleSetTitleFromSave);
+            if (this.state.projectFileName) {
+                fs.readFile(this.state.projectFileName, null, (err, data) => {
+                    if (err) {
+                        remote.dialog.showMessageBox({
+                            type: 'error',
+                            title: 'Failed to load project',
+                            message: `Could not load project from file:\n${this.state.projectFileName}`,
+                            detail: err.message,
+                            buttons: ['OK']
+                        });
+                        // just open a blank editor
+                        this.setState({projectFileName: null});
+                    } else {
+                        // render the GUI with the now-loaded project data
+                        this.setState({projectData: data});
+                    }
+                });
+            }
         }
         componentWillUnmount () {
             ipcRenderer.removeListener('setTitleFromSave', this.handleSetTitleFromSave);
@@ -67,8 +92,11 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             ipcRenderer.send('setTelemetryDidOptIn', false);
         }
         render () {
+            if (this.state.projectFileName && !this.state.projectData) {
+                return <p className="splash">Loading File...</p>;
+            }
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
-            const wrappedComponent = (<WrappedComponent
+            return (<WrappedComponent
                 isScratchDesktop
                 projectId={defaultProjectId}
                 showTelemetryModal={shouldShowTelemetryModal}
@@ -77,17 +105,14 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
+
+                // completely omit the projectData prop if the projectData state is empty
+                // passing an empty projectData causes a GUI error
+                {...(this.state.projectData ? {projectData: this.state.projectData} : {})}
+
+                // allow passed-in props to override any of the above
                 {...this.props}
             />);
-            if (oneTimeArgs) {
-                const projectFileName = oneTimeArgs.projectFile;
-                oneTimeArgs = null;
-
-                process.nextTick(() => {
-                    console.log('I should load:', projectFileName);
-                });
-            }
-            return wrappedComponent;
         }
     }
 
