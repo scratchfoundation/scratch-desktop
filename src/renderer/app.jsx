@@ -36,8 +36,12 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleSetTitleFromSave',
                 'handleStorageInit',
                 'handleTelemetryModalOptIn',
-                'handleTelemetryModalOptOut'
+                'handleTelemetryModalOptOut',
+                'handleUpdateProjectTitle'
             ]);
+            this.state = {
+                projectTitle: null
+            };
         }
         componentDidMount () {
             ipcRenderer.on('setTitleFromSave', this.handleSetTitleFromSave);
@@ -52,7 +56,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             ipcRenderer.send(event, metadata);
         }
         handleSetTitleFromSave (event, args) {
-            this.props.onUpdateProjectTitle(args.title);
+            this.handleUpdateProjectTitle(args.title);
         }
         handleStorageInit (storageInstance) {
             storageInstance.addHelper(new ElectronStorageHelper(storageInstance));
@@ -63,25 +67,27 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         handleTelemetryModalOptOut () {
             ipcRenderer.send('setTelemetryDidOptIn', false);
         }
+        handleUpdateProjectTitle (newTitle) {
+            this.setState({projectTitle: newTitle});
+        }
         render () {
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
             return (<WrappedComponent
+                canEditTitle
                 isScratchDesktop
                 projectId={defaultProjectId}
+                projectTitle={this.state.projectTitle}
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickLogo={this.handleClickLogo}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
+                onUpdateProjectTitle={this.handleUpdateProjectTitle}
                 {...this.props}
             />);
         }
     }
-
-    ScratchDesktopComponent.propTypes = {
-        onUpdateProjectTitle: PropTypes.func
-    };
 
     return ScratchDesktopComponent;
 };
@@ -91,8 +97,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
 // ability to compose reducers.
 const WrappedGui = compose(
     AppStateHOC,
-    TitledHOC,
-    ScratchDesktopHOC // must come after `TitledHOC` so it has access to `onUpdateProjectTitle`
+    ScratchDesktopHOC
 )(GUI);
 
 ReactDOM.render(<WrappedGui />, appTarget);
