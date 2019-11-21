@@ -44,25 +44,25 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleTelemetryModalOptOut'
             ]);
             this.state = {
-                // projectFileName is used as "do we want to wait for a project file to load?"
-                projectFileName: mainProcessArgs.projectFile,
+                // projectPath is used as "do we want to wait for a project file to load?"
+                projectPath: mainProcessArgs.projectPath,
                 projectData: null
             };
         }
         componentDidMount () {
             ipcRenderer.on('setTitleFromSave', this.handleSetTitleFromSave);
-            if (this.state.projectFileName) {
-                fs.readFile(this.state.projectFileName, null, (err, data) => {
+            if (this.state.projectPath) {
+                fs.readFile(this.state.projectPath, null, (err, data) => {
                     if (err) {
                         remote.dialog.showMessageBox({
                             type: 'error',
                             title: 'Failed to load project',
-                            message: `Could not load project from file:\n${this.state.projectFileName}`,
+                            message: `Could not load project from file:\n${this.state.projectPath}`,
                             detail: err.message,
                             buttons: ['OK']
                         });
                         // just open a blank editor
-                        this.setState({projectFileName: null});
+                        this.setState({projectPath: null});
                     } else {
                         // render the GUI with the now-loaded project data
                         this.setState({projectData: data});
@@ -92,7 +92,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             ipcRenderer.send('setTelemetryDidOptIn', false);
         }
         render () {
-            if (this.state.projectFileName && !this.state.projectData) {
+            if (this.state.projectPath && !this.state.projectData) {
                 return <p className="splash">Loading File...</p>;
             }
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');

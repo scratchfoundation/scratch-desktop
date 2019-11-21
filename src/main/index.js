@@ -16,12 +16,13 @@ const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const args = yargs
-    .command({
-        command: '$0 [project-file]', // "app.exe file.sb3"
-        aliases: ['dev'], // for compatibility with "electron-webpack dev"
-        desc: 'Start Scratch 3.0 standalone application. Optionally, load a project file.'
+    .command('$0 [projectPath]', 'Start Scratch 3.0 standalone application', innerYargs => {
+        innerYargs
+            .positional('[projectPath]', {
+                describe: 'Path to a project file to open'
+            })
+            .demand(0, 1);
     })
-    .strict(false) // ignore args meant for Electron
     .help()
     .argv;
 
