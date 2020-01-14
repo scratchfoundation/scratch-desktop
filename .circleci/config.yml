@@ -1,0 +1,38 @@
+version: 2.1
+workflows:
+  windows:
+    jobs:
+      - build_for_windows:
+          context: code-sign-generic
+orbs:
+  windows: circleci/windows@2.2.0
+jobs:
+  build_for_windows:
+    executor:
+      name: windows/default
+      shell: bash.exe
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install scratch-desktop dependencies
+          command: npm ci
+      - save_cache: # save cache BEFORE doing anything special with scratch-gui
+          paths:
+            - node_modules/
+          key: npm-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install scratch-gui dependencies
+          command: cd node_modules/scratch-gui && npm install
+      - run:
+          name: Build
+          command: npm run dist
+      - run:
+          name: Move build products to artifacts directory
+          command: |
+            mkdir -p Artifacts/
+            mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
+      - store_artifacts:
+          path: Artifacts/
