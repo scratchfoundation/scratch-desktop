@@ -52,11 +52,20 @@ const runBuilder = function (targetGroup) {
     const platformFlag = getPlatformFlag();
     const command = `electron-builder ${platformFlag} ${targetGroup}`;
     console.log(`running: ${command}`);
-    spawnSync(command, {
+    const result = spawnSync(command, {
         env: childEnvironment,
         shell: true,
         stdio: 'inherit'
     });
+    if (result.error) {
+        throw result.error;
+    }
+    if (result.signal) {
+        throw new Error(`Child process terminated due to signal ${result.signal}`);
+    }
+    if (result.status) {
+        throw new Error(`Child process returned status code ${result.status}`);
+    }
 };
 
 /**
