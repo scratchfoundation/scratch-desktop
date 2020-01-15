@@ -14,6 +14,7 @@ mas:
   type: distribution
   category: public.app-category.education
   entitlements: buildResources/entitlements.plist
+  entitlementsInherit: buildResources/entitlements.inherit.plist
   icon: buildResources/ScratchDesktop.icns
 win:
   icon: buildResources/ScratchDesktop.ico
