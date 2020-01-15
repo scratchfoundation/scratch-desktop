@@ -23,9 +23,13 @@ const collectSimple = function (library, dest, debugLabel = 'Item') {
             ++md5Count;
             dest.add(item.md5);
         }
-        if (item.baseLayerMD5) {
+        if (item.baseLayerMD5) { // 2.0 library syntax for costumes
             ++md5Count;
             dest.add(item.baseLayerMD5);
+        }
+        if (item.md5ext) { // 3.0 library syntax for costumes
+            ++md5Count;
+            dest.add(item.md5ext);
         }
         if (md5Count < 1) {
             console.warn(`${debugLabel} has no MD5 property:\n${describe(item)}`);
