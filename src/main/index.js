@@ -104,8 +104,11 @@ const createMainWindow = () => {
             const extNameNoDot = extName.replace(/^\./, '');
             options.filters = [getFilterForExtension(extNameNoDot)];
         }
-        const userChosenPath = dialog.showSaveDialog(window, options);
+        const userChosenPath = dialog.showSaveDialogSync(window, options);
         if (userChosenPath) {
+            // WARNING: `setSavePath` on this item is only valid during the `will-download` event. Calling the async
+            // version of `showSaveDialog` means the event will finish before we get here, so `setSavePath` will be
+            // ignored. For that reason we need to call `showSaveDialogSync` above.
             item.setSavePath(userChosenPath);
             if (isProjectSave) {
                 const newProjectTitle = path.basename(userChosenPath, extName);
@@ -125,7 +128,7 @@ const createMainWindow = () => {
     });
 
     webContents.on('will-prevent-unload', ev => {
-        const choice = dialog.showMessageBox(window, {
+        const choice = dialog.showMessageBoxSync(window, {
             type: 'question',
             message: 'Leave Scratch?',
             detail: 'Any unsaved changes will be lost.',
