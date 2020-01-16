@@ -69,8 +69,10 @@ const calculateTargets = function () {
         // run in two passes so we can skip signing the appx
         return ['nsis', 'appx'];
     case 'darwin':
-        // run in one pass for slightly better speed
-        return ['dmg mas'];
+        // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
+        // Running them as separate passes means they both get signed.
+        // Seems like a bug in electron-builder...
+        return ['dmg', 'mas'];
     }
     throw new Error(`Could not determine targets for platform: ${process.platform}`);
 };
