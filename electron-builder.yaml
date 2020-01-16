@@ -5,6 +5,7 @@ appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
 mac:
   category: public.app-category.education
+  hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
   provisioningProfile: embedded.provisionprofile
   target:
