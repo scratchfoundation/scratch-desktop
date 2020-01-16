@@ -20,6 +20,9 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
     const window = new BrowserWindow({
         useContentSize: true,
         show: false,
+        webPreferences: {
+            nodeIntegration: true
+        },
         ...browserWindowOptions
     });
     const webContents = window.webContents;
