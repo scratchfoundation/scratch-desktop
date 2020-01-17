@@ -52,11 +52,20 @@ const runBuilder = function (targetGroup) {
     const platformFlag = getPlatformFlag();
     const command = `electron-builder ${platformFlag} ${targetGroup}`;
     console.log(`running: ${command}`);
-    spawnSync(command, {
+    const result = spawnSync(command, {
         env: childEnvironment,
         shell: true,
         stdio: 'inherit'
     });
+    if (result.error) {
+        throw result.error;
+    }
+    if (result.signal) {
+        throw new Error(`Child process terminated due to signal ${result.signal}`);
+    }
+    if (result.status) {
+        throw new Error(`Child process returned status code ${result.status}`);
+    }
 };
 
 /**
@@ -69,8 +78,10 @@ const calculateTargets = function () {
         // run in two passes so we can skip signing the appx
         return ['nsis', 'appx'];
     case 'darwin':
-        // run in one pass for slightly better speed
-        return ['dmg mas'];
+        // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
+        // Running them as separate passes means they both get signed.
+        // Seems like a bug in electron-builder...
+        return ['dmg', 'mas'];
     }
     throw new Error(`Could not determine targets for platform: ${process.platform}`);
 };

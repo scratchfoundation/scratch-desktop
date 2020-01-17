@@ -38,6 +38,7 @@
     "electron": "^6.1.7",
     "electron-builder": "^22.2.0",
     "electron-devtools-installer": "^2.2.4",
+    "electron-notarize": "^0.2.1",
     "electron-store": "^3.3.0",
     "electron-webpack": "^2.7.4",
     "eslint": "^5.16.0",
