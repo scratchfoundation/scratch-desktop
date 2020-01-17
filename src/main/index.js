@@ -152,6 +152,9 @@ const createMainWindow = () => {
 if (process.platform === 'darwin') {
     const osxMenu = Menu.buildFromTemplate(MacOSMenu(app));
     Menu.setApplicationMenu(osxMenu);
+} else {
+    // disable menu for other platforms
+    Menu.setApplicationMenu(null);
 }
 
 // quit application when all windows are closed
