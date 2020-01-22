@@ -3,32 +3,19 @@ import ReactDOM from 'react-dom';
 import {productName, version} from '../../package.json';
 
 import logo from '../icon/ScratchDesktop.svg';
+import styles from './about.css';
 
 // TODO: localization?
 const AboutElement = () => (
-    <div
-        style={{
-            color: 'white',
-            fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-            fontWeight: 'bolder',
-            margin: 0,
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)'
-        }}
-    >
+    <div className={styles.aboutBox}>
         <div><img
             alt={`${productName} icon`}
             src={logo}
-            style={{
-                maxWidth: '10rem',
-                maxHeight: '10rem'
-            }}
+            className={styles.aboutLogo}
         /></div>
         <h2>{productName}</h2>
         <div>Version {version}</div>
-        <table style={{fontSize: 'x-small'}}>
+        <table className={styles.aboutDetails}>
             {
                 ['Electron', 'Chrome'].map(component => {
                     const componentVersion = process.versions[component.toLowerCase()];
