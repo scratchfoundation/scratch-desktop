@@ -9,4 +9,7 @@ case 'app':
 case 'about':
     import('./about.jsx'); // eslint-disable-line no-unused-expressions
     break;
+case 'privacy':
+    import('./privacy.jsx');
+    break;
 }

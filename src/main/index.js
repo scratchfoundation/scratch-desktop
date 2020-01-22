@@ -177,6 +177,17 @@ const createAboutWindow = () => {
     return window;
 };
 
+const createPrivacyWindow = () => {
+    const window = createWindow({
+        width: _windows.main.width * 0.8,
+        height: _windows.main.height * 0.8,
+        parent: _windows.main,
+        search: 'route=privacy',
+        title: 'Scratch Desktop Privacy Policy'
+    });
+    return window;
+};
+
 const getIsProjectSave = downloadItem => {
     switch (downloadItem.getMimeType()) {
     case 'application/x.scratch.sb3':
@@ -308,6 +319,11 @@ app.on('ready', () => {
     _windows.about.on('close', event => {
         event.preventDefault();
         _windows.about.hide();
+    });
+    _windows.privacy = createPrivacyWindow();
+    _windows.privacy.on('close', event => {
+        event.preventDefault();
+        _windows.privacy.hide();
     });
 });
 
