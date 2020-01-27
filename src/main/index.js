@@ -1,6 +1,8 @@
 import {BrowserWindow, Menu, app, dialog, ipcMain} from 'electron';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import {format as formatUrl} from 'url';
+
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
@@ -28,22 +30,8 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
     const webContents = window.webContents;
 
     if (isDevelopment) {
-        webContents.openDevTools();
-        import('electron-devtools-installer').then(importedModule => {
-            const {default: installExtension, REACT_DEVELOPER_TOOLS} = importedModule;
-            installExtension(REACT_DEVELOPER_TOOLS);
-            // TODO: add logging package and bring back the lines below
-            // .then(name => console.log(`Added browser extension:  ${name}`))
-            // .catch(err => console.log('An error occurred: ', err));
-        });
+        webContents.openDevTools({mode: 'detach', activate: true});
     }
-
-    webContents.on('devtools-opened', () => {
-        window.focus();
-        setImmediate(() => {
-            window.focus();
-        });
-    });
 
     const fullUrl = formatUrl(isDevelopment ?
         { // Webpack Dev Server
@@ -166,8 +154,41 @@ app.on('will-quit', () => {
     telemetry.appWillClose();
 });
 
+// work around https://github.com/MarshallOfSound/electron-devtools-installer/issues/122
+// which seems to be a result of https://github.com/electron/electron/issues/19468
+if (process.platform === 'win32') {
+    const appUserDataPath = app.getPath('userData');
+    const devToolsExtensionsPath = path.join(appUserDataPath, 'DevTools Extensions');
+    try {
+        fs.unlinkSync(devToolsExtensionsPath);
+    } catch (_) {
+        // don't complain if the file doesn't exist
+    }
+}
+
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
+    if (isDevelopment) {
+        import('electron-devtools-installer').then(importedModule => {
+            const {default: installExtension, ...devToolsExtensions} = importedModule;
+            const extensionsToInstall = [
+                devToolsExtensions.REACT_DEVELOPER_TOOLS,
+                devToolsExtensions.REACT_PERF,
+                devToolsExtensions.REDUX_DEVTOOLS
+            ];
+            for (const extension of extensionsToInstall) {
+                // WARNING: depending on a lot of things including the version of Electron `installExtension` might
+                // return a promise that never resolves, especially if the extension is already installed.
+                installExtension(extension).then(
+                    // eslint-disable-next-line no-console
+                    extensionName => console.log(`Installed dev extension: ${extensionName}`),
+                    // eslint-disable-next-line no-console
+                    errorMessage => console.error(`Error installing dev extension: ${errorMessage}`)
+                );
+            }
+        });
+    }
+
     _windows.main = createMainWindow();
     _windows.main.on('closed', () => {
         delete _windows.main;
