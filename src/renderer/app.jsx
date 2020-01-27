@@ -1,4 +1,4 @@
-import {ipcRenderer, shell} from 'electron';
+import {ipcRenderer} from 'electron';
 import bindAll from 'lodash.bindall';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -11,12 +11,6 @@ import styles from './app.css';
 
 const defaultProjectId = 0;
 
-// override window.open so that it uses the OS's default browser, not an electron browser
-window.open = function (url, target) {
-    if (target === '_blank') {
-        shell.openExternal(url);
-    }
-};
 // Register "base" page view
 // analytics.pageview('/');
 

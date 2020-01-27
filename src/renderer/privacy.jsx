@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 
 import styles from './privacy.css';
 
-// TODO: localization?
 const PrivacyElement = () => (
     <div className={styles.privacyBox}>
         <h1>Privacy Policy</h1>
@@ -11,7 +10,11 @@ const PrivacyElement = () => (
             We understand how important privacy is to our community, especially children and their parents. We wrote
             this privacy policy to explain what information we collect through the Scratch application (the
             &ldquo;App&rdquo;), how we use it, and what we&apos;re doing to keep it safe. If you have any questions
-            regarding this privacy policy, you can <a href="https://scratch.mit.edu/contact-us">contact us</a>.
+            regarding this privacy policy, you can <a
+                href="https://scratch.mit.edu/contact-us/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >contact us</a>.
         </p>
         <h2>What information does the App collect?</h2>
         <p>
