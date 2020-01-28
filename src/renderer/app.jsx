@@ -2,7 +2,6 @@ import {ipcRenderer} from 'electron';
 import bindAll from 'lodash.bindall';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {compose} from 'redux';
 import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
@@ -11,12 +10,8 @@ import styles from './app.css';
 
 const defaultProjectId = 0;
 
-// Register "base" page view
-// analytics.pageview('/');
-
 const appTarget = document.getElementById('app');
-appTarget.className = styles.app || 'app'; // TODO
-document.body.appendChild(appTarget);
+appTarget.className = styles.app || 'app';
 
 GUI.setAppElement(appTarget);
 
@@ -68,6 +63,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             return (<WrappedComponent
                 canEditTitle
                 isScratchDesktop
+                canSave={false}
                 projectId={defaultProjectId}
                 projectTitle={this.state.projectTitle}
                 showTelemetryModal={shouldShowTelemetryModal}
@@ -85,12 +81,6 @@ const ScratchDesktopHOC = function (WrappedComponent) {
     return ScratchDesktopComponent;
 };
 
-// note that redux's 'compose' function is just being used as a general utility to make
-// the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
-// ability to compose reducers.
-const WrappedGui = compose(
-    ScratchDesktopHOC,
-    AppStateHOC
-)(GUI);
+const WrappedGui = ScratchDesktopHOC(AppStateHOC(GUI));
 
 ReactDOM.render(<WrappedGui />, appTarget);
