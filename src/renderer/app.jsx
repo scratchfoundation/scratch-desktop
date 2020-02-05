@@ -96,8 +96,8 @@ const ScratchDesktopHOC = function (WrappedComponent) {
 // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
 // ability to compose reducers.
 const WrappedGui = compose(
-    AppStateHOC,
-    ScratchDesktopHOC
+    ScratchDesktopHOC,
+    AppStateHOC
 )(GUI);
 
 ReactDOM.render(<WrappedGui />, appTarget);
