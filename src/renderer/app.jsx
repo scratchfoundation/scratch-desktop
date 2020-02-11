@@ -6,6 +6,7 @@ import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
+import showPrivacyPolicy from './showPrivacyPolicy';
 import styles from './app.css';
 
 const defaultProjectId = 0;
@@ -69,6 +70,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickAbout={this.handleClickAbout}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
+                onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
