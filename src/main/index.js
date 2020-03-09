@@ -1,4 +1,4 @@
-import {BrowserWindow, Menu, app, dialog, ipcMain} from 'electron';
+import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'electron';
 import fs from 'fs';
 import path from 'path';
 import {format as formatUrl} from 'url';
@@ -140,6 +140,10 @@ const createMainWindow = () => {
 if (process.platform === 'darwin') {
     const osxMenu = Menu.buildFromTemplate(MacOSMenu(app));
     Menu.setApplicationMenu(osxMenu);
+    (async () => {
+        await systemPreferences.askForMediaAccess('microphone');
+        await systemPreferences.askForMediaAccess('camera');
+    })();
 } else {
     // disable menu for other platforms
     Menu.setApplicationMenu(null);
