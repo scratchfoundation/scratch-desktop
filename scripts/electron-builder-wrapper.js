@@ -50,9 +50,10 @@ const runBuilder = function (targetGroup) {
         throw new Error(`NSIS build requires CSC_LINK or WIN_CSC_LINK`);
     }
     const platformFlag = getPlatformFlag();
-    const command = `electron-builder ${platformFlag} ${targetGroup}`;
-    console.log(`running: ${command}`);
-    const result = spawnSync(command, {
+    const customArgs = process.argv.slice(2); // remove `node` and `this-script.js`
+    const allArgs = [platformFlag, targetGroup, ...customArgs];
+    console.log(`running electron-builder with arguments: ${allArgs}`);
+    const result = spawnSync('electron-builder', allArgs, {
         env: childEnvironment,
         shell: true,
         stdio: 'inherit'
