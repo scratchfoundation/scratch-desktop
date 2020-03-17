@@ -75,6 +75,23 @@ const makeFullUrl = (url, search = null) =>
         }
     ));
 
+/**
+ * Prompt in a platform-specific way for permission to access the microphone or camera, if Electron supports doing so.
+ * Any application-level checks, such as whether or not a particular frame or document should be allowed to ask,
+ * should be done before calling this function.
+ *
+ * @param {string} mediaType - one of Electron's media types, like 'microphone' or 'camera'
+ * @returns {boolean} - true if permission granted, false otherwise.
+ */
+const askForMediaAccess = async mediaType => {
+    if (systemPreferences.askForMediaAccess) {
+        // Electron currently only implements this on macOS
+        return await systemPreferences.askForMediaAccess(mediaType);
+    }
+    // For other platforms we can't reasonably do anything other than assume we have access.
+    return true;
+};
+
 const handlePermissionRequest = async (webContents, permission, callback, details) => {
     if (webContents !== _windows.main.webContents) {
         // deny: request came from somewhere other than the main window's web contents
@@ -110,14 +127,14 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
     }
     const parentWindow = _windows.main; // if we ever allow media in non-main windows we'll also need to change this
     if (askForMicrophone) {
-        const microphoneResult = await systemPreferences.askForMediaAccess('microphone');
+        const microphoneResult = await askForMediaAccess('microphone');
         if (!microphoneResult) {
             displayPermissionDeniedWarning(parentWindow, 'microphone');
             return callback(false);
         }
     }
     if (askForCamera) {
-        const cameraResult = await systemPreferences.askForMediaAccess('camera');
+        const cameraResult = await askForMediaAccess('camera');
         if (!cameraResult) {
             displayPermissionDeniedWarning(parentWindow, 'camera');
             return callback(false);
