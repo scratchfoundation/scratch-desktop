@@ -86,7 +86,7 @@ const makeFullUrl = (url, search = null) =>
 const askForMediaAccess = async mediaType => {
     if (systemPreferences.askForMediaAccess) {
         // Electron currently only implements this on macOS
-        return await systemPreferences.askForMediaAccess(mediaType);
+        return systemPreferences.askForMediaAccess(mediaType);
     }
     // For other platforms we can't reasonably do anything other than assume we have access.
     return true;
