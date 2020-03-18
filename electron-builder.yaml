@@ -6,17 +6,23 @@ productName: "Scratch Desktop"
 afterSign: "scripts/afterSign.js"
 mac:
   category: public.app-category.education
+  entitlements: buildResources/entitlements.mac.plist
+  extendInfo:
+    NSCameraUsageDescription: >-
+        This app requires camera access when taking a photo in the paint editor or using the video sensing blocks.
+    NSMicrophoneUsageDescription: >-
+        This app requires microphone access when recording sounds or detecting loudness.
+  gatekeeperAssess: true
   hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
   provisioningProfile: embedded.provisionprofile
   target:
     - dmg
     - mas
-mas:
   type: distribution
+mas:
   category: public.app-category.education
-  entitlements: buildResources/entitlements.plist
-  entitlementsInherit: buildResources/entitlements.inherit.plist
+  entitlements: buildResources/entitlements.mas.plist
   icon: buildResources/ScratchDesktop.icns
 win:
   icon: buildResources/ScratchDesktop.ico

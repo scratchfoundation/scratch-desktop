@@ -79,6 +79,20 @@ To generate a signed NSIS installer:
 4. Build the NSIS installer only: building the APPX installer will fail if these environment variables are set.
    - `npm run dist -- -w nsis`
 
+#### Workaround for code signing issue in macOS
+
+Sometimes the macOS build process will result in a build which crashes on startup. If this happens, check in `Console`
+for an entry similar to this:
+
+```text
+failed to parse entitlements for Scratch Desktop[12345]: OSUnserializeXML: syntax error near line 1
+```
+
+This appears to be an issue with `codesign` itself. Rebooting your computer and trying to build again might help. Yes,
+really.
+
+See this issue for more detail: <https://github.com/electron/electron-osx-sign/issues/218>
+
 ### Make a semi-packaged build
 
 This will simulate a packaged build without actually packaging it: instead the files will be copied to a subdirectory
