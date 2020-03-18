@@ -1,10 +1,9 @@
 import {ipcRenderer, shell} from 'electron';
 import bindAll from 'lodash.bindall';
-import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {compose} from 'redux';
-import GUI, {AppStateHOC, TitledHOC} from 'scratch-gui';
+import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
