@@ -23,6 +23,7 @@ mac:
 mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mas.plist
+  entitlementsInherit: buildResources/entitlements.mas.inherit.plist
   icon: buildResources/ScratchDesktop.icns
 win:
   icon: buildResources/ScratchDesktop.ico
