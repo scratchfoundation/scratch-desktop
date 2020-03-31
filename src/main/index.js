@@ -1,7 +1,7 @@
 import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'electron';
 import fs from 'fs';
 import path from 'path';
-import {format as formatUrl} from 'url';
+import {URL} from 'url';
 
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
@@ -58,22 +58,17 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
  * @param {*} search - the optional "search" parameters (the part of the URL after '?'), like "route=about"
  * @returns {string} - an absolute URL as a string
  */
-const makeFullUrl = (url, search = null) =>
-    encodeURI(formatUrl(isDevelopment ?
-        { // Webpack Dev Server
-            hostname: 'localhost',
-            pathname: url,
-            port: process.env.ELECTRON_WEBPACK_WDS_PORT,
-            protocol: 'http',
-            search,
-            slashes: true
-        } : { // production / bundled
-            pathname: path.join(__dirname, url),
-            protocol: 'file',
-            search,
-            slashes: true
-        }
-    ));
+const makeFullUrl = (url, search = null) => {
+    const baseUrl = (isDevelopment ?
+        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/` :
+        `file://${__dirname}/`
+    );
+    const fullUrl = new URL(url, baseUrl);
+    if (search) {
+        fullUrl.search = search; // automatically percent-encodes anything that needs it
+    }
+    return fullUrl.toString();
+};
 
 /**
  * Prompt in a platform-specific way for permission to access the microphone or camera, if Electron supports doing so.
@@ -105,7 +100,7 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
         // deny: request is for some other kind of access like notifications or pointerLock
         return callback(false);
     }
-    const requiredBase = makeFullUrl('/');
+    const requiredBase = makeFullUrl('');
     if (details.requestingUrl.indexOf(requiredBase) !== 0) {
         // deny: request came from a URL outside of our "sandbox"
         return callback(false);
