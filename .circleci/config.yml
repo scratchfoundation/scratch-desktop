@@ -1,36 +1,58 @@
 version: 2.1
 workflows:
+  macos:
+    jobs:
+      - build_for_macos:
+          context: code-sign-generic
   windows:
     jobs:
       - build_for_windows:
           context: code-sign-generic
 orbs:
   windows: circleci/windows@2.2.0
-jobs:
-  build_for_windows:
-    executor:
-      name: windows/default
-      shell: bash.exe
+commands:
+  shared_build_steps:
+    description: "The build steps which are the same on all platforms. Does not include 'checkout'"
     steps:
-      - checkout
       - restore_cache:
           keys:
-            - npm-cache-{{ checksum "package-lock.json" }}
+            - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
           name: Install scratch-desktop dependencies
           command: npm ci
       - save_cache: # save cache BEFORE doing anything special with scratch-gui
           paths:
             - node_modules/
-          key: npm-cache-{{ checksum "package-lock.json" }}
+          key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
           name: Install scratch-gui dependencies
           command: cd node_modules/scratch-gui && npm install
       - run:
           name: Build
           command: npm run dist
+jobs:
+  build_for_macos:
+    macos:
+      xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
+    steps:
+      - checkout
+      - shared_build_steps
       - run:
-          name: Move build products to artifacts directory
+          name: Move macOS build products to artifacts directory
+          command: |
+            mkdir -p Artifacts/
+            mv dist/{Scratch*.dmg,mas/Scratch*.pkg} Artifacts/
+      - store_artifacts:
+          path: Artifacts/
+  build_for_windows:
+    executor:
+      name: 'windows/default'
+      shell: "bash.exe"
+    steps:
+      - checkout
+      - shared_build_steps
+      - run:
+          name: Move Windows build products to artifacts directory
           command: |
             mkdir -p Artifacts/
             mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
