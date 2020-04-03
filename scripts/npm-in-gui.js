@@ -3,8 +3,6 @@ const path = require('path');
 
 // process.argv: ['node', 'run-in-gui.js', 'foo', ...]
 const args = process.argv.slice(2);
-args.unshift('run');
-// args: ['run', 'foo', ...]
 
 // copy environment (including PATH) then add or replace BUILD_MODE and STATIC_PATH
 const env = {

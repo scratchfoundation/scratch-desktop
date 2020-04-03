@@ -3,33 +3,13 @@ workflows:
   macos:
     jobs:
       - build_for_macos:
-          context: code-sign-generic
+          context: code-sign-macOS
   windows:
     jobs:
       - build_for_windows:
           context: code-sign-generic
 orbs:
   windows: circleci/windows@2.2.0
-commands:
-  shared_build_steps:
-    description: "The build steps which are the same on all platforms. Does not include 'checkout'"
-    steps:
-      - restore_cache:
-          keys:
-            - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: Install scratch-desktop dependencies
-          command: npm ci
-      - save_cache: # save cache BEFORE doing anything special with scratch-gui
-          paths:
-            - node_modules/
-          key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: Install scratch-gui dependencies
-          command: cd node_modules/scratch-gui && npm install
-      - run:
-          name: Build
-          command: npm run dist
 jobs:
   build_for_macos:
     macos:
@@ -58,3 +38,23 @@ jobs:
             mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
       - store_artifacts:
           path: Artifacts/
+commands:
+  shared_build_steps:
+    description: The build steps which are the same on all platforms. Does not include 'checkout'
+    steps:
+      - restore_cache:
+          keys:
+            - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
+      - run:
+          name: Print NPM cache root
+          command: npm config get cache
+      - run:
+          name: Install scratch-desktop dependencies
+          command: npm ci
+      - save_cache:
+          paths:
+            - node_modules/
+          key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
+      - run:
+          name: Build
+          command: npm run dist
