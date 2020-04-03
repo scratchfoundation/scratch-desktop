@@ -16,7 +16,8 @@ jobs:
       xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
     steps:
       - checkout
-      - shared_build_steps
+      - shared_build_steps:
+          npmCacheDir: "/Users/distiller/.npm"
       - run:
           name: Move macOS build products to artifacts directory
           command: |
@@ -30,7 +31,8 @@ jobs:
       shell: "bash.exe"
     steps:
       - checkout
-      - shared_build_steps
+      - shared_build_steps:
+          npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
       - run:
           name: Move Windows build products to artifacts directory
           command: |
@@ -41,19 +43,22 @@ jobs:
 commands:
   shared_build_steps:
     description: The build steps which are the same on all platforms. Does not include 'checkout'
+    parameters:
+      npmCacheDir:
+        type: string
+        description: NPM cache directory (`npm config cache get`) - usually either ~/.npm or %AppData%/npm-cache
     steps:
       - restore_cache:
           keys:
             - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
-          name: Print NPM cache root
-          command: npm config get cache
-      - run:
-          name: Install scratch-desktop dependencies
-          command: npm ci
+          name: Install node_modules
+          # --prefer-offline "will make npm skip any conditional requests (304 checks) for stale cache data, and only
+          #   hit the network if something is missing from the cache"
+          command: npm ci --prefer-offline
       - save_cache:
           paths:
-            - node_modules/
+            - << parameters.npmCacheDir >>
           key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
           name: Build
