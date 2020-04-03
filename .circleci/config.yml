@@ -30,6 +30,14 @@ jobs:
       name: 'windows/default'
       shell: "bash.exe"
     steps:
+      - run:
+          # work around https://github.com/appveyor/ci/issues/2420 which seems to affect CircleCI too
+          # see also https://circleci.com/docs/2.0/env-vars/#using-parameters-and-bash-environment
+          name: Work around git-sh-setup issue
+          command: |
+            echo 'Adding libexec/git-core to PATH...'
+            echo 'For more details see https://github.com/appveyor/ci/issues/2420'
+            echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
       - checkout
       - shared_build_steps:
           npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
