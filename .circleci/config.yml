@@ -69,5 +69,8 @@ commands:
             - << parameters.npmCacheDir >>
           key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
+          name: Test
+          command: npm run test
+      - run:
           name: Build
           command: npm run dist

@@ -3,7 +3,6 @@ directories:
   output: dist
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
-afterSign: "scripts/afterSign.js"
 mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
@@ -19,7 +18,6 @@ mac:
   target:
     - dmg
     - mas
-  type: distribution
 mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mas.plist
