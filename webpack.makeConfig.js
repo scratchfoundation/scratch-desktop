@@ -2,7 +2,6 @@ const childProcess = require('child_process');
 
 const electronPath = require('electron');
 const webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const isProduction = (process.env.NODE_ENV === 'production');
 
@@ -60,21 +59,6 @@ const makeConfig = function (options) {
                     enforce: 'pre'
                 }
             ]
-        },
-        optimization: {
-            // Use `--env.minify=false` to disable the UglifyJsPlugin instance automatically injected by
-            // electron-webpack. Otherwise it will do double-duty with this one.
-            minimizer: isProduction ? [
-                new UglifyJsPlugin({
-                    cache: true,
-                    parallel: true,
-                    sourceMap: true, // disable this if UglifyJSPlugin takes too long and/or runs out of memory
-                    uglifyOptions: {
-                        compress: isProduction ? {} : false,
-                        mangle: isProduction
-                    }
-                })
-            ] : []
         },
         plugins: [
             new webpack.SourceMapDevToolPlugin({
