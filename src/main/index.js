@@ -6,6 +6,7 @@ import {URL} from 'url';
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
+import log from '../common/log.js';
 
 telemetry.appWasOpened();
 
@@ -290,10 +291,8 @@ app.on('ready', () => {
                 // WARNING: depending on a lot of things including the version of Electron `installExtension` might
                 // return a promise that never resolves, especially if the extension is already installed.
                 installExtension(extension).then(
-                    // eslint-disable-next-line no-console
-                    extensionName => console.log(`Installed dev extension: ${extensionName}`),
-                    // eslint-disable-next-line no-console
-                    errorMessage => console.error(`Error installing dev extension: ${errorMessage}`)
+                    extensionName => log(`Installed dev extension: ${extensionName}`),
+                    errorMessage => log.error(`Error installing dev extension: ${errorMessage}`)
                 );
             }
         });
