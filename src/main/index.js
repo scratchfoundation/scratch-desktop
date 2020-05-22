@@ -8,8 +8,10 @@ import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
 
-telemetry.appWasOpened();
+// suppress deprecation warning; this will be the default in Electron 9
+app.allowRendererProcessReuse = true;
 
+telemetry.appWasOpened();
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
