@@ -24,6 +24,7 @@ mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mas.plist
   entitlementsInherit: buildResources/entitlements.mas.inherit.plist
+  hardenedRuntime: false
   icon: buildResources/ScratchDesktop.icns
 masDev:
   type: development
