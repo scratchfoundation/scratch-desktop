@@ -25,6 +25,9 @@ mas:
   entitlements: buildResources/entitlements.mas.plist
   entitlementsInherit: buildResources/entitlements.mas.inherit.plist
   icon: buildResources/ScratchDesktop.icns
+masDev:
+  type: development
+  provisioningProfile: macDeveloperThisDevice.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:

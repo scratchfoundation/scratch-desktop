@@ -83,6 +83,7 @@ const calculateTargets = function () {
         // Running them as separate passes means they both get signed.
         // Seems like a bug in electron-builder...
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
+        // Add 'mas-dev' here to test a 'mas'-like build locally. You'll need a Mac Developer provisioning profile.
         return ['mas', 'dmg'];
     }
     throw new Error(`Could not determine targets for platform: ${process.platform}`);
