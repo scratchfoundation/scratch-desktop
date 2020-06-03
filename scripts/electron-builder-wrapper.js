@@ -77,7 +77,7 @@ const calculateTargets = function () {
     switch (process.platform) {
     case 'win32':
         // run in two passes so we can skip signing the appx
-        return ['nsis', 'appx'];
+        return ['nsis:ia32', 'appx'];
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
         // Running them as separate passes means they both get signed.
