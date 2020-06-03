@@ -5,11 +5,13 @@ const notarizeMacBuild = async function (context) {
     const appId = 'edu.mit.scratch.scratch-desktop';
 
     if (!process.env.AC_USERNAME) {
-        throw new Error(
-            'Notarizing the macOS build requires an Apple ID.\n' +
-            'Please set the environment variable AC_USERNAME.\n' +
-            'Make sure your keychain has an item for "Application Loader: your@apple.id"'
-        );
+        console.error([
+            'Notarizing the macOS build requires an Apple ID.',
+            'Please set the environment variable AC_USERNAME.',
+            'Make sure your keychain has an item for "Application Loader: your@apple.id"',
+            'This build will not run on newer versions of macOS!'
+        ].join('\n'));
+        return;
     }
 
     const appleId = process.env.AC_USERNAME;

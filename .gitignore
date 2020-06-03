@@ -17,7 +17,7 @@ npm-*
 /build
 /dist
 /.opt-in
-/embedded.provisionprofile
+/*.provisionprofile
 
 # don't store the assets downloaded with the `fetch` script
 /static/assets/

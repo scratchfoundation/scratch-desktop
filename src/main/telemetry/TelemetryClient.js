@@ -1,8 +1,10 @@
 import ElectronStore from 'electron-store';
 import nets from 'nets';
 import * as os from 'os';
-import uuidv1 from 'uuid/v1'; // semi-persistent client ID
-import uuidv4 from 'uuid/v4'; // random ID
+import {
+    v1 as uuidv1, // semi-persistent client ID
+    v4 as uuidv4 // random ID
+} from 'uuid';
 
 /**
  * Basic telemetry event data. These fields are filled automatically by the `addEvent` call.

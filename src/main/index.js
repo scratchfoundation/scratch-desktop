@@ -6,9 +6,12 @@ import {URL} from 'url';
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
+import log from '../common/log.js';
+
+// suppress deprecation warning; this will be the default in Electron 9
+app.allowRendererProcessReuse = true;
 
 telemetry.appWasOpened();
-
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
@@ -74,13 +77,15 @@ const makeFullUrl = (url, search = null) => {
  * Prompt in a platform-specific way for permission to access the microphone or camera, if Electron supports doing so.
  * Any application-level checks, such as whether or not a particular frame or document should be allowed to ask,
  * should be done before calling this function.
+ * This function may return a Promise!
  *
  * @param {string} mediaType - one of Electron's media types, like 'microphone' or 'camera'
- * @returns {boolean} - true if permission granted, false otherwise.
+ * @returns {boolean|Promise.<boolean>} - true if permission granted, false otherwise.
  */
-const askForMediaAccess = async mediaType => {
+const askForMediaAccess = mediaType => {
     if (systemPreferences.askForMediaAccess) {
         // Electron currently only implements this on macOS
+        // This returns a Promise
         return systemPreferences.askForMediaAccess(mediaType);
     }
     // For other platforms we can't reasonably do anything other than assume we have access.
@@ -288,10 +293,8 @@ app.on('ready', () => {
                 // WARNING: depending on a lot of things including the version of Electron `installExtension` might
                 // return a promise that never resolves, especially if the extension is already installed.
                 installExtension(extension).then(
-                    // eslint-disable-next-line no-console
-                    extensionName => console.log(`Installed dev extension: ${extensionName}`),
-                    // eslint-disable-next-line no-console
-                    errorMessage => console.error(`Error installing dev extension: ${errorMessage}`)
+                    extensionName => log(`Installed dev extension: ${extensionName}`),
+                    errorMessage => log.error(`Error installing dev extension: ${errorMessage}`)
                 );
             }
         });

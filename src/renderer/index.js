@@ -4,9 +4,9 @@
 const route = new URLSearchParams(window.location.search).get('route') || 'app';
 switch (route) {
 case 'app':
-    import('./app.jsx');
+    import('./app.jsx'); // eslint-disable-line no-unused-expressions
     break;
 case 'about':
-    import('./about.jsx');
+    import('./about.jsx'); // eslint-disable-line no-unused-expressions
     break;
 }
