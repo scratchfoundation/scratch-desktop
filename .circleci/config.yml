@@ -3,11 +3,11 @@ workflows:
   macos:
     jobs:
       - build_for_macos:
-          context: code-sign-macOS
+          context: scratch-desktop-and-link
   windows:
     jobs:
       - build_for_windows:
-          context: code-sign-generic
+          context: scratch-desktop-and-link
 orbs:
   windows: circleci/windows@2.2.0
 jobs:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - checkout
       - shared_build_steps:
-          npmCacheDir: "/Users/distiller/.npm"
+          npmCacheDir: ~/.npm
       - run:
           name: Move macOS build products to artifacts directory
           command: |
@@ -27,8 +27,8 @@ jobs:
           path: Artifacts/
   build_for_windows:
     executor:
-      name: 'windows/default'
-      shell: "bash.exe"
+      name: windows/default
+      shell: bash
     steps:
       - run:
           # work around https://github.com/appveyor/ci/issues/2420 which seems to affect CircleCI too
