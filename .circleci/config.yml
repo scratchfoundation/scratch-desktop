@@ -16,8 +16,31 @@ jobs:
       xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
     steps:
       - checkout
-      - shared_build_steps:
+      - npm_install:
           npmCacheDir: ~/.npm
+      - restore_cache:
+          name: Restore Homebrew cache
+          key: homebrew-cache-v1
+      - run:
+          name: Work around electron-userland/electron-builder#4964
+          command: |
+            brew install go go-bindata
+            git -C ~ clone https://github.com/develar/app-builder.git
+            git -C ~/app-builder checkout b85740334fec875f5dd8dcd22eb1f729599109db
+            make --directory=~/app-builder build
+            ln -sfv ~/app-builder/dist/app-builder_darwin_amd64/app-builder ./node_modules/app-builder-bin/mac/
+      - save_cache:
+          name: Save Homebrew cache
+          paths:
+            - ~/Library/Caches/Homebrew
+            - /usr/local/Homebrew
+          key: homebrew-cache-v1
+      - run:
+          name: Test
+          command: npm run test
+      - run:
+          name: Build
+          command: npm run dist
       - run:
           name: Move macOS build products to artifacts directory
           command: |
@@ -39,8 +62,14 @@ jobs:
             echo 'For more details see https://github.com/appveyor/ci/issues/2420'
             echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
       - checkout
-      - shared_build_steps:
+      - npm_install:
           npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
+      - run:
+          name: Test
+          command: npm run test
+      - run:
+          name: Build
+          command: npm run dist
       - run:
           name: Move Windows build products to artifacts directory
           command: |
@@ -49,8 +78,8 @@ jobs:
       - store_artifacts:
           path: Artifacts/
 commands:
-  shared_build_steps:
-    description: The build steps which are the same on all platforms. Does not include 'checkout'
+  npm_install:
+    description: Run 'npm install' with caching
     parameters:
       npmCacheDir:
         type: string
@@ -68,9 +97,3 @@ commands:
           paths:
             - << parameters.npmCacheDir >>
           key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: Test
-          command: npm run test
-      - run:
-          name: Build
-          command: npm run dist
