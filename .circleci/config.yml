@@ -10,12 +10,48 @@ workflows:
           context: scratch-desktop-and-link
 orbs:
   windows: circleci/windows@2.2.0
+aliases:
+  - &should_sign
+    or:
+      - equal: [ develop, << pipeline.git.branch >> ]
+      - equal: [ main, << pipeline.git.branch >> ]
+      - equal: [ master, << pipeline.git.branch >> ]
 jobs:
   build_for_macos:
     macos:
       xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
     steps:
       - checkout
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                name: Set up code-signing keychain
+                command: |
+                  set -e
+                  function decodeToFile () {
+                    if [ -z "$1" ]; then
+                      echo "Missing or invalid filename"
+                      return 1
+                    fi
+                    if [ -z "$2" ]; then
+                      echo "Missing environment variable contents for file: $1"
+                      return 2
+                    fi
+                    echo "$2" | base64 --decode > "$1"
+                  }
+                  decodeToFile code-to-learn-macos.p12 "${CSC_MACOS}"
+                  security -v create-keychain -p circleci circleci.keychain
+                  security -v default-keychain -s circleci.keychain
+                  security -v import code-to-learn-macos.p12 -k circleci.keychain -P "" -T /usr/bin/codesign -T /usr/bin/productbuild
+                  security -v unlock-keychain -p circleci circleci.keychain
+                  # "set-key-partition-list" prints extensive not-so-useful output and adding "-q" (even multiple times) doesn't suppress it.
+                  # The "grep -v" at the end of this line suppresses all of that so any errors or warnings might be more visible.
+                  security -v set-key-partition-list -S apple-tool:,apple:,codesign: -s -k circleci circleci.keychain | grep -v '^    0x'
+                  security -v set-keychain-settings -lut 600 circleci.keychain
+                  security -v find-identity circleci.keychain
+                  rm code-to-learn-macos.p12
       - npm_install:
           npmCacheDir: ~/.npm
       - restore_cache:
@@ -62,6 +98,25 @@ jobs:
             echo 'For more details see https://github.com/appveyor/ci/issues/2420'
             echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
       - checkout
+      - when:
+          condition:
+            false #*should_sign
+          steps:
+            - run:
+                name: Import code-signing certificate
+                shell: powershell
+                command: |
+                  $ErrorActionPreference = "Stop"
+                  # TODO: is there a way to avoid creating a temporary file?
+                  $tempPfx = New-TemporaryFile
+                  try {
+                      $env:WIN_CSC_LINK | Set-Content $tempPfx
+                      $securePassword = (ConvertTo-SecureString -String $env:WIN_CSC_KEY_PASSWORD -AsPlainText -Force)
+                      Import-PfxCertificate -FilePath $tempPfx -Password $securePassword -CertStoreLocation "Cert:/LocalMachine/My"
+                  }
+                  finally {
+                      Remove-Item -Force $tempPfx
+                  }
       - npm_install:
           npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
       - run:
