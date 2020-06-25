@@ -32,7 +32,7 @@ jobs:
             *should_sign
           steps:
             - run:
-                name: Set up code-signing keychain
+                name: Import CI context
                 command: |
                   set -e
                   function decodeToFile () {
@@ -46,6 +46,7 @@ jobs:
                     fi
                     echo "$2" | base64 --decode > "$1"
                   }
+                  decodeToFile embedded.provisionprofile "${MAC_PROVISION_PROFILE}"
                   decodeToFile code-to-learn-macos.p12 "${CSC_MACOS}"
                   security -v create-keychain -p circleci circleci.keychain
                   security -v default-keychain -s circleci.keychain
