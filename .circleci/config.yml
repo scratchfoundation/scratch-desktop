@@ -22,6 +22,11 @@ jobs:
       xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
     steps:
       - checkout
+      - npm_install:
+          npmCacheDir: ~/.npm
+      - run:
+          name: Test
+          command: npm run test
       - when:
           condition:
             *should_sign
@@ -52,8 +57,6 @@ jobs:
                   security -v set-keychain-settings -lut 600 circleci.keychain
                   security -v find-identity circleci.keychain
                   rm code-to-learn-macos.p12
-      - npm_install:
-          npmCacheDir: ~/.npm
       - restore_cache:
           name: Restore Homebrew cache
           key: homebrew-cache-v1
@@ -71,9 +74,6 @@ jobs:
             - ~/Library/Caches/Homebrew
             - /usr/local/Homebrew
           key: homebrew-cache-v1
-      - run:
-          name: Test
-          command: npm run test
       - run:
           name: Build
           command: npm run dist
@@ -98,6 +98,11 @@ jobs:
             echo 'For more details see https://github.com/appveyor/ci/issues/2420'
             echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
       - checkout
+      - npm_install:
+          npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
+      - run:
+          name: Test
+          command: npm run test
       - when:
           condition:
             false #*should_sign
@@ -117,11 +122,6 @@ jobs:
                   finally {
                       Remove-Item -Force $tempPfx
                   }
-      - npm_install:
-          npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
-      - run:
-          name: Test
-          command: npm run test
       - run:
           name: Build
           command: npm run dist
