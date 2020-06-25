@@ -75,9 +75,7 @@ jobs:
             - ~/Library/Caches/Homebrew
             - /usr/local/Homebrew
           key: homebrew-cache-v1
-      - run:
-          name: Build
-          command: npm run dist
+      - build
       - run:
           name: Move macOS build products to artifacts directory
           command: |
@@ -123,9 +121,7 @@ jobs:
                   finally {
                       Remove-Item -Force $tempPfx
                   }
-      - run:
-          name: Build
-          command: npm run dist
+      - build
       - run:
           name: Move Windows build products to artifacts directory
           command: |
@@ -153,3 +149,15 @@ commands:
           paths:
             - << parameters.npmCacheDir >>
           key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
+  build:
+    steps:
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run: npm run dist
+      - unless:
+          condition:
+            *should_sign
+          steps:
+            - run: npm run distDev
