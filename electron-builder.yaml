@@ -3,6 +3,7 @@ directories:
   output: dist
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch Desktop"
+publish: # empty provider list = don't publish
 mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
