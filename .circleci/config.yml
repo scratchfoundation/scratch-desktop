@@ -104,23 +104,39 @@ jobs:
           command: npm run test
       - when:
           condition:
-            false #*should_sign
+            *should_sign
           steps:
             - run:
-                name: Import code-signing certificate
+                name: Import CI context
+                shell: bash
+                command: |
+                  set -e
+                  function decodeToFile () {
+                    if [ -z "$1" ]; then
+                      echo "Missing or invalid filename"
+                      return 1
+                    fi
+                    if [ -z "$2" ]; then
+                      echo "Missing environment variable contents for file: $1"
+                      return 2
+                    fi
+                    echo "$2" | base64 --decode > "$1"
+                  }
+                  decodeToFile ~/codesign.pfx "${WIN_CSC_LINK}"
+            - run:
+                # In theory this should be unnecessary: the electron-builder documentation says that WIN_CSC_LINK can
+                # be a base64-encoded certificate, which is what's in the CI context. In practice that leads to an
+                # signtool.exe finding the certificate but not the key, for reasons I haven't been able to understand.
+                # Also, because of the non-standard user configuration on CircleCI's Windows VM, attempting to import
+                # a certificate into the user's certificate store ("Cert:/LocalUser/My") will fail. Instead, this code
+                # imports the PFX into the machine certificate store. That usually requires Administrator permissions,
+                # but on CircleCI's setup it works just fine. See also: https://github.com/ShabadOS/desktop/issues/265
+                # and https://github.com/ShabadOS/desktop/pull/266
+                name: Add CSC to machine store
                 shell: powershell
                 command: |
-                  $ErrorActionPreference = "Stop"
-                  # TODO: is there a way to avoid creating a temporary file?
-                  $tempPfx = New-TemporaryFile
-                  try {
-                      $env:WIN_CSC_LINK | Set-Content $tempPfx
-                      $securePassword = (ConvertTo-SecureString -String $env:WIN_CSC_KEY_PASSWORD -AsPlainText -Force)
-                      Import-PfxCertificate -FilePath $tempPfx -Password $securePassword -CertStoreLocation "Cert:/LocalMachine/My"
-                  }
-                  finally {
-                      Remove-Item -Force $tempPfx
-                  }
+                  $securePassword = (ConvertTo-SecureString -String $env:WIN_CSC_KEY_PASSWORD -AsPlainText -Force)
+                  Import-PfxCertificate -FilePath ~/codesign.pfx -Password $securePassword -CertStoreLocation "Cert:/LocalMachine/My"
       - build
       - run:
           name: Move Windows build products to artifacts directory
@@ -155,7 +171,10 @@ commands:
           condition:
             *should_sign
           steps:
-            - run: npm run dist
+            - run:
+                command: npm run dist
+                environment:
+                  - WIN_CSC_LINK: ~/codesign.pfx
       - unless:
           condition:
             *should_sign
