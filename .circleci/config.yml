@@ -77,10 +77,18 @@ jobs:
           key: homebrew-cache-v1
       - build
       - run:
-          name: Move macOS build products to artifacts directory
+          name: Move DMG to artifacts directory
           command: |
             mkdir -p Artifacts/
-            mv dist/{Scratch*.dmg,mas/Scratch*.pkg} Artifacts/
+            mv -v dist/Scratch*.dmg Artifacts/
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                name: Move PKG to artifacts directory
+                command: |
+                  mv -v dist/mas/Scratch*.pkg Artifacts/
       - store_artifacts:
           path: Artifacts/
   build_for_windows:

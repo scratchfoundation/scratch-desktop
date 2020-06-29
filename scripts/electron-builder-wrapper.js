@@ -45,26 +45,21 @@ const getPlatformFlag = function () {
  */
 const runBuilder = function (wrapperConfig, target) {
     // the AppX build fails if CSC_* or WIN_CSC_* variables are set
-    const shouldStripCSC = (target.name === 'appx');
+    const shouldStripCSC = (target.name === 'appx') || (!wrapperConfig.doSign);
     const childEnvironment = shouldStripCSC ? stripCSC(process.env) : process.env;
-    if ((target.name === 'nsis') && !(childEnvironment.CSC_LINK || childEnvironment.WIN_CSC_LINK)) {
-        throw new Error(`NSIS build requires CSC_LINK or WIN_CSC_LINK`);
+    if (wrapperConfig.doSign &&
+        (target.name.indexOf('nsis') === 0) &&
+        !(childEnvironment.CSC_LINK || childEnvironment.WIN_CSC_LINK)) {
+        throw new Error(`Signing NSIS build requires CSC_LINK or WIN_CSC_LINK`);
     }
     const platformFlag = getPlatformFlag();
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
-    }
-    if (wrapperConfig.doSign) {
-        // really this is "notarize only if we also sign"
-        allArgs.push('--c.afterSign=scripts/afterSign.js');
-    } else {
-        if (target.name === 'mas') {
-            // electron-builder doesn't seem to support this configuration even if mac.type is "development"
-            console.log(`skipping target "${target.name}" because code-signing is disabled`);
-            return;
-        }
-        if (target.platform === 'darwin') {
+        if (wrapperConfig.doSign) {
+            // really this is "notarize only if we also sign"
+            allArgs.push('--c.afterSign=scripts/afterSign.js');
+        } else {
             allArgs.push('--c.mac.identity=null');
         }
     }
@@ -90,12 +85,13 @@ const runBuilder = function (wrapperConfig, target) {
 };
 
 /**
+ * @param {object} wrapperConfig - overall configuration object for the wrapper script.
  * @returns {Array.<object>} - the default list of targets on this platform. Each item in the array represents one
  * call to `runBuilder` for exactly one build target. In theory electron-builder can build two or more targets at the
  * same time but doing so limits has unwanted side effects on both macOS and Windows (see function body).
  */
-const calculateTargets = function () {
-    const targets = {
+const calculateTargets = function (wrapperConfig) {
+    const availableTargets = {
         macAppStore: {
             name: 'mas',
             platform: 'darwin'
@@ -117,19 +113,32 @@ const calculateTargets = function () {
             platform: 'win32'
         }
     };
+    const targets = [];
     switch (process.platform) {
     case 'win32':
         // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
-        return [targets.microsoftStore, targets.windowsDirectDownload];
+        targets.push(availableTargets.microsoftStore);
+        targets.push(availableTargets.windowsDirectDownload);
+        break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
         // Running them as separate passes means they can both get signed.
         // Seems like a bug in electron-builder...
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
-        return [targets.macAppStore, targets.macDirectDownload];
+        // targets.push(availableTargets.macAppStoreDev);
+        if (wrapperConfig.doSign) {
+            targets.push(availableTargets.macAppStore);
+        } else {
+            // electron-builder doesn't seem to support this configuration even if mac.type is "development"
+            console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
+        }
+        targets.push(availableTargets.macDirectDownload);
+        break;
+    default:
+        throw new Error(`Could not determine targets for platform: ${process.platform}`);
     }
-    throw new Error(`Could not determine targets for platform: ${process.platform}`);
+    return targets;
 };
 
 const parseArgs = function () {
@@ -163,20 +172,19 @@ const parseArgs = function () {
         doSign = true;
     }
 
-    // TODO: allow user to specify targets? We could theoretically build NSIS on Mac, for example.
-    const targets = calculateTargets();
-
     return {
         builderArgs,
         doPackage, // false = build to directory
         doSign,
-        mode,
-        targets
+        mode
     };
 };
 
 const main = function () {
     const wrapperConfig = parseArgs();
+
+    // TODO: allow user to specify targets? We could theoretically build NSIS on Mac, for example.
+    wrapperConfig.targets = calculateTargets(wrapperConfig);
 
     for (const target of wrapperConfig.targets) {
         runBuilder(wrapperConfig, target);
