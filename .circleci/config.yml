@@ -11,11 +11,21 @@ workflows:
 orbs:
   windows: circleci/windows@2.4.0
 aliases:
+  # condition to indicate whether or not we should sign this build
   - &should_sign
     or:
       - equal: [ develop, << pipeline.git.branch >> ]
       - equal: [ main, << pipeline.git.branch >> ]
       - equal: [ master, << pipeline.git.branch >> ]
+  # clear large environment variables from the "scratch-desktop-and-link" context
+  # this helps when a program (like NPM) encounters errors with a large environment
+  - &clear_context
+      CSC_MACOS: ""
+      MAC_PROVISION_PROFILE: ""
+      SDM_CERT: ""
+      SDM_CERT_CA_BUNDLE: ""
+      SDM_CERT_KEY: ""
+      WIN_CSC_LINK: ""
 jobs:
   build_for_macos:
     macos:
@@ -109,6 +119,7 @@ jobs:
       - run:
           name: Test
           command: npm run test
+          environment: *clear_context
       - when:
           condition:
             *should_sign
@@ -170,6 +181,7 @@ commands:
           # --prefer-offline "will make npm skip any conditional requests (304 checks) for stale cache data, and only
           #   hit the network if something is missing from the cache"
           command: npm ci --prefer-offline
+          environment: *clear_context
       - save_cache:
           paths:
             - << parameters.npmCacheDir >>
@@ -183,9 +195,12 @@ commands:
             - run:
                 command: npm run dist
                 environment:
-                  - WIN_CSC_LINK: ~/codesign.pfx
+                  <<: *clear_context
+                  WIN_CSC_LINK: ~/codesign.pfx
       - unless:
           condition:
             *should_sign
           steps:
-            - run: npm run distDev
+            - run:
+                command: npm run distDev
+                environment: *clear_context
