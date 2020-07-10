@@ -7,6 +7,7 @@
  */
 
 const {spawnSync} = require('child_process');
+const fs = require('fs');
 
 /**
  * Strip any code signing configuration (CSC) from a set of environment variables.
@@ -91,6 +92,7 @@ const runBuilder = function (wrapperConfig, target) {
  * same time but doing so limits has unwanted side effects on both macOS and Windows (see function body).
  */
 const calculateTargets = function (wrapperConfig) {
+    const masDevProfile = 'mas-dev.provisionprofile';
     const availableTargets = {
         macAppStore: {
             name: 'mas',
@@ -126,7 +128,11 @@ const calculateTargets = function (wrapperConfig) {
         // Seems like a bug in electron-builder...
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
-        // targets.push(availableTargets.macAppStoreDev);
+        if (fs.existsSync(masDevProfile)) {
+            targets.push(availableTargets.macAppStoreDev);
+        } else {
+            console.log(`skipping target "${availableTargets.macAppStoreDev.name}": ${masDevProfile} missing`);
+        }
         if (wrapperConfig.doSign) {
             targets.push(availableTargets.macAppStore);
         } else {

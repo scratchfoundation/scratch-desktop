@@ -27,7 +27,7 @@ mas:
   icon: buildResources/ScratchDesktop.icns
 masDev:
   type: development
-  provisioningProfile: macDeveloperThisDevice.provisionprofile
+  provisioningProfile: mas-dev.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:
