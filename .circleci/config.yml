@@ -9,7 +9,7 @@ workflows:
       - build_for_windows:
           context: scratch-desktop-and-link
 orbs:
-  windows: circleci/windows@2.2.0
+  windows: circleci/windows@2.4.0
 aliases:
   - &should_sign
     or:
@@ -92,14 +92,13 @@ jobs:
       - store_artifacts:
           path: Artifacts/
   build_for_windows:
-    executor:
-      name: windows/default
-      shell: bash
+    executor: windows/default
     steps:
       - run:
           # work around https://github.com/appveyor/ci/issues/2420 which seems to affect CircleCI too
           # see also https://circleci.com/docs/2.0/env-vars/#using-parameters-and-bash-environment
           name: Work around git-sh-setup issue
+          shell: bash
           command: |
             echo 'Adding libexec/git-core to PATH...'
             echo 'For more details see https://github.com/appveyor/ci/issues/2420'
@@ -148,6 +147,7 @@ jobs:
       - build
       - run:
           name: Move Windows build products to artifacts directory
+          shell: bash
           command: |
             mkdir -p Artifacts/
             mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
@@ -166,6 +166,7 @@ commands:
             - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
       - run:
           name: Install node_modules
+          shell: bash # harmless on macOS, required on Windows to work around git-sh-setup issue
           # --prefer-offline "will make npm skip any conditional requests (304 checks) for stale cache data, and only
           #   hit the network if something is missing from the cache"
           command: npm ci --prefer-offline
