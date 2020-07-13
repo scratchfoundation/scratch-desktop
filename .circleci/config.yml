@@ -97,6 +97,17 @@ jobs:
             *should_sign
           steps:
             - run:
+                name: Zip MAS-Dev to artifacts directory
+                # If you use `zip` for this it will throw away some metadata (resource forks?) and
+                # the app will crash on startup with "EXC_CRASH (Code Signature Invalid)".
+                # To preserve that metadata, use `ditto` instead.
+                # See also: https://stackoverflow.com/a/22370486
+                command: |
+                  NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
+                  cd dist/mas-dev
+                  ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
+                    "Scratch Desktop.app" ../../Artifacts/mas-dev-${NPM_APP_VERSION}.zip
+            - run:
                 name: Move PKG to artifacts directory
                 command: |
                   mv -v dist/mas/Scratch*.pkg Artifacts/
