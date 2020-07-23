@@ -57,6 +57,9 @@ const runBuilder = function (wrapperConfig, target) {
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
+        if (target.name === 'mas-dev') {
+            allArgs.push('--c.mac.provisioningProfile=mas-dev.provisionprofile');
+        }
         if (wrapperConfig.doSign) {
             // really this is "notarize only if we also sign"
             allArgs.push('--c.afterSign=scripts/afterSign.js');
