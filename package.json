@@ -57,7 +57,7 @@
     "react-redux": "5.0.7",
     "redux": "3.5.2",
     "rimraf": "^3.0.2",
-    "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.11",
+    "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.12.0",
     "source-map-loader": "^0.2.4",
     "uuid": "^8.0.0",
     "webpack": "^4.43.0"
