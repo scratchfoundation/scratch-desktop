@@ -106,7 +106,7 @@ jobs:
                   NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
                   cd dist/mas-dev
                   ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
-                    "Scratch Desktop.app" ../../Artifacts/mas-dev-${NPM_APP_VERSION}.zip
+                    Scratch*.app ../../Artifacts/mas-dev-${NPM_APP_VERSION}.zip
             - run:
                 name: Move PKG to artifacts directory
                 command: |
