@@ -208,8 +208,12 @@ commands:
                 command: npm run dist
                 no_output_timeout: 30m # macOS notarization can take longer than the default 10 minutes
                 environment:
+                  # blank big variables to avoid crash on Windows
                   <<: *clear_context
+                  # let Windows know where to get the PFX (ignored on non-Windows builds)
                   WIN_CSC_LINK: ~/codesign.pfx
+                  # blank CIRCLE_BUILD_NUM to work around electron-userland/electron-builder#5016
+                  CIRCLE_BUILD_NUM: ""
       - unless:
           condition:
             *should_sign
