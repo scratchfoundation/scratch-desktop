@@ -29,7 +29,10 @@ aliases:
 jobs:
   build_for_macos:
     macos:
-      xcode: 11.1.0 # last version for which CircleCI uses macOS 10.14.x
+      # CircleCI's Xcode 11.1.0 image is the last of their images to be based on macOS 10.14
+      # I've had trouble building for earlier versions of macOS on Catalina but it's unclear whether that was due to
+      # Catalina or the version of Xcode. We should investigate this further.
+      xcode: 11.1.0
     steps:
       - checkout
       - npm_install:
@@ -70,6 +73,10 @@ jobs:
                   security -v find-identity circleci.keychain
                   rm macos-certs-scratch-foundation.p12
       - restore_cache:
+          # Caching Homebrew's files (see the save_cache step below) means that Homebrew doesn't have to update as
+          # much. The Homebrew update can take several minutes without this, but with the cache it tends to take less
+          # than a minute most of the time. The cache will expire periodically and be replaced by a more up-to-date
+          # cache, which should effectively cap the amount of updating that Homebrew needs to do on top of the cache.
           name: Restore Homebrew cache
           key: homebrew-cache-v1
       - run:
