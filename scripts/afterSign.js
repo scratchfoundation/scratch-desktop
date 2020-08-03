@@ -6,10 +6,10 @@ const notarizeMacBuild = async function (context) {
 
     if (!process.env.AC_USERNAME) {
         console.error([
-            'Notarizing the macOS build requires an Apple ID.',
-            'Please set the environment variable AC_USERNAME.',
-            'Make sure your keychain has an item for "Application Loader: your@apple.id"',
-            'This build will not run on newer versions of macOS!'
+            'This build is not notarized and will not run on newer versions of macOS!',
+            'Notarizing the macOS build requires an Apple ID. To notarize future builds:',
+            '* Set the environment variable AC_USERNAME to your@apple.id and',
+            '* Either set AC_PASSWORD or ensure your keychain has an item for "Application Loader: your@apple.id"'
         ].join('\n'));
         return;
     }
@@ -17,7 +17,11 @@ const notarizeMacBuild = async function (context) {
     const appleId = process.env.AC_USERNAME;
     const appleIdKeychainItem = `Application Loader: ${appleId}`;
 
-    console.log(`Notarizing with Apple ID "${appleId}" and keychain item "${appleIdKeychainItem}"`);
+    if (process.env.AC_PASSWORD) {
+        console.log(`Notarizing with Apple ID "${appleId}" and a password`);
+    } else {
+        console.log(`Notarizing with Apple ID "${appleId}" and keychain item "${appleIdKeychainItem}"`);
+    }
 
     const {appOutDir} = context;
     const productFilename = context.packager.appInfo.productFilename;
@@ -25,7 +29,7 @@ const notarizeMacBuild = async function (context) {
         appBundleId: appId,
         appPath: `${appOutDir}/${productFilename}.app`,
         appleId,
-        appleIdPassword: `@keychain:${appleIdKeychainItem}`
+        appleIdPassword: process.env.AC_PASSWORD || `@keychain:${appleIdKeychainItem}`
     });
 };
 

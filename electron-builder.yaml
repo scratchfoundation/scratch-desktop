@@ -3,7 +3,7 @@ directories:
   output: dist
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch"
-afterSign: "scripts/afterSign.js"
+publish: # empty provider list = don't publish
 mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
@@ -19,7 +19,6 @@ mac:
   target:
     - dmg
     - mas
-  type: distribution
 mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mas.plist
@@ -28,7 +27,7 @@ mas:
   icon: buildResources/ScratchDesktop.icns
 masDev:
   type: development
-  provisioningProfile: macDeveloperThisDevice.provisionprofile
+  provisioningProfile: mas-dev.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:

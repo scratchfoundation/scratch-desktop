@@ -1,0 +1,230 @@
+version: 2.1
+workflows:
+  macos:
+    jobs:
+      - build_for_macos:
+          context: scratch-desktop-and-link
+  windows:
+    jobs:
+      - build_for_windows:
+          context: scratch-desktop-and-link
+orbs:
+  windows: circleci/windows@2.4.0
+aliases:
+  # condition to indicate whether or not we should sign this build
+  - &should_sign
+    or:
+      - equal: [ develop, << pipeline.git.branch >> ]
+      - equal: [ main, << pipeline.git.branch >> ]
+      - equal: [ master, << pipeline.git.branch >> ]
+  # clear large environment variables from the "scratch-desktop-and-link" context
+  # this helps when a program (like NPM) encounters errors with a large environment
+  - &clear_context
+      CSC_MACOS: ""
+      MAC_PROVISION_PROFILE: ""
+      SDM_CERT: ""
+      SDM_CERT_CA_BUNDLE: ""
+      SDM_CERT_KEY: ""
+      WIN_CSC_LINK: ""
+jobs:
+  build_for_macos:
+    macos:
+      # CircleCI's Xcode 11.1.0 image is the last of their images to be based on macOS 10.14
+      # I've had trouble building for earlier versions of macOS on Catalina but it's unclear whether that was due to
+      # Catalina or the version of Xcode. We should investigate this further.
+      xcode: 11.1.0
+    steps:
+      - checkout
+      - npm_install:
+          npmCacheDir: ~/.npm
+      - run:
+          name: Test
+          command: npm run test
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                name: Import CI context
+                command: |
+                  set -e
+                  function decodeToFile () {
+                    if [ -z "$1" ]; then
+                      echo "Missing or invalid filename"
+                      return 1
+                    fi
+                    if [ -z "$2" ]; then
+                      echo "Missing environment variable contents for file: $1"
+                      return 2
+                    fi
+                    echo "$2" | base64 --decode > "$1"
+                  }
+                  decodeToFile embedded.provisionprofile "${MAC_PROVISION_PROFILE}"
+                  decodeToFile mas-dev.provisionprofile "${MAC_DEV_PROVISION_PROFILE}"
+                  decodeToFile macos-certs-scratch-foundation.p12 "${CSC_MACOS}"
+                  security -v create-keychain -p circleci circleci.keychain
+                  security -v default-keychain -s circleci.keychain
+                  security -v import macos-certs-scratch-foundation.p12 -k circleci.keychain -P "${CSC_MACOS_PASSWORD}" -T /usr/bin/codesign -T /usr/bin/productbuild
+                  security -v unlock-keychain -p circleci circleci.keychain
+                  # "set-key-partition-list" prints extensive not-so-useful output and adding "-q" (even multiple times) doesn't suppress it.
+                  # The "grep -v" at the end of this line suppresses all of that so any errors or warnings might be more visible.
+                  security -v set-key-partition-list -S apple-tool:,apple:,codesign: -s -k circleci circleci.keychain | grep -v '^    0x'
+                  security -v set-keychain-settings -lut 600 circleci.keychain
+                  security -v find-identity circleci.keychain
+                  rm macos-certs-scratch-foundation.p12
+      - restore_cache:
+          # Caching Homebrew's files (see the save_cache step below) means that Homebrew doesn't have to update as
+          # much. The Homebrew update can take several minutes without this, but with the cache it tends to take less
+          # than a minute most of the time. The cache will expire periodically and be replaced by a more up-to-date
+          # cache, which should effectively cap the amount of updating that Homebrew needs to do on top of the cache.
+          name: Restore Homebrew cache
+          key: homebrew-cache-v1
+      - run:
+          name: Work around electron-userland/electron-builder#4964
+          command: |
+            brew install go go-bindata
+            git -C ~ clone https://github.com/develar/app-builder.git
+            git -C ~/app-builder checkout b85740334fec875f5dd8dcd22eb1f729599109db
+            make --directory=~/app-builder build
+            ln -sfv ~/app-builder/dist/app-builder_darwin_amd64/app-builder ./node_modules/app-builder-bin/mac/
+      - save_cache:
+          name: Save Homebrew cache
+          paths:
+            - ~/Library/Caches/Homebrew
+            - /usr/local/Homebrew
+          key: homebrew-cache-v1
+      - build
+      - run:
+          name: Move DMG to artifacts directory
+          command: |
+            mkdir -p Artifacts/
+            mv -v dist/Scratch*.dmg Artifacts/
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                name: Zip MAS-Dev to artifacts directory
+                # If you use `zip` for this it will throw away some metadata (resource forks?) and
+                # the app will crash on startup with "EXC_CRASH (Code Signature Invalid)".
+                # To preserve that metadata, use `ditto` instead.
+                # See also: https://stackoverflow.com/a/22370486
+                command: |
+                  NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
+                  cd dist/mas-dev
+                  ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
+                    Scratch*.app ../../Artifacts/mas-dev-${NPM_APP_VERSION}.zip
+            - run:
+                name: Move PKG to artifacts directory
+                command: |
+                  mv -v dist/mas/Scratch*.pkg Artifacts/
+      - store_artifacts:
+          path: Artifacts/
+  build_for_windows:
+    executor: windows/default
+    steps:
+      - run:
+          # work around https://github.com/appveyor/ci/issues/2420 which seems to affect CircleCI too
+          # see also https://circleci.com/docs/2.0/env-vars/#using-parameters-and-bash-environment
+          name: Work around git-sh-setup issue
+          shell: bash
+          command: |
+            echo 'Adding libexec/git-core to PATH...'
+            echo 'For more details see https://github.com/appveyor/ci/issues/2420'
+            echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
+      - checkout
+      - npm_install:
+          npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
+      - run:
+          name: Test
+          command: npm run test
+          environment: *clear_context
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                name: Import CI context
+                shell: bash
+                command: |
+                  set -e
+                  function decodeToFile () {
+                    if [ -z "$1" ]; then
+                      echo "Missing or invalid filename"
+                      return 1
+                    fi
+                    if [ -z "$2" ]; then
+                      echo "Missing environment variable contents for file: $1"
+                      return 2
+                    fi
+                    echo "$2" | base64 --decode > "$1"
+                  }
+                  decodeToFile ~/codesign.pfx "${WIN_CSC_LINK}"
+            - run:
+                # In theory this should be unnecessary: the electron-builder documentation says that WIN_CSC_LINK can
+                # be a base64-encoded certificate, which is what's in the CI context. In practice that leads to an
+                # signtool.exe finding the certificate but not the key, for reasons I haven't been able to understand.
+                # Also, because of the non-standard user configuration on CircleCI's Windows VM, attempting to import
+                # a certificate into the user's certificate store ("Cert:/LocalUser/My") will fail. Instead, this code
+                # imports the PFX into the machine certificate store. That usually requires Administrator permissions,
+                # but on CircleCI's setup it works just fine. See also: https://github.com/ShabadOS/desktop/issues/265
+                # and https://github.com/ShabadOS/desktop/pull/266
+                name: Add CSC to machine store
+                shell: powershell
+                command: |
+                  $securePassword = (ConvertTo-SecureString -String $env:WIN_CSC_KEY_PASSWORD -AsPlainText -Force)
+                  Import-PfxCertificate -FilePath ~/codesign.pfx -Password $securePassword -CertStoreLocation "Cert:/LocalMachine/My"
+      - build
+      - run:
+          name: Move Windows build products to artifacts directory
+          shell: bash
+          command: |
+            mkdir -p Artifacts/
+            mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
+      - store_artifacts:
+          path: Artifacts/
+commands:
+  npm_install:
+    description: Run 'npm install' with caching
+    parameters:
+      npmCacheDir:
+        type: string
+        description: NPM cache directory (`npm config cache get`) - usually either ~/.npm or %AppData%/npm-cache
+    steps:
+      - restore_cache:
+          keys:
+            - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install node_modules
+          shell: bash # harmless on macOS, required on Windows to work around git-sh-setup issue
+          # --prefer-offline "will make npm skip any conditional requests (304 checks) for stale cache data, and only
+          #   hit the network if something is missing from the cache"
+          command: npm ci --prefer-offline
+          environment: *clear_context
+      - save_cache:
+          paths:
+            - << parameters.npmCacheDir >>
+          key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
+  build:
+    steps:
+      - when:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                command: npm run dist
+                no_output_timeout: 30m # macOS notarization can take longer than the default 10 minutes
+                environment:
+                  # blank big variables to avoid crash on Windows
+                  <<: *clear_context
+                  # let Windows know where to get the PFX (ignored on non-Windows builds)
+                  WIN_CSC_LINK: ~/codesign.pfx
+                  # blank CIRCLE_BUILD_NUM to work around electron-userland/electron-builder#5016
+                  CIRCLE_BUILD_NUM: ""
+      - unless:
+          condition:
+            *should_sign
+          steps:
+            - run:
+                command: npm run distDev
+                environment: *clear_context
