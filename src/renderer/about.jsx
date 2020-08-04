@@ -26,18 +26,16 @@ const AboutElement = () => (
                 maxHeight: '10rem'
             }}
         /></div>
-        <div style={{margin: '1.5rem'}}>
-            <h2>{productName}</h2>
-            <div>Version {version}</div>
-            <table style={{fontSize: 'x-small'}}>
-                {
-                    ['Electron', 'Chrome'].map(component => {
-                        const componentVersion = process.versions[component.toLowerCase()];
-                        return <tr key={component}><td>{component}</td><td>{componentVersion}</td></tr>;
-                    })
-                }
-            </table>
-        </div>
+        <h2>{productName}</h2>
+        <div>Version {version}</div>
+        <table style={{fontSize: 'x-small'}}>
+            {
+                ['Electron', 'Chrome'].map(component => {
+                    const componentVersion = process.versions[component.toLowerCase()];
+                    return <tr key={component}><td>{component}</td><td>{componentVersion}</td></tr>;
+                })
+            }
+        </table>
     </div>
 );
 
