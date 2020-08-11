@@ -10,14 +10,26 @@ module.exports = defaultConfig =>
         {
             name: 'renderer',
             useReact: true,
-            disableDefaultRulesForExtensions: ['js', 'jsx', 'css', 'svg', 'png', 'wav', 'gif', 'jpg'],
+            disableDefaultRulesForExtensions: ['js', 'jsx', 'css', 'svg', 'png', 'wav', 'gif', 'jpg', 'ttf'],
             babelPaths: [
-                path.resolve(__dirname, 'src', 'renderer')
+                path.resolve(__dirname, 'src', 'renderer'),
+                /node_modules[\\/]+scratch-[^\\/]+[\\/]+src/,
+                /node_modules[\\/]+pify/,
+                /node_modules[\\/]+@vernier[\\/]+godirect/
             ],
             plugins: [
                 new CopyWebpackPlugin([{
-                    from: path.resolve(__dirname, 'node_modules', 'scratch-gui', 'dist', 'static'),
-                    to: 'static'
+                    from: 'node_modules/scratch-blocks/media',
+                    to: 'static/blocks-media'
+                }]),
+                new CopyWebpackPlugin([{
+                    from: 'extension-worker.{js,js.map}',
+                    context: 'node_modules/scratch-vm/dist/web'
+                }]),
+                new CopyWebpackPlugin([{
+                    from: 'src/lib/libraries/*.json',
+                    to: 'static/libraries',
+                    flatten: true
                 }])
             ]
         }

@@ -6,9 +6,9 @@
   "version": "3.13.1",
   "license": "BSD-3-Clause",
   "scripts": {
-    "clean": "rimraf ./dist ./static/assets && node ./scripts/npm-in-gui.js run clean",
+    "clean": "rimraf ./dist ./static/assets",
     "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
-    "compile": "npm run build-gui && electron-webpack --bail --display-error-details --env.minify=false",
+    "compile": "electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
     "build": "npm run build:dev",
     "build:dev": "npm run compile && npm run doBuild -- --mode=dev",
@@ -19,9 +19,6 @@
     "distDev": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dev",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js .",
-    "postinstall": "node ./scripts/npm-in-gui.js install",
-    "build-gui": "node ./scripts/npm-in-gui.js run build",
-    "watch-gui": "node ./scripts/npm-in-gui.js run watch",
     "rebuild-deps": "node ./scripts/rebuild-deps.js"
   },
   "repository": {
@@ -129,7 +126,6 @@
     "scratch-svg-renderer": "0.2.0-prerelease.20200610220938",
     "scratch-vm": "0.2.0-prerelease.20200720182258",
     "selenium-webdriver": "3.6.0",
-    "source-map-loader": "^0.2.4",
     "startaudiocontext": "1.2.1",
     "style-loader": "^0.23.0",
     "svg-to-image": "1.1.3",

@@ -1,4 +1,5 @@
 const childProcess = require('child_process');
+const path = require('path');
 
 const electronPath = require('electron');
 const webpack = require('webpack');
@@ -49,9 +50,8 @@ const makeConfig = function (defaultConfig, options) {
             const shouldDisable = options.disableDefaultRulesForExtensions.some(
                 ext => rule.test.test(`test.${ext}`)
             );
-            if (shouldDisable) {
-                console.log(`${options.name}: Discarding electron-webpack default rule for ${rule.test}`);
-            }
+            const statusWord = shouldDisable ? 'Discarding' : 'Keeping';
+            console.log(`${options.name}: ${statusWord} electron-webpack default rule for ${rule.test}`);
             return !shouldDisable;
         });
     }
@@ -66,11 +66,6 @@ const makeConfig = function (defaultConfig, options) {
                     include: options.babelPaths,
                     loader: 'babel-loader',
                     options: babelOptions
-                },
-                {
-                    test: sourceFileTest,
-                    loader: 'source-map-loader',
-                    enforce: 'pre'
                 },
                 { // coped from scratch-gui
                     test: /\.css$/,
@@ -114,7 +109,12 @@ const makeConfig = function (defaultConfig, options) {
         ].concat(options.plugins || []),
         resolve: {
             cacheWithContext: false,
-            symlinks: false
+            symlinks: false,
+            alias: {
+                // act like scratch-gui has this line in its package.json:
+                //   "browser": "./src/index.js"
+                'scratch-gui$': path.resolve(__dirname, 'node_modules', 'scratch-gui', 'src', 'index.js')
+            }
         }
     });
 };
