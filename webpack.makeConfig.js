@@ -1,5 +1,7 @@
 const childProcess = require('child_process');
+const fs = require('fs');
 const path = require('path');
+const util = require('util');
 
 const electronPath = require('electron');
 const webpack = require('webpack');
@@ -56,7 +58,7 @@ const makeConfig = function (defaultConfig, options) {
         });
     }
 
-    return merge.smart(defaultConfig, {
+    const config = merge.smart(defaultConfig, {
         devtool: 'cheap-module-eval-source-map',
         mode: isProduction ? 'production' : 'development',
         module: {
@@ -117,6 +119,13 @@ const makeConfig = function (defaultConfig, options) {
             }
         }
     });
+
+    fs.writeFileSync(
+        `dist/webpack.${options.name}.js`,
+        `module.exports = ${util.inspect(config, {depth: null})};\n`
+    );
+
+    return config;
 };
 
 module.exports = makeConfig;

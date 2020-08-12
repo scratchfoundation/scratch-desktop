@@ -7,8 +7,8 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "clean": "rimraf ./dist ./static/assets",
-    "start": "electron-webpack dev --bail --display-error-details --env.minify=false",
-    "compile": "electron-webpack --bail --display-error-details --env.minify=false",
+    "start": "mkdirp ./dist && electron-webpack dev --bail --display-error-details --env.minify=false",
+    "compile": "mkdirp ./dist && electron-webpack --bail --display-error-details --env.minify=false",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
     "build": "npm run build:dev",
     "build:dev": "npm run compile && npm run doBuild -- --mode=dev",
