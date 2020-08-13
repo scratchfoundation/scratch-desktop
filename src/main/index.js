@@ -21,6 +21,10 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 // global window references prevent them from being garbage-collected
 const _windows = {};
 
+// enable connecting to Scratch Link even if we DNS / Internet access is not available
+// this must happen BEFORE the app ready event!
+app.commandLine.appendSwitch('host-resolver-rules', 'MAP device-manager.scratch.mit.edu 127.0.0.1');
+
 const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
     let title;
     let message;
