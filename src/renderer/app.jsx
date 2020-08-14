@@ -1,7 +1,6 @@
 import {ipcRenderer} from 'electron';
 import bindAll from 'lodash.bindall';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
@@ -85,4 +84,4 @@ const ScratchDesktopHOC = function (WrappedComponent) {
 
 const WrappedGui = ScratchDesktopHOC(AppStateHOC(GUI));
 
-ReactDOM.render(<WrappedGui />, appTarget);
+export default <WrappedGui />;

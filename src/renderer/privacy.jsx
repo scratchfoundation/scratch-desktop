@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import styles from './privacy.css';
 
@@ -58,5 +57,4 @@ const PrivacyElement = () => (
     </div>
 );
 
-const appTarget = document.getElementById('app');
-ReactDOM.render(<PrivacyElement />, appTarget);
+export default <PrivacyElement />;

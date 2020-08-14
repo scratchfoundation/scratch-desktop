@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import {productName, version} from '../../package.json';
 
 import logo from '../icon/ScratchDesktop.svg';
@@ -37,5 +36,4 @@ const AboutElement = () => (
     </div>
 );
 
-const appTarget = document.getElementById('app');
-ReactDOM.render(<AboutElement />, appTarget);
+export default <AboutElement />;

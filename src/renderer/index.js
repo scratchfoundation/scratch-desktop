@@ -3,6 +3,8 @@
 
 import {ipcRenderer} from 'electron';
 
+import ReactDOM from 'react-dom';
+
 ipcRenderer.on('ready-to-show', () => {
     // Start without any element in focus, otherwise the first link starts with focus and shows an orange box.
     // We shouldn't disable that box or the focus behavior in case someone wants or needs to navigate that way.
@@ -11,14 +13,21 @@ ipcRenderer.on('ready-to-show', () => {
 });
 
 const route = new URLSearchParams(window.location.search).get('route') || 'app';
+let routeModulePromise;
 switch (route) {
 case 'app':
-    import('./app.jsx'); // eslint-disable-line no-unused-expressions
+    routeModulePromise = import('./app.jsx');
     break;
 case 'about':
-    import('./about.jsx'); // eslint-disable-line no-unused-expressions
+    routeModulePromise = import('./about.jsx');
     break;
 case 'privacy':
-    import('./privacy.jsx');
+    routeModulePromise = import('./privacy.jsx');
     break;
 }
+
+routeModulePromise.then(routeModule => {
+    const appTarget = document.getElementById('app');
+    const routeElement = routeModule.default;
+    ReactDOM.render(routeElement, appTarget);
+});
