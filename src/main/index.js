@@ -237,6 +237,14 @@ const createMainWindow = () => {
         }
         const userChosenPath = dialog.showSaveDialogSync(window, options);
         if (userChosenPath) {
+            // If the file exists the browser will first download to a temp file then rename to the userChosenPath.
+            // The MAS sandbox allows accessing userChosenPath but not the temp file, so overwriting fails on MAS.
+            // Deleting the file first could be considered risky but works around the sandbox problem.
+            // Security bookmarks might work to fix the problem but they're only supported by async showSaveDialog.
+            // Since we need to use showSaveDialogSync (see WARNING below) this workaround might be the best option.
+            if (fs.existsSync(userChosenPath)) {
+                fs.unlinkSync(userChosenPath);
+            }
             // WARNING: `setSavePath` on this item is only valid during the `will-download` event. Calling the async
             // version of `showSaveDialog` means the event will finish before we get here, so `setSavePath` will be
             // ignored. For that reason we need to call `showSaveDialogSync` above.
