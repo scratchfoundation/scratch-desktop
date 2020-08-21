@@ -18,6 +18,22 @@ const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
+const devToolKey = ((process.platform === 'darwin') ?
+    { // macOS: command+option+i
+        alt: true, // option
+        control: false,
+        meta: true, // command
+        shift: false,
+        code: 'KeyI'
+    } : { // Windows: control+shift+i
+        alt: false,
+        control: true,
+        meta: false, // Windows key
+        shift: true,
+        code: 'KeyI'
+    }
+);
+
 // global window references prevent them from being garbage-collected
 const _windows = {};
 
@@ -160,9 +176,19 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
 
     webContents.session.setPermissionRequestHandler(handlePermissionRequest);
 
-    if (isDevelopment) {
-        webContents.openDevTools({mode: 'detach', activate: true});
-    }
+    webContents.on('before-input-event', (event, input) => {
+        if (input.code === devToolKey.code &&
+            input.alt === devToolKey.alt &&
+            input.control === devToolKey.control &&
+            input.meta === devToolKey.meta &&
+            input.shift === devToolKey.shift &&
+            input.type === 'keyDown' &&
+            !input.isAutoRepeat &&
+            !input.isComposing) {
+            event.preventDefault();
+            webContents.openDevTools({mode: 'detach', activate: true});
+        }
+    });
 
     const fullUrl = makeFullUrl(url, search);
     window.loadURL(fullUrl);
