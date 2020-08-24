@@ -1,9 +1,9 @@
 {
     "main": {
-        "webpackConfig": "webpack.main.additions.js"
+        "webpackConfig": "webpack.main.js"
     },
     "renderer": {
         "template": "src/renderer/index.html",
-        "webpackConfig": "webpack.renderer.additions.js"
+        "webpackConfig": "webpack.renderer.js"
     }
 }

@@ -1,0 +1,23 @@
+{
+  "description": "Deps of scratch-desktop that don't match scratch-gui. See scripts/rebuild-deps.js",
+  "devDependencies": {
+    "async": "^3.2.0",
+    "babel-plugin-react-intl": "^7.5.7",
+    "copy-webpack-plugin": "^5.1.1",
+    "electron": "^8.2.5",
+    "electron-builder": "^22.6.0",
+    "electron-devtools-installer": "^3.0.0",
+    "electron-notarize": "^0.3.0",
+    "electron-store": "^5.1.1",
+    "electron-webpack": "^2.8.2",
+    "eslint": "^7.0.0",
+    "eslint-config-scratch": "^6.0.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-react": "^7.20.0",
+    "mkdirp": "^1.0.4",
+    "nets": "^3.2.0",
+    "rimraf": "^3.0.2",
+    "scratch-gui": "github:LLK/scratch-gui#scratch-desktop",
+    "uuid": "^8.0.0"
+  }
+}
