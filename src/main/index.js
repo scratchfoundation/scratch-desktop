@@ -1,5 +1,5 @@
 import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'electron';
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import {URL} from 'url';
 
@@ -223,9 +223,9 @@ const createMainWindow = () => {
     });
     const webContents = window.webContents;
 
-    webContents.session.on('will-download', (ev, item) => {
-        const isProjectSave = getIsProjectSave(item);
-        const itemPath = item.getFilename();
+    webContents.session.on('will-download', (willDownloadEvent, downloadItem) => {
+        const isProjectSave = getIsProjectSave(downloadItem);
+        const itemPath = downloadItem.getFilename();
         const baseName = path.basename(itemPath);
         const extName = path.extname(baseName);
         const options = {
@@ -236,30 +236,51 @@ const createMainWindow = () => {
             options.filters = [getFilterForExtension(extNameNoDot)];
         }
         const userChosenPath = dialog.showSaveDialogSync(window, options);
+        // this will be falsy if the user canceled the save
         if (userChosenPath) {
-            // If the file exists the browser will first download to a temp file then rename to the userChosenPath.
-            // The MAS sandbox allows accessing userChosenPath but not the temp file, so overwriting fails on MAS.
-            // Deleting the file first could be considered risky but works around the sandbox problem.
-            // Security bookmarks might work to fix the problem but they're only supported by async showSaveDialog.
-            // Since we need to use showSaveDialogSync (see WARNING below) this workaround might be the best option.
-            if (fs.existsSync(userChosenPath)) {
-                fs.unlinkSync(userChosenPath);
-            }
+            const userBaseName = path.basename(userChosenPath);
+            const tempPath = path.join(app.getPath('temp'), userBaseName);
+
             // WARNING: `setSavePath` on this item is only valid during the `will-download` event. Calling the async
             // version of `showSaveDialog` means the event will finish before we get here, so `setSavePath` will be
             // ignored. For that reason we need to call `showSaveDialogSync` above.
-            item.setSavePath(userChosenPath);
-            if (isProjectSave) {
-                const newProjectTitle = path.basename(userChosenPath, extName);
-                webContents.send('setTitleFromSave', {title: newProjectTitle});
+            downloadItem.setSavePath(tempPath);
 
-                // "setTitleFromSave" will set the project title but GUI has already reported the telemetry event
-                // using the old title. This call lets the telemetry client know that the save was actually completed
-                // and the event should be committed to the event queue with this new title.
-                telemetry.projectSaveCompleted(newProjectTitle);
-            }
+            downloadItem.on('done', async (doneEvent, doneState) => {
+                try {
+                    if (doneState !== 'completed') {
+                        // The download was canceled or interrupted. Cancel the telemetry event and delete the file.
+                        throw new Error(`save ${doneState}`); // "save cancelled" or "save interrupted"
+                    }
+                    await fs.move(tempPath, userChosenPath, {overwrite: true});
+                    if (isProjectSave) {
+                        const newProjectTitle = path.basename(userChosenPath, extName);
+                        webContents.send('setTitleFromSave', {title: newProjectTitle});
+
+                        // "setTitleFromSave" will set the project title but GUI has already reported the telemetry
+                        // event using the old title. This call lets the telemetry client know that the save was
+                        // actually completed and the event should be committed to the event queue with this new title.
+                        telemetry.projectSaveCompleted(newProjectTitle);
+                    }
+                } catch (e) {
+                    if (isProjectSave) {
+                        telemetry.projectSaveCanceled();
+                    }
+                    // don't clean up until after the message box to allow troubleshooting / recovery
+                    await dialog.showMessageBox(window, {
+                        type: 'error',
+                        message: `Save failed:\n${userChosenPath}`,
+                        detail: e.message
+                    });
+                    fs.exists(tempPath).then(exists => {
+                        if (exists) {
+                            fs.unlink(tempPath);
+                        }
+                    });
+                }
+            });
         } else {
-            item.cancel();
+            downloadItem.cancel();
             if (isProjectSave) {
                 telemetry.projectSaveCanceled();
             }

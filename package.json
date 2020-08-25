@@ -68,6 +68,7 @@
     "eslint-plugin-jest": "^22.14.1",
     "eslint-plugin-react": "^7.20.0",
     "file-loader": "2.0.0",
+    "fs-extra": "^9.0.1",
     "get-float-time-domain-data": "0.1.0",
     "get-user-media-promise": "1.1.4",
     "gh-pages": "github:rschamp/gh-pages#publish-branch-to-subfolder",
