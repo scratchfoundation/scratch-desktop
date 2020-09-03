@@ -19,7 +19,7 @@ module.exports = defaultConfig =>
             ],
             plugins: [
                 new CopyWebpackPlugin([{
-                    from: 'node_modules/scratch-blocks/media',
+                    from: 'node_modules/scratch-gui/node_modules/scratch-blocks/media',
                     to: 'static/blocks-media'
                 }]),
                 new CopyWebpackPlugin([{
@@ -27,7 +27,7 @@ module.exports = defaultConfig =>
                     context: 'node_modules/scratch-vm/dist/web'
                 }]),
                 new CopyWebpackPlugin([{
-                    from: 'src/lib/libraries/*.json',
+                    from: 'node_modules/scratch-gui/src/lib/libraries/*.json',
                     to: 'static/libraries',
                     flatten: true
                 }])
