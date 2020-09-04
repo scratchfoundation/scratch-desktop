@@ -6,6 +6,7 @@ import {compose} from 'redux';
 import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
+import log from '../common/log';
 
 import styles from './app.css';
 
@@ -98,5 +99,14 @@ const WrappedGui = compose(
     ScratchDesktopHOC,
     AppStateHOC
 )(GUI);
+
+ipcRenderer.invoke('get-argv').then(
+    argv => {
+        log.log(`argv._ = ${argv._}`);
+    },
+    err => {
+        log.warn('Failed to retrieve argv', err);
+    }
+);
 
 ReactDOM.render(<WrappedGui />, appTarget);

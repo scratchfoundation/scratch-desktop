@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import {URL} from 'url';
 
+import argv from './argv';
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
@@ -373,3 +374,5 @@ app.on('ready', () => {
 ipcMain.on('open-about-window', () => {
     _windows.about.show();
 });
+
+ipcMain.handle('get-argv', () => argv);
