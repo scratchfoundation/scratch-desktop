@@ -6,7 +6,6 @@ import {compose} from 'redux';
 import GUI, {AppStateHOC} from 'scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
-import log from '../common/log';
 
 import styles from './app.css';
 
@@ -40,8 +39,16 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleUpdateProjectTitle'
             ]);
             this.state = {
-                projectTitle: null
+                projectTitle: null,
+                projectLoading: true
             };
+
+            ipcRenderer.invoke('get-initial-project-data').then(projectData => {
+                this.setState({
+                    projectData,
+                    projectLoading: false
+                });
+            });
         }
         componentDidMount () {
             ipcRenderer.on('setTitleFromSave', this.handleSetTitleFromSave);
@@ -72,6 +79,11 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
         render () {
             const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
+
+            if (this.state.projectLoading) {
+                return <p className="splash">Loading File...</p>;
+            }
+
             return (<WrappedComponent
                 canEditTitle
                 isScratchDesktop
@@ -84,6 +96,12 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
                 onUpdateProjectTitle={this.handleUpdateProjectTitle}
+
+                // completely omit the projectData prop if we have no project data
+                // passing an empty projectData causes a GUI error
+                {...(this.state.projectData ? {projectData: this.state.projectData} : {})}
+
+                // allow passed-in props to override any of the above
                 {...this.props}
             />);
         }
@@ -99,14 +117,5 @@ const WrappedGui = compose(
     ScratchDesktopHOC,
     AppStateHOC
 )(GUI);
-
-ipcRenderer.invoke('get-argv').then(
-    argv => {
-        log.log(`argv._ = ${argv._}`);
-    },
-    err => {
-        log.warn('Failed to retrieve argv', err);
-    }
-);
 
 ReactDOM.render(<WrappedGui />, appTarget);
