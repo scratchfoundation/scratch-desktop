@@ -1,4 +1,4 @@
-import {ipcRenderer, shell} from 'electron';
+import {ipcRenderer, remote, shell} from 'electron';
 import bindAll from 'lodash.bindall';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
@@ -70,11 +70,19 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                     },
                     e => {
                         this.props.onLoadingCompleted();
-                        console.error(e); // TODO: dialog box reporting the error?
-
-                        // abandon this load and instead fetch+load the default project
-                        // WARNING: this stuff doesn't currently work correctly!
                         this.props.onLoadedProject(this.props.loadingState, false);
+                        remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                            type: 'error',
+                            title: 'Failed to load project',
+                            message: 'Invalid or corrupt project file.',
+                            detail: e.message
+                        });
+
+                        // this effectively sets the default project ID
+                        // TODO: maybe setting the default project ID should be implicit in `requestNewProject`
+                        this.props.onHasInitialProject(false, this.props.loadingState);
+
+                        // restart as if we didn't have an initial project to load
                         this.props.onRequestNewProject();
                     }
                 );
