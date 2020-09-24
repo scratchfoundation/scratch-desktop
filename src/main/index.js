@@ -7,6 +7,7 @@ import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
+import {productName, version} from '../../package.json';
 
 // suppress deprecation warning; this will be the default in Electron 9
 app.allowRendererProcessReuse = true;
@@ -202,7 +203,7 @@ const createAboutWindow = () => {
         height: 400,
         parent: _windows.main,
         search: 'route=about',
-        title: 'About Scratch Desktop'
+        title: `About ${productName}`
     });
     return window;
 };
@@ -219,7 +220,7 @@ const createMainWindow = () => {
     const window = createWindow({
         width: defaultSize.width,
         height: defaultSize.height,
-        title: 'Scratch Desktop'
+        title: `${productName} ${version}` // something like "Scratch 3.14"
     });
     const webContents = window.webContents;
 

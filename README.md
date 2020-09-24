@@ -7,10 +7,10 @@ Scratch 3.0 as a standalone desktop application
 ### A note about `scratch-gui`
 
 Eventually, the `scratch-desktop` branch of the Scratch GUI repository will be merged with that repository's main
-development line. For now, though, the `scratch-desktop` branch holds a few changes that are necessary for Scratch
-Desktop to function correctly but are not yet merged into the main development branch. If you only intend to build or
-work on the `scratch-desktop` repository then you can ignore this, but if you intend to work on `scratch-gui` as well,
-make sure you use the `scratch-desktop` branch there.
+development line. For now, though, the `scratch-desktop` branch holds a few changes that are necessary for the Scratch
+app to function correctly but are not yet merged into the main development branch. If you only intend to build or work
+on the `scratch-desktop` repository then you can ignore this, but if you intend to work on `scratch-gui` as well, make
+sure you use the `scratch-desktop` branch there.
 
 Previously it was necessary to explicitly build `scratch-gui` before building `scratch-desktop`. This is no longer
 necessary and the related build scripts, such as `build-gui`, have been removed.
@@ -56,7 +56,7 @@ Sometimes the macOS build process will result in a build which crashes on startu
 for an entry similar to this:
 
 ```text
-failed to parse entitlements for Scratch Desktop[12345]: OSUnserializeXML: syntax error near line 1
+failed to parse entitlements for Scratch[12345]: OSUnserializeXML: syntax error near line 1
 ```
 
 This appears to be an issue with `codesign` itself. Rebooting your computer and trying to build again might help. Yes,
