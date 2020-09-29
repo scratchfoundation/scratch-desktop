@@ -2,7 +2,9 @@ import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'elec
 import fs from 'fs-extra';
 import path from 'path';
 import {URL} from 'url';
+import {promisify} from 'util';
 
+import argv from './argv';
 import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
@@ -374,3 +376,29 @@ app.on('ready', () => {
 ipcMain.on('open-about-window', () => {
     _windows.about.show();
 });
+
+// start loading initial project data before the GUI needs it so the load seems faster
+const initialProjectDataPromise = (async () => {
+    if (argv._.length === 0) {
+        // no command line argument means no initial project data
+        return;
+    }
+    if (argv._.length > 1) {
+        log.warn(`Expected 1 command line argument but received ${argv._.length}.`);
+    }
+    const projectPath = argv._[argv._.length - 1];
+    try {
+        const projectData = await promisify(fs.readFile)(projectPath, null);
+        return projectData;
+    } catch (e) {
+        dialog.showMessageBox(_windows.main, {
+            type: 'error',
+            title: 'Failed to load project',
+            message: `Could not load project from file:\n${projectPath}`,
+            detail: e.message
+        });
+    }
+    // load failed: initial project data undefined
+})(); // IIFE
+
+ipcMain.handle('get-initial-project-data', () => initialProjectDataPromise);
