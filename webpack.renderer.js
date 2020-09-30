@@ -4,6 +4,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const makeConfig = require('./webpack.makeConfig.js');
 
+const getModulePath = moduleName => path.dirname(require.resolve(`${moduleName}/package.json`));
+
 module.exports = defaultConfig =>
     makeConfig(
         defaultConfig,
@@ -19,15 +21,15 @@ module.exports = defaultConfig =>
             ],
             plugins: [
                 new CopyWebpackPlugin([{
-                    from: 'node_modules/scratch-gui/node_modules/scratch-blocks/media',
+                    from: path.join(getModulePath('scratch-blocks'), 'media'),
                     to: 'static/blocks-media'
                 }]),
                 new CopyWebpackPlugin([{
                     from: 'extension-worker.{js,js.map}',
-                    context: 'node_modules/scratch-vm/dist/web'
+                    context: path.join(getModulePath('scratch-vm'), 'dist', 'web')
                 }]),
                 new CopyWebpackPlugin([{
-                    from: 'node_modules/scratch-gui/src/lib/libraries/*.json',
+                    from: path.join(getModulePath('scratch-gui'), 'src', 'lib', 'libraries', '*.json'),
                     to: 'static/libraries',
                     flatten: true
                 }])
