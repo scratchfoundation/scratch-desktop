@@ -1,0 +1,26 @@
+html, body {
+    color: white;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: bolder;
+}
+
+.aboutBox {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.aboutLogo {
+    max-width: 10rem;
+    max-height: 10rem;
+}
+
+.aboutText {
+    margin: 1.5rem;
+}
+
+.aboutDetails {
+    font-size: x-small;
+}
