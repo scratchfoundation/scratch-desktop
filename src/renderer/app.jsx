@@ -84,7 +84,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         componentWillUnmount () {
             ipcRenderer.removeListener('setTitleFromSave', this.handleSetTitleFromSave);
         }
-        handleClickLogo () {
+        handleClickAbout () {
             ipcRenderer.send('open-about-window');
         }
         handleProjectTelemetryEvent (event, metadata) {
@@ -116,7 +116,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 canSave={false}
                 isScratchDesktop
                 showTelemetryModal={shouldShowTelemetryModal}
-                onClickLogo={this.handleClickLogo}
+                onClickAbout={this.handleClickAbout}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}

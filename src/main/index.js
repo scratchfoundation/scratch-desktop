@@ -200,6 +200,9 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
 
     const fullUrl = makeFullUrl(url, search);
     window.loadURL(fullUrl);
+    window.once('ready-to-show', () => {
+        webContents.send('ready-to-show');
+    });
 
     return window;
 };
@@ -396,6 +399,10 @@ app.on('ready', () => {
 
 ipcMain.on('open-about-window', () => {
     _windows.about.show();
+});
+
+ipcMain.on('open-privacy-policy-window', () => {
+    _windows.privacy.show();
 });
 
 // start loading initial project data before the GUI needs it so the load seems faster
