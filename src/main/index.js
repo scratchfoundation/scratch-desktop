@@ -1,4 +1,4 @@
-import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'electron';
+import {BrowserWindow, Menu, app, dialog, ipcMain, shell, systemPreferences} from 'electron';
 import fs from 'fs-extra';
 import path from 'path';
 import {URL} from 'url';
@@ -191,6 +191,11 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
             event.preventDefault();
             webContents.openDevTools({mode: 'detach', activate: true});
         }
+    });
+
+    webContents.on('new-window', (event, newWindowUrl) => {
+        shell.openExternal(newWindowUrl);
+        event.preventDefault();
     });
 
     const fullUrl = makeFullUrl(url, search);

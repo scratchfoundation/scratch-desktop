@@ -1,4 +1,4 @@
-import {ipcRenderer, remote, shell} from 'electron';
+import {ipcRenderer, remote} from 'electron';
 import bindAll from 'lodash.bindall';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
@@ -28,12 +28,6 @@ import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
 import styles from './app.css';
 
-// override window.open so that it uses the OS's default browser, not an electron browser
-window.open = function (url, target) {
-    if (target === '_blank') {
-        shell.openExternal(url);
-    }
-};
 // Register "base" page view
 // analytics.pageview('/');
 

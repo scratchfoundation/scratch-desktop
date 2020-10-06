@@ -5,7 +5,6 @@ import {productName, version} from '../../package.json';
 import logo from '../icon/ScratchDesktop.svg';
 import styles from './about.css';
 
-// TODO: localization?
 const AboutElement = () => (
     <div className={styles.aboutBox}>
         <div><img
