@@ -28,12 +28,8 @@ import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
 import styles from './app.css';
 
-// Register "base" page view
-// analytics.pageview('/');
-
 const appTarget = document.getElementById('app');
-appTarget.className = styles.app || 'app'; // TODO
-document.body.appendChild(appTarget);
+appTarget.className = styles.app || 'app';
 
 GUI.setAppElement(appTarget);
 
@@ -117,6 +113,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             return (<WrappedComponent
                 canEditTitle
                 canModifyCloudData={false}
+                canSave={false}
                 isScratchDesktop
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickLogo={this.handleClickLogo}
