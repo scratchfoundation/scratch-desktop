@@ -3,7 +3,6 @@ import bindAll from 'lodash.bindall';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import {connect} from 'react-redux';
 import {compose} from 'redux';
 import GUI from 'scratch-gui/src/index';
@@ -181,4 +180,4 @@ const WrappedGui = compose(
     ScratchDesktopHOC
 )(GUI);
 
-ReactDOM.render(<WrappedGui />, appTarget);
+export default <WrappedGui />;
