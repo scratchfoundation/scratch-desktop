@@ -1,20 +1,10 @@
-import {ipcRenderer} from 'electron';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {productName, version} from '../../package.json';
 
 import logo from '../icon/ScratchDesktop.svg';
 import styles from './about.css';
-
-// don't actually follow the link in the `href` attribute
-// instead, tell the main process to open the privacy policy window
-const showPrivacyPolicy = event => {
-    if (event) {
-        event.preventDefault();
-    }
-    ipcRenderer.send('open-privacy-policy-window');
-    return false;
-};
+import showPrivacyPolicy from './showPrivacyPolicy';
 
 const AboutElement = () => (
     <div className={styles.aboutBox}>

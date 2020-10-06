@@ -26,6 +26,7 @@ import {
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
+import showPrivacyPolicy from './showPrivacyPolicy';
 import styles from './app.css';
 
 const appTarget = document.getElementById('app');
@@ -118,6 +119,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickAbout={this.handleClickAbout}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
+                onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
