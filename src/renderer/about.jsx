@@ -25,9 +25,9 @@ const AboutElement = () => (
             </tbody></table>
             <p className={styles.aboutFooter}>
                 <a
-                    // The `href` attribute causes link styling to be applied. The value doesn't really matter but using a
-                    // reasonable value might make testing easier, or at least makes the HTML more readable. The `onClick`
-                    // function actually handles opening the privacy policy window.
+                    // The `href` attribute causes link styling to be applied. The value doesn't really matter but
+                    // using a reasonable value might make testing easier, or at least makes the HTML more readable.
+                    // The `onClick` function actually handles opening the privacy policy window.
                     href="./index.html?route=privacy"
                     onClick={showPrivacyPolicy}
                 >View the Privacy Policy...</a>
