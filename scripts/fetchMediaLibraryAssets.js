@@ -46,16 +46,11 @@ const collectAssets = function (dest) {
     collectSimple(libraries.costumes, dest, 'Costume');
     collectSimple(libraries.sounds, dest, 'Sound');
     libraries.sprites.forEach(sprite => {
-        if (sprite.md5) {
-            dest.add(sprite.md5);
-        } else {
-            console.warn(`Sprite has no MD5 property:\n${describe(sprite)}`);
+        if (sprite.costumes) {
+            collectSimple(sprite.costumes, dest, `Costume for sprite ${sprite.name}`);
         }
-        if (sprite.json.costumes) {
-            collectSimple(sprite.json.costumes, dest, `Costume for sprite ${sprite.name}`);
-        }
-        if (sprite.json.sounds) {
-            collectSimple(sprite.json.sounds, dest, `Sound for sprite ${sprite.name}`);
+        if (sprite.sounds) {
+            collectSimple(sprite.sounds, dest, `Sound for sprite ${sprite.name}`);
         }
     });
     return dest;
