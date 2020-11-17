@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom';
 import {connect} from 'react-redux';
 import {compose} from 'redux';
 import GUI from 'scratch-gui/src/index';
-import VM from 'scratch-vm';
+import GUIComponent from 'scratch-gui/src/components/gui/gui.jsx';
 
 import AppStateHOC from 'scratch-gui/src/lib/app-state-hoc.jsx';
 import {
@@ -43,8 +43,26 @@ document.body.appendChild(appTarget);
 
 GUI.setAppElement(appTarget);
 
-const ScratchDesktopHOC = function (WrappedComponent) {
-    class ScratchDesktopComponent extends React.Component {
+const ScratchDesktopOuterHOC = function (WrappedComponent) {
+    const ScratchDesktopOuterComponent = function (props) {
+        const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
+
+        return (<WrappedComponent
+            canEditTitle
+            canModifyCloudData={false}
+            isScratchDesktop
+            showTelemetryModal={shouldShowTelemetryModal}
+
+            // allow passed-in props to override any of the above
+            {...props}
+        />);
+    };
+
+    return ScratchDesktopOuterComponent;
+};
+
+const ScratchDesktopInnerHOC = function (WrappedComponent) {
+    class ScratchDesktopInnerComponent extends React.Component {
         constructor (props) {
             super(props);
             bindAll(this, [
@@ -116,15 +134,9 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             this.setState({projectTitle: newTitle});
         }
         render () {
-            const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
-
-            const childProps = omit(this.props, Object.keys(ScratchDesktopComponent.propTypes));
+            const childProps = omit(this.props, Object.keys(ScratchDesktopInnerComponent.propTypes));
 
             return (<WrappedComponent
-                canEditTitle
-                canModifyCloudData={false}
-                isScratchDesktop
-                showTelemetryModal={shouldShowTelemetryModal}
                 onClickLogo={this.handleClickLogo}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
                 onStorageInit={this.handleStorageInit}
@@ -138,7 +150,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
     }
 
-    ScratchDesktopComponent.propTypes = {
+    ScratchDesktopInnerComponent.propTypes = {
         loadingState: PropTypes.oneOf(LoadingStates),
         onFetchedInitialProjectData: PropTypes.func,
         onHasInitialProject: PropTypes.func,
@@ -146,7 +158,8 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         onLoadingCompleted: PropTypes.func,
         onLoadingStarted: PropTypes.func,
         onRequestNewProject: PropTypes.func,
-        vm: PropTypes.instanceOf(VM).isRequired
+        // using PropTypes.instanceOf(VM) here will cause prop type warnings due to VM mismatch
+        vm: GUIComponent.WrappedComponent.propTypes.vm
     };
     const mapStateToProps = state => {
         const loadingState = state.scratchGui.projectState.loadingState;
@@ -177,15 +190,16 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         onRequestNewProject: () => dispatch(requestNewProject(false))
     });
 
-    return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopComponent);
+    return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopInnerComponent);
 };
 
 // note that redux's 'compose' function is just being used as a general utility to make
 // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
 // ability to compose reducers.
 const WrappedGui = compose(
+    ScratchDesktopOuterHOC,
     AppStateHOC,
-    ScratchDesktopHOC
+    ScratchDesktopInnerHOC
 )(GUI);
 
 ReactDOM.render(<WrappedGui />, appTarget);
