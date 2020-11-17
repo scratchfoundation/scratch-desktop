@@ -185,6 +185,9 @@ class TelemetryClient {
     set didOptIn (value) {
         this._store.set('optIn', !!value);
     }
+    clearDidOptIn () {
+        this._store.delete('optIn');
+    }
 
     /**
      * Semi-persistent unique ID for this client

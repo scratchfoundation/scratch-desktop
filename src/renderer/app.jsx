@@ -116,7 +116,23 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 canSave={false}
                 isScratchDesktop
                 showTelemetryModal={shouldShowTelemetryModal}
-                onClickAbout={this.handleClickAbout}
+                onClickAbout={[
+                    {
+                        title: 'About',
+                        onClick: () => this.handleClickAbout()
+                    },
+                    {
+                        title: 'Privacy Policy',
+                        onClick: () => showPrivacyPolicy()
+                    },
+                    {
+                        title: 'Telemetry Settings',
+                        onClick: () => {
+                            // set to null (non-Boolean) to cause app to ask again
+                            ipcRenderer.sendSync('clearTelemetryDidOptIn');
+                        }
+                    }
+                ]}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
                 onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}

@@ -36,6 +36,9 @@ class ScratchDesktopTelemetry {
     set didOptIn (value) {
         this._telemetryClient.didOptIn = value;
     }
+    clearDidOptIn () {
+        this._telemetryClient.clearDidOptIn();
+    }
 
     appWasOpened () {
         this._telemetryClient.addEvent('app::open', {...EVENT_TEMPLATE, ...APP_INFO});
@@ -95,6 +98,11 @@ ipcMain.on('getTelemetryDidOptIn', event => {
 });
 ipcMain.on('setTelemetryDidOptIn', (event, arg) => {
     scratchDesktopTelemetrySingleton.didOptIn = arg;
+    event.returnValue = null;
+});
+ipcMain.on('clearTelemetryDidOptIn', event => {
+    scratchDesktopTelemetrySingleton.clearDidOptIn();
+    event.returnValue = null;
 });
 ipcMain.on('projectDidLoad', (event, arg) => {
     scratchDesktopTelemetrySingleton.projectDidLoad(arg);
