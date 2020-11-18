@@ -20,7 +20,8 @@ import {
 } from 'scratch-gui/src/reducers/project-state';
 import {
     openLoadingProject,
-    closeLoadingProject
+    closeLoadingProject,
+    openTelemetryModal
 } from 'scratch-gui/src/reducers/modals';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
@@ -127,10 +128,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                     },
                     {
                         title: 'Telemetry Settings',
-                        onClick: () => {
-                            // set to null (non-Boolean) to cause app to ask again
-                            ipcRenderer.sendSync('clearTelemetryDidOptIn');
-                        }
+                        onClick: () => this.props.onTelemetrySettingsClicked()
                     }
                 ]}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
@@ -154,6 +152,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         onLoadingCompleted: PropTypes.func,
         onLoadingStarted: PropTypes.func,
         onRequestNewProject: PropTypes.func,
+        onTelemetrySettingsClicked: PropTypes.func,
         vm: PropTypes.instanceOf(VM).isRequired
     };
     const mapStateToProps = state => {
@@ -182,7 +181,8 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             const canSaveToServer = false;
             return dispatch(onLoadedProject(loadingState, canSaveToServer, loadSuccess));
         },
-        onRequestNewProject: () => dispatch(requestNewProject(false))
+        onRequestNewProject: () => dispatch(requestNewProject(false)),
+        onTelemetrySettingsClicked: () => dispatch(openTelemetryModal())
     });
 
     return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopComponent);
