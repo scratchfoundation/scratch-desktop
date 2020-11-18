@@ -104,3 +104,27 @@ configuration like this:
         ]
     },
 ```
+
+### Resetting the Telemetry System
+
+This application includes a telemetry system which is only active if the user opts in. When testing this system, it's
+sometimes helpful to reset it by deleting the `telemetry.json` file.
+
+The location of this file depends on your operating system and whether or not you're running a packaged build. Running
+from `npm start` or equivalent is a non-packaged build.
+
+In addition, macOS may store the file in one of two places depending on the OS version and a few other variables. If
+in doubt, I recommend removing both.
+
+- Windows, packaged build: `%APPDATA%\Scratch\telemetry.json`
+- Windows, non-packaged: `%APPDATA%\Electron\telemetry.json`
+- macOS, packaged build: `~/Library/Application Support/Scratch/telemetry.json` or
+  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Scratch/telemetry.json`
+- macOS, non-packaged build: `~/Library/Application Support/Electron/telemetry.json` or
+  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Electron/telemetry.json`
+
+Deleting this file will:
+
+- Remove any pending telemetry packets
+- Reset the opt in/out state: the app should display the opt in/out modal on next launch
+- Remove the random client UUID: the app will generate a new one on next launch
