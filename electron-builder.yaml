@@ -1,6 +1,6 @@
 directories:
   buildResources: buildResources
-  output: dist
+  output: dist/${os}.${arch}
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch 3"
 publish: # empty provider list = don't publish
