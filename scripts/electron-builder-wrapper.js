@@ -89,6 +89,21 @@ const runBuilder = function (wrapperConfig, target) {
 };
 
 /**
+ * Add to `dest` a list of platform+target objects built from the parameters.
+ * @param {Array.<object>} dest - the list to which new target objects will be added
+ * @property {string} name - each of the items from the 'targets' argument
+ * @property {string} platform - the 'platform' argument
+ * @param {string} platform - the electon-builder platform name ('win32', 'darwin')
+ * @param {Array.<string>} targets - the electron-builder target names ('mas', 'nsis:ia32', etc.)
+ */
+const applyPlatformToTargets = function (dest, platform, targets) {
+    Array.prototype.push.apply(dest, targets.map(name => ({
+        name,
+        platform
+    })));
+};
+
+/**
  * @param {object} wrapperConfig - overall configuration object for the wrapper script.
  * @returns {Array.<object>} - the default list of targets on this platform. Each item in the array represents one
  * call to `runBuilder` for exactly one build target. In theory electron-builder can build two or more targets at the
@@ -96,34 +111,11 @@ const runBuilder = function (wrapperConfig, target) {
  */
 const calculateTargets = function (wrapperConfig) {
     const masDevProfile = 'mas-dev.provisionprofile';
-    const availableTargets = {
-        macAppStore: {
-            name: 'mas',
-            platform: 'darwin'
-        },
-        macAppStoreDev: {
-            name: 'mas-dev',
-            platform: 'darwin'
-        },
-        macDirectDownload: {
-            name: 'dmg',
-            platform: 'darwin'
-        },
-        microsoftStore: {
-            name: 'appx:ia32 appx:x64',
-            platform: 'win32'
-        },
-        windowsDirectDownload: {
-            name: 'nsis:ia32',
-            platform: 'win32'
-        }
-    };
     const targets = [];
     switch (process.platform) {
     case 'win32':
         // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
-        targets.push(availableTargets.microsoftStore);
-        targets.push(availableTargets.windowsDirectDownload);
+        applyPlatformToTargets(targets, 'win32', ['appx:ia32 appx:x64', 'nsis:ia32']);
         break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
@@ -132,21 +124,22 @@ const calculateTargets = function (wrapperConfig) {
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
         if (fs.existsSync(masDevProfile)) {
-            targets.push(availableTargets.macAppStoreDev);
+            applyPlatformToTargets(targets, 'darwin', ['mas-dev', 'mas-dev:arm64']);
         } else {
-            console.log(`skipping target "${availableTargets.macAppStoreDev.name}": ${masDevProfile} missing`);
+            console.log(`skipping 'mas-dev' targets: ${masDevProfile} missing`);
         }
         if (wrapperConfig.doSign) {
-            targets.push(availableTargets.macAppStore);
+            applyPlatformToTargets(targets, 'darwin', ['mas', 'mas:arm64']);
         } else {
             // electron-builder doesn't seem to support this configuration even if mac.type is "development"
-            console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
+            console.log(`skipping 'mas' targets: code-signing is disabled`);
         }
-        targets.push(availableTargets.macDirectDownload);
+        applyPlatformToTargets(targets, 'darwin', ['dmg', 'dmg:arm64']);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
     }
+    console.dir(targets);
     return targets;
 };
 
