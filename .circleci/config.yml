@@ -97,8 +97,9 @@ jobs:
       - run:
           name: Move DMG to artifacts directory
           command: |
-            mkdir -p Artifacts/
-            mv -v dist/Scratch*.dmg Artifacts/
+            mkdir -p Artifacts/mac.{x64,arm64}
+            mv -v dist/mac.arm64/Scratch*.dmg Artifacts/mac.arm64/
+            mv -v dist/mac.x64/Scratch*.dmg Artifacts/mac.x64/
       - when:
           condition:
             *should_sign
@@ -111,13 +112,19 @@ jobs:
                 # See also: https://stackoverflow.com/a/22370486
                 command: |
                   NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
-                  cd dist/mas-dev
-                  ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
-                    Scratch*.app ../../Artifacts/mas-dev-${NPM_APP_VERSION}.zip
+                  for PLATFORM in mac.{arm64,x64}; do
+                    mkdir -p Artifacts/${PLATFORM}
+                    pushd dist/${PLATFORM}/mas-dev
+                    ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
+                      Scratch*.app ../../../Artifacts/${PLATFORM}/mas-dev-${NPM_APP_VERSION}.zip
+                    popd
+                  done
             - run:
                 name: Move PKG to artifacts directory
                 command: |
-                  mv -v dist/mas/Scratch*.pkg Artifacts/
+                  mkdir -p Artifacts/mac.{x64,arm64}
+                  mv -v dist/mac.arm64/mas/Scratch*.pkg Artifacts/mac.arm64/
+                  mv -v dist/mac.x64/mas/Scratch*.pkg Artifacts/mac.x64/
       - store_artifacts:
           path: Artifacts/
   build_for_windows:
@@ -179,8 +186,9 @@ jobs:
           name: Move Windows build products to artifacts directory
           shell: bash
           command: |
-            mkdir -p Artifacts/
-            mv dist/{Scratch*.appx,Scratch*.exe} Artifacts/
+            mkdir -p Artifacts/win.{ia32,x64}
+            mv dist/win.ia32/Scratch*.exe Artifacts/win.ia32/
+            mv dist/win.x64/Scratch*.appx Artifacts/win.x64/
       - store_artifacts:
           path: Artifacts/
 commands:
