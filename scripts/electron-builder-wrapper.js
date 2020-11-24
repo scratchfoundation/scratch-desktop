@@ -38,6 +38,17 @@ const getPlatformFlag = function () {
 };
 
 /**
+ * Tests if the target name is of the given target type.
+ * @param {string} targetName - the target name to test, like 'nsis' or 'dmg:arm64'
+ * @param {string} targetType - the target type to look for, such as 'nsis' or 'dmg'
+ * @returns {boolean} - true if `targetName` is exactly `targetType` or starts with `targetType` followed by ':'.
+ */
+const isTargetOfType = function (targetName, targetType) {
+    return targetName === targetType ||
+        targetName.indexOf(`${targetType}:`) === 0;
+};
+
+/**
  * Run `electron-builder` once to build one or more target(s).
  * @param {object} wrapperConfig - overall configuration object for the wrapper script.
  * @param {object} target - the target to build in this call.
@@ -46,10 +57,10 @@ const getPlatformFlag = function () {
  */
 const runBuilder = function (wrapperConfig, target) {
     // the AppX build fails if CSC_* or WIN_CSC_* variables are set
-    const shouldStripCSC = (target.name.indexOf('appx') === 0) || (!wrapperConfig.doSign);
+    const shouldStripCSC = isTargetOfType(target.name, 'appx') || (!wrapperConfig.doSign);
     const childEnvironment = shouldStripCSC ? stripCSC(process.env) : process.env;
     if (wrapperConfig.doSign &&
-        (target.name.indexOf('nsis') === 0) &&
+        isTargetOfType(target.name, 'nsis') &&
         !(childEnvironment.CSC_LINK || childEnvironment.WIN_CSC_LINK)) {
         throw new Error(`Signing NSIS build requires CSC_LINK or WIN_CSC_LINK`);
     }
@@ -57,7 +68,7 @@ const runBuilder = function (wrapperConfig, target) {
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
-        if (target.name === 'mas-dev') {
+        if (isTargetOfType(target.name, 'mas-dev')) {
             allArgs.push('--c.mac.provisioningProfile=mas-dev.provisionprofile');
         }
         if (wrapperConfig.doSign) {
