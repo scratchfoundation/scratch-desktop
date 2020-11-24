@@ -126,7 +126,7 @@ const calculateTargets = function (wrapperConfig) {
     switch (process.platform) {
     case 'win32':
         // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
-        applyPlatformToTargets(targets, 'win32', ['appx:ia32 appx:x64', 'nsis:ia32']);
+        applyPlatformToTargets(targets, 'win32', ['appx:x64 appx:ia32 appx:arm64', 'nsis:ia32']);
         break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
@@ -135,17 +135,17 @@ const calculateTargets = function (wrapperConfig) {
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
         if (fs.existsSync(masDevProfile)) {
-            applyPlatformToTargets(targets, 'darwin', ['mas-dev:x64', 'mas-dev:arm64']);
+            applyPlatformToTargets(targets, 'darwin', ['mas-dev:x64 mas-dev:arm64']);
         } else {
             console.log(`skipping 'mas-dev' targets: ${masDevProfile} missing`);
         }
         if (wrapperConfig.doSign) {
-            applyPlatformToTargets(targets, 'darwin', ['mas:x64', 'mas:arm64']);
+            applyPlatformToTargets(targets, 'darwin', ['mas:x64 mas:arm64']);
         } else {
             // electron-builder doesn't seem to support this configuration even if mac.type is "development"
             console.log(`skipping 'mas' targets: code-signing is disabled`);
         }
-        applyPlatformToTargets(targets, 'darwin', ['dmg:x64', 'dmg:arm64']);
+        applyPlatformToTargets(targets, 'darwin', ['dmg:x64 dmg:arm64']);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
