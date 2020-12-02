@@ -1,4 +1,18 @@
 const path = require('path');
+const v8 = require('v8');
+
+const desiredHeapSizeMB = 2560; // determined experimentally
+const actualHeapSizeMB = v8.getHeapStatistics().heap_size_limit / 1024 / 1024;
+
+console.log(`Current Node heap size limit: ${actualHeapSizeMB} MB`);
+if (actualHeapSizeMB < desiredHeapSizeMB) {
+    console.warn([
+        '**********',
+        `WARNING: Node heap size limit is smaller than ${desiredHeapSizeMB} MB! Webpack may fail!`,
+        `To increase this limit set NODE_OPTIONS to include something like: --max-old-space-size=${desiredHeapSizeMB}`,
+        '**********'
+    ].join('\n'));
+}
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 

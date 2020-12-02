@@ -7,8 +7,8 @@
   "license": "BSD-3-Clause",
   "scripts": {
     "clean": "rimraf ./dist ./static/assets",
-    "start": "mkdirp ./dist && electron-webpack dev --bail --display-error-details --env.minify=false --no-progress",
-    "compile": "mkdirp ./dist && electron-webpack --bail --display-error-details --env.minify=false --no-progress",
+    "start": "mkdirp ./dist && cross-env NODE_OPTIONS=--max-old-space-size=2560 electron-webpack dev --bail --display-error-details --env.minify=false --no-progress",
+    "compile": "mkdirp ./dist && cross-env NODE_OPTIONS=--max-old-space-size=2560 electron-webpack --bail --display-error-details --env.minify=false --no-progress",
     "fetch": "rimraf ./static/assets/ && mkdirp ./static/assets/ && node ./scripts/fetchMediaLibraryAssets.js",
     "build": "npm run build:dev",
     "build:dev": "npm run compile && npm run doBuild -- --mode=dev",
@@ -39,6 +39,7 @@
     "babel-loader": "^8.1.0",
     "babel-plugin-react-intl": "^7.5.7",
     "copy-webpack-plugin": "^5.1.1",
+    "cross-env": "^7.0.3",
     "electron": "^8.2.5",
     "electron-builder": "^22.6.0",
     "electron-devtools-installer": "^3.0.0",
