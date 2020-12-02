@@ -3,7 +3,6 @@ import {productName, version} from '../../package.json';
 
 import logo from '../icon/ScratchDesktop.svg';
 import styles from './about.css';
-import showPrivacyPolicy from './showPrivacyPolicy';
 
 const AboutElement = () => (
     <div className={styles.aboutBox}>
@@ -23,15 +22,6 @@ const AboutElement = () => (
                     })
                 }
             </tbody></table>
-            <p className={styles.aboutFooter}>
-                <a
-                    // The `href` attribute causes link styling to be applied. The value doesn't really matter but
-                    // using a reasonable value might make testing easier, or at least makes the HTML more readable.
-                    // The `onClick` function actually handles opening the privacy policy window.
-                    href="./index.html?route=privacy"
-                    onClick={showPrivacyPolicy}
-                >View the Privacy Policy...</a>
-            </p>
         </div>
     </div>
 );

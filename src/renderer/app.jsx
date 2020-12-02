@@ -131,7 +131,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                         onClick: () => showPrivacyPolicy()
                     },
                     {
-                        title: 'Telemetry Settings',
+                        title: 'Data Settings',
                         onClick: () => this.props.onTelemetrySettingsClicked()
                     }
                 ]}
