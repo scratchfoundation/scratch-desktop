@@ -99,15 +99,18 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
         handleTelemetryModalOptIn () {
             ipcRenderer.send('setTelemetryDidOptIn', true);
+            this.forceUpdate();
         }
         handleTelemetryModalOptOut () {
             ipcRenderer.send('setTelemetryDidOptIn', false);
+            this.forceUpdate();
         }
         handleUpdateProjectTitle (newTitle) {
             this.setState({projectTitle: newTitle});
         }
         render () {
-            const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
+            const currentTelemetryState = ipcRenderer.sendSync('getTelemetryDidOptIn');
+            const shouldShowTelemetryModal = (typeof currentTelemetryState !== 'boolean');
 
             const childProps = omit(this.props, Object.keys(ScratchDesktopComponent.propTypes));
 
@@ -116,6 +119,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 canModifyCloudData={false}
                 canSave={false}
                 isScratchDesktop
+                isTelemetryEnabled={currentTelemetryState}
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickAbout={[
                     {
