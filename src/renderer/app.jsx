@@ -43,14 +43,16 @@ document.body.appendChild(appTarget);
 
 GUI.setAppElement(appTarget);
 
-const ScratchDesktopOuterHOC = function (WrappedComponent) {
-    const ScratchDesktopOuterComponent = function (props) {
+/**
+ * Higher-order component to add desktop logic to AppStateHOC.
+ * @param {Component} WrappedComponent - an AppStateHOC-like component to wrap.
+ * @returns {Component} - a component similar to AppStateHOC with desktop-specific logic added.
+ */
+const ScratchDesktopAppStateHOC = function (WrappedComponent) {
+    const ScratchDesktopAppStateComponent = function (props) {
         const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
 
         return (<WrappedComponent
-            canEditTitle
-            canModifyCloudData={false}
-            isScratchDesktop
             showTelemetryModal={shouldShowTelemetryModal}
 
             // allow passed-in props to override any of the above
@@ -58,11 +60,16 @@ const ScratchDesktopOuterHOC = function (WrappedComponent) {
         />);
     };
 
-    return ScratchDesktopOuterComponent;
+    return ScratchDesktopAppStateComponent;
 };
 
-const ScratchDesktopInnerHOC = function (WrappedComponent) {
-    class ScratchDesktopInnerComponent extends React.Component {
+/**
+ * Higher-order component to add desktop logic to the GUI.
+ * @param {Component} WrappedComponent - a GUI-like component to wrap.
+ * @returns {Component} - a component similar to GUI with desktop-specific logic added.
+ */
+const ScratchDesktopGUIHOC = function (WrappedComponent) {
+    class ScratchDesktopGUIComponent extends React.Component {
         constructor (props) {
             super(props);
             bindAll(this, [
@@ -134,9 +141,12 @@ const ScratchDesktopInnerHOC = function (WrappedComponent) {
             this.setState({projectTitle: newTitle});
         }
         render () {
-            const childProps = omit(this.props, Object.keys(ScratchDesktopInnerComponent.propTypes));
+            const childProps = omit(this.props, Object.keys(ScratchDesktopGUIComponent.propTypes));
 
             return (<WrappedComponent
+                canEditTitle
+                canModifyCloudData={false}
+                isScratchDesktop
                 onClickLogo={this.handleClickLogo}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
                 onStorageInit={this.handleStorageInit}
@@ -150,7 +160,7 @@ const ScratchDesktopInnerHOC = function (WrappedComponent) {
         }
     }
 
-    ScratchDesktopInnerComponent.propTypes = {
+    ScratchDesktopGUIComponent.propTypes = {
         loadingState: PropTypes.oneOf(LoadingStates),
         onFetchedInitialProjectData: PropTypes.func,
         onHasInitialProject: PropTypes.func,
@@ -190,16 +200,16 @@ const ScratchDesktopInnerHOC = function (WrappedComponent) {
         onRequestNewProject: () => dispatch(requestNewProject(false))
     });
 
-    return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopInnerComponent);
+    return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopGUIComponent);
 };
 
 // note that redux's 'compose' function is just being used as a general utility to make
 // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
 // ability to compose reducers.
 const WrappedGui = compose(
-    ScratchDesktopOuterHOC,
+    ScratchDesktopAppStateHOC,
     AppStateHOC,
-    ScratchDesktopInnerHOC
+    ScratchDesktopGUIHOC
 )(GUI);
 
 ReactDOM.render(<WrappedGui />, appTarget);
