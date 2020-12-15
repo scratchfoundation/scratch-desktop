@@ -46,6 +46,10 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleTelemetryModalOptOut',
                 'handleUpdateProjectTitle'
             ]);
+            this.state = {
+                // use `sendSync` because this should be set before first render
+                telemetryDidOptIn: ipcRenderer.sendSync('getTelemetryDidOptIn')
+            };
             this.props.onLoadingStarted();
             ipcRenderer.invoke('get-initial-project-data').then(initialProjectData => {
                 const hasInitialProject = initialProjectData && (initialProjectData.length > 0);
@@ -99,18 +103,21 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
         handleTelemetryModalOptIn () {
             ipcRenderer.send('setTelemetryDidOptIn', true);
-            this.forceUpdate();
+            ipcRenderer.invoke('getTelemetryDidOptIn').then(telemetryDidOptIn => {
+                this.setState({telemetryDidOptIn});
+            });
         }
         handleTelemetryModalOptOut () {
             ipcRenderer.send('setTelemetryDidOptIn', false);
-            this.forceUpdate();
+            ipcRenderer.invoke('getTelemetryDidOptIn').then(telemetryDidOptIn => {
+                this.setState({telemetryDidOptIn});
+            });
         }
         handleUpdateProjectTitle (newTitle) {
             this.setState({projectTitle: newTitle});
         }
         render () {
-            const currentTelemetryState = ipcRenderer.sendSync('getTelemetryDidOptIn');
-            const shouldShowTelemetryModal = (typeof currentTelemetryState !== 'boolean');
+            const shouldShowTelemetryModal = (typeof this.state.telemetryDidOptIn !== 'boolean');
 
             const childProps = omit(this.props, Object.keys(ScratchDesktopComponent.propTypes));
 
@@ -119,7 +126,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 canModifyCloudData={false}
                 canSave={false}
                 isScratchDesktop
-                isTelemetryEnabled={currentTelemetryState}
+                isTelemetryEnabled={this.state.telemetryDidOptIn}
                 showTelemetryModal={shouldShowTelemetryModal}
                 onClickAbout={[
                     {

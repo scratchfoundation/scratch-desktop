@@ -93,16 +93,16 @@ class ScratchDesktopTelemetry {
 // make a singleton so it's easy to share across both Electron processes
 const scratchDesktopTelemetrySingleton = new ScratchDesktopTelemetry();
 
+// `handle` works with `invoke`
+ipcMain.handle('getTelemetryDidOptIn', () =>
+    scratchDesktopTelemetrySingleton.didOptIn
+);
+// `on` works with `sendSync` (and `send`)
 ipcMain.on('getTelemetryDidOptIn', event => {
     event.returnValue = scratchDesktopTelemetrySingleton.didOptIn;
 });
 ipcMain.on('setTelemetryDidOptIn', (event, arg) => {
     scratchDesktopTelemetrySingleton.didOptIn = arg;
-    event.returnValue = null;
-});
-ipcMain.on('clearTelemetryDidOptIn', event => {
-    scratchDesktopTelemetrySingleton.clearDidOptIn();
-    event.returnValue = null;
 });
 ipcMain.on('projectDidLoad', (event, arg) => {
     scratchDesktopTelemetrySingleton.projectDidLoad(arg);
