@@ -72,7 +72,7 @@ const runBuilder = function (wrapperConfig, target) {
     }
     allArgs = allArgs.concat(wrapperConfig.builderArgs);
     console.log(`running electron-builder with arguments: ${allArgs}`);
-    const result = spawnSync('electron-builder', allArgs, {
+    const result = spawnSync('./node_modules/.bin/electron-builder', allArgs, {
         env: childEnvironment,
         shell: true,
         stdio: 'inherit'
@@ -116,6 +116,10 @@ const calculateTargets = function (wrapperConfig) {
         windowsDirectDownload: {
             name: 'nsis:ia32',
             platform: 'win32'
+        },
+        linuxDeb: {
+            name: 'deb',
+            platform: 'linux'
         }
     };
     const targets = [];
@@ -143,6 +147,9 @@ const calculateTargets = function (wrapperConfig) {
             console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
         }
         targets.push(availableTargets.macDirectDownload);
+        break;
+    case 'linux':
+        targets.push(availableTargets.linuxDeb);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
