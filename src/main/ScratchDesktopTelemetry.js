@@ -36,9 +36,6 @@ class ScratchDesktopTelemetry {
     set didOptIn (value) {
         this._telemetryClient.didOptIn = value;
     }
-    clearDidOptIn () {
-        this._telemetryClient.clearDidOptIn();
-    }
 
     appWasOpened () {
         this._telemetryClient.addEvent('app::open', {...EVENT_TEMPLATE, ...APP_INFO});
