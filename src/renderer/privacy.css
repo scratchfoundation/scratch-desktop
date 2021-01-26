@@ -1,0 +1,14 @@
+html, body {
+    background-color: #4D97FF;
+    color: white;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: normal;
+    line-height: 150%;
+}
+
+.privacyBox {
+    background-color: white;
+    color: #575e75;
+    margin: 3rem;
+    padding: 2rem 3rem;
+}
