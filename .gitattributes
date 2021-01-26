@@ -7,6 +7,7 @@
 # File types which we know are binary
 
 # Prefer LF for most file types
+*.css text eol=lf
 *.htm text eol=lf
 *.html text eol=lf
 *.js text eol=lf

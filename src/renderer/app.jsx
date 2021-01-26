@@ -1,9 +1,8 @@
-import {ipcRenderer, remote, shell} from 'electron';
+import {ipcRenderer, remote} from 'electron';
 import bindAll from 'lodash.bindall';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import {connect} from 'react-redux';
 import {compose} from 'redux';
 import GUI from 'scratch-gui/src/index';
@@ -21,25 +20,17 @@ import {
 } from 'scratch-gui/src/reducers/project-state';
 import {
     openLoadingProject,
-    closeLoadingProject
+    closeLoadingProject,
+    openTelemetryModal
 } from 'scratch-gui/src/reducers/modals';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
+import showPrivacyPolicy from './showPrivacyPolicy';
 import styles from './app.css';
 
-// override window.open so that it uses the OS's default browser, not an electron browser
-window.open = function (url, target) {
-    if (target === '_blank') {
-        shell.openExternal(url);
-    }
-};
-// Register "base" page view
-// analytics.pageview('/');
-
 const appTarget = document.getElementById('app');
-appTarget.className = styles.app || 'app'; // TODO
-document.body.appendChild(appTarget);
+appTarget.className = styles.app || 'app';
 
 GUI.setAppElement(appTarget);
 
@@ -55,6 +46,10 @@ const ScratchDesktopHOC = function (WrappedComponent) {
                 'handleTelemetryModalOptOut',
                 'handleUpdateProjectTitle'
             ]);
+            this.state = {
+                // use `sendSync` because this should be set before first render
+                telemetryDidOptIn: ipcRenderer.sendSync('getTelemetryDidOptIn')
+            };
             this.props.onLoadingStarted();
             ipcRenderer.invoke('get-initial-project-data').then(initialProjectData => {
                 const hasInitialProject = initialProjectData && (initialProjectData.length > 0);
@@ -94,7 +89,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         componentWillUnmount () {
             ipcRenderer.removeListener('setTitleFromSave', this.handleSetTitleFromSave);
         }
-        handleClickLogo () {
+        handleClickAbout () {
             ipcRenderer.send('open-about-window');
         }
         handleProjectTelemetryEvent (event, metadata) {
@@ -108,25 +103,47 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         }
         handleTelemetryModalOptIn () {
             ipcRenderer.send('setTelemetryDidOptIn', true);
+            ipcRenderer.invoke('getTelemetryDidOptIn').then(telemetryDidOptIn => {
+                this.setState({telemetryDidOptIn});
+            });
         }
         handleTelemetryModalOptOut () {
             ipcRenderer.send('setTelemetryDidOptIn', false);
+            ipcRenderer.invoke('getTelemetryDidOptIn').then(telemetryDidOptIn => {
+                this.setState({telemetryDidOptIn});
+            });
         }
         handleUpdateProjectTitle (newTitle) {
             this.setState({projectTitle: newTitle});
         }
         render () {
-            const shouldShowTelemetryModal = (typeof ipcRenderer.sendSync('getTelemetryDidOptIn') !== 'boolean');
+            const shouldShowTelemetryModal = (typeof this.state.telemetryDidOptIn !== 'boolean');
 
             const childProps = omit(this.props, Object.keys(ScratchDesktopComponent.propTypes));
 
             return (<WrappedComponent
                 canEditTitle
                 canModifyCloudData={false}
+                canSave={false}
                 isScratchDesktop
+                isTelemetryEnabled={this.state.telemetryDidOptIn}
                 showTelemetryModal={shouldShowTelemetryModal}
-                onClickLogo={this.handleClickLogo}
+                onClickAbout={[
+                    {
+                        title: 'About',
+                        onClick: () => this.handleClickAbout()
+                    },
+                    {
+                        title: 'Privacy Policy',
+                        onClick: () => showPrivacyPolicy()
+                    },
+                    {
+                        title: 'Data Settings',
+                        onClick: () => this.props.onTelemetrySettingsClicked()
+                    }
+                ]}
                 onProjectTelemetryEvent={this.handleProjectTelemetryEvent}
+                onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}
                 onTelemetryModalOptIn={this.handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={this.handleTelemetryModalOptOut}
@@ -146,6 +163,7 @@ const ScratchDesktopHOC = function (WrappedComponent) {
         onLoadingCompleted: PropTypes.func,
         onLoadingStarted: PropTypes.func,
         onRequestNewProject: PropTypes.func,
+        onTelemetrySettingsClicked: PropTypes.func,
         vm: PropTypes.instanceOf(VM).isRequired
     };
     const mapStateToProps = state => {
@@ -174,7 +192,8 @@ const ScratchDesktopHOC = function (WrappedComponent) {
             const canSaveToServer = false;
             return dispatch(onLoadedProject(loadingState, canSaveToServer, loadSuccess));
         },
-        onRequestNewProject: () => dispatch(requestNewProject(false))
+        onRequestNewProject: () => dispatch(requestNewProject(false)),
+        onTelemetrySettingsClicked: () => dispatch(openTelemetryModal())
     });
 
     return connect(mapStateToProps, mapDispatchToProps)(ScratchDesktopComponent);
@@ -188,4 +207,4 @@ const WrappedGui = compose(
     ScratchDesktopHOC
 )(GUI);
 
-ReactDOM.render(<WrappedGui />, appTarget);
+export default <WrappedGui />;
