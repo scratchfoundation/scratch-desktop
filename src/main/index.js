@@ -224,7 +224,7 @@ const createPrivacyWindow = () => {
         height: _windows.main.height * 0.8,
         parent: _windows.main,
         search: 'route=privacy',
-        title: 'Scratch Desktop Privacy Policy'
+        title: `${productName} Privacy Policy`
     });
     return window;
 };
