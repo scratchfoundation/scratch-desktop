@@ -46,7 +46,7 @@ const getPlatformFlag = function () {
  */
 const runBuilder = function (wrapperConfig, target) {
     // the AppX build fails if CSC_* or WIN_CSC_* variables are set
-    const shouldStripCSC = (target.name === 'appx') || (!wrapperConfig.doSign);
+    const shouldStripCSC = (target.name.indexOf('appx') === 0) || (!wrapperConfig.doSign);
     const childEnvironment = shouldStripCSC ? stripCSC(process.env) : process.env;
     if (wrapperConfig.doSign &&
         (target.name.indexOf('nsis') === 0) &&
@@ -110,7 +110,7 @@ const calculateTargets = function (wrapperConfig) {
             platform: 'darwin'
         },
         microsoftStore: {
-            name: 'appx',
+            name: 'appx:ia32 appx:x64',
             platform: 'win32'
         },
         windowsDirectDownload: {
