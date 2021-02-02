@@ -34,12 +34,14 @@ const notarizeMacBuild = async function (context) {
 };
 
 const afterSign = async function (context) {
-    const {electronPlatformName} = context;
-
-    switch (electronPlatformName) {
+    // WARNING: this assumes all targets have the same notarization requirements as the first
+    // this is fine if you (for example) run DMG for x64 and arm64 together, but run MAS separately
+    const firstTargetName = context.targets[0].name;
+    switch (firstTargetName) {
+    case 'mas-dev': // unpacked macOS dev/test build simulating MAS
     case 'mas': // macOS build for Mac App Store
         break;
-    case 'darwin': // macOS build NOT for Mac App Store
+    case 'dmg': // macOS build NOT for Mac App Store
         await notarizeMacBuild(context);
         break;
     }

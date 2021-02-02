@@ -150,7 +150,6 @@ const calculateTargets = function (wrapperConfig) {
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
     }
-    console.dir(targets);
     return targets;
 };
 
