@@ -139,17 +139,17 @@ const calculateTargets = function (wrapperConfig) {
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
         if (fs.existsSync(masDevProfile)) {
-            addPlatformTarget(targets, 'darwin', 'mas-dev', ['x64', 'arm64']);
+            addPlatformTarget(targets, 'darwin', 'mas-dev', ['x64', 'arm64', 'universal']);
         } else {
             console.log(`skipping 'mas-dev' targets: ${masDevProfile} missing`);
         }
         if (wrapperConfig.doSign) {
-            addPlatformTarget(targets, 'darwin', 'mas', ['x64', 'arm64']);
+            addPlatformTarget(targets, 'darwin', 'mas', ['x64', 'arm64', 'universal']);
         } else {
             // electron-builder doesn't seem to support this configuration even if mac.type is "development"
             console.log(`skipping 'mas' targets: code-signing is disabled`);
         }
-        addPlatformTarget(targets, 'darwin', 'dmg', ['x64', 'arm64']);
+        addPlatformTarget(targets, 'darwin', 'dmg', ['x64', 'arm64', 'universal']);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
