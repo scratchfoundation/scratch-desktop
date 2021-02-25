@@ -100,18 +100,21 @@ const runBuilder = function (wrapperConfig, target) {
 };
 
 /**
- * Add to `dest` a list of platform+target objects built from the parameters.
- * @param {Array.<object>} dest - the list to which new target objects will be added
- * @property {string} name - each of the items from the 'targets' argument
+ * Build a platform+target object from the parameters. This object represents one call to electron-builder and will
+ * build one platform+target, potentially for multiple architectures.
+ * @param {Array.<object>} targets - the list to which new target objects will be added
+ * @property {string} name - the 'target' combined with each of the items from the 'architectures' argument
  * @property {string} platform - the 'platform' argument
- * @param {string} platform - the electon-builder platform name ('win32', 'darwin')
- * @param {Array.<string>} targets - the electron-builder target names ('mas', 'nsis:ia32', etc.)
+ * @param {string} newPlatform - the electron-builder platform name ('win32', 'darwin', etc.)
+ * @param {string} newTarget - the electron-builder target name ('mas', 'nsis', etc.)
+ * @param {Array.<string>} newArchitectures - the electron-builder architecture names ('x64', 'ia32', etc.)
  */
-const applyPlatformToTargets = function (dest, platform, targets) {
-    Array.prototype.push.apply(dest, targets.map(name => ({
-        name,
-        platform
-    })));
+const addPlatformTarget = function (targets, newPlatform, newTarget, newArchitectures = null) {
+    const newEntry = {
+        platform: newPlatform,
+        name: newArchitectures.map(arch => `${newTarget}:${arch}`).join(' ') // 'dmg:x64 dmg:arm64'
+    };
+    targets.push(newEntry);
 };
 
 /**
@@ -126,7 +129,8 @@ const calculateTargets = function (wrapperConfig) {
     switch (process.platform) {
     case 'win32':
         // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
-        applyPlatformToTargets(targets, 'win32', ['appx:x64 appx:ia32 appx:arm64', 'nsis:ia32']);
+        addPlatformTarget(targets, 'win32', 'appx', ['x64', 'ia32', 'arm64']);
+        addPlatformTarget(targets, 'win32', 'nsis', ['ia32']);
         break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
@@ -135,17 +139,17 @@ const calculateTargets = function (wrapperConfig) {
         // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
         // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
         if (fs.existsSync(masDevProfile)) {
-            applyPlatformToTargets(targets, 'darwin', ['mas-dev:x64 mas-dev:arm64']);
+            addPlatformTarget(targets, 'darwin', 'mas-dev', ['x64', 'arm64']);
         } else {
             console.log(`skipping 'mas-dev' targets: ${masDevProfile} missing`);
         }
         if (wrapperConfig.doSign) {
-            applyPlatformToTargets(targets, 'darwin', ['mas:x64 mas:arm64']);
+            addPlatformTarget(targets, 'darwin', 'mas', ['x64', 'arm64']);
         } else {
             // electron-builder doesn't seem to support this configuration even if mac.type is "development"
             console.log(`skipping 'mas' targets: code-signing is disabled`);
         }
-        applyPlatformToTargets(targets, 'darwin', ['dmg:x64 dmg:arm64']);
+        addPlatformTarget(targets, 'darwin', 'dmg', ['x64', 'arm64']);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
