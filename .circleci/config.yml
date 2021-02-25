@@ -119,7 +119,7 @@ jobs:
                     popd
                   }
                   zip_app dist/mas-dev x64
-                  zip_app dist/mas-dev-arm64 arm64
+                  if [ -d dist/mas-dev-arm64 ]; then zip_app dist/mas-dev-arm64 arm64; fi
             - run:
                 name: Move PKG to artifacts directory
                 command: |
