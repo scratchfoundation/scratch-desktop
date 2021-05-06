@@ -4,6 +4,33 @@ Scratch 3.0 as a standalone desktop application
 
 ## Developer Instructions
 
+### Releasing a new version
+
+Let's assume that you want to make a new release, version `3.999.0`, corresponding to `scratch-gui` version
+`0.1.0-prerelease.20yymmdd`.
+
+1. Merge `scratch-gui`:
+   1. `cd scratch-gui`
+   2. `git pull --all --tags`
+   3. `git checkout scratch-desktop`
+   4. `git merge 0.1.0-prerelease.20yymmdd`
+   5. Resolve conflicts if necessary
+   6. `git tag scratch-desktop-v3.999.0`
+   7. `git push`
+   8. `git push --tags`
+2. Prep `scratch-desktop`:
+   1. `cd scratch-desktop`
+   2. `git pull --all --tags`
+   3. `git checkout develop`
+   4. `npm install --save-dev 'scratch-gui@github:LLK/scratch-gui#scratch-desktop-v3.999.0'`
+   5. `git add package.json package-lock.json`
+   6. Make sure the app works, the diffs look reasonable, etc.
+   7. `git commit -m "bump scratch-gui to scratch-desktop-v3.999.0"`
+   8. `npm version 3.999.0`
+   9. `git push`
+   10. `git push --tags`
+3. Wait for the CI build and collect the release from the build artifacts
+
 ### A note about `scratch-gui`
 
 Eventually, the `scratch-desktop` branch of the Scratch GUI repository will be merged with that repository's main
