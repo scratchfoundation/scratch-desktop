@@ -9,7 +9,7 @@ mac:
   entitlements: buildResources/entitlements.mac.plist
   extendInfo:
     NSCameraUsageDescription: >-
-        This app requires camera access when taking a photo in the paint editor or using the video sensing blocks.
+        This app requires camera access when using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
         This app requires microphone access when recording sounds or detecting loudness.
   gatekeeperAssess: true
