@@ -2,7 +2,7 @@
   "name": "scratch-desktop",
   "productName": "Scratch",
   "description": "Scratch 3.0 as a self-contained desktop application",
-  "author": "Scratch Foundation",
+  "author": "Scratch Foundation <help@scratch.mit.edu>",
   "version": "3.23.1",
   "license": "BSD-3-Clause",
   "scripts": {
