@@ -9,7 +9,7 @@ mac:
   entitlements: buildResources/entitlements.mac.plist
   extendInfo:
     NSCameraUsageDescription: >-
-        This app requires camera access when taking a photo in the paint editor or using the video sensing blocks.
+        This app requires camera access when using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
         This app requires microphone access when recording sounds or detecting loudness.
   gatekeeperAssess: true
@@ -40,7 +40,7 @@ appx:
   identityName: ScratchFoundation.ScratchDesktop
   publisherDisplayName: "Scratch Foundation"
   publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
-  artifactName: "Scratch ${version}.${ext}"
+  artifactName: "Scratch ${version} ${arch}.${ext}"
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
   artifactName: "Scratch ${version} Setup.${ext}"

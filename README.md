@@ -4,6 +4,33 @@ Scratch 3.0 as a standalone desktop application
 
 ## Developer Instructions
 
+### Releasing a new version
+
+Let's assume that you want to make a new release, version `3.999.0`, corresponding to `scratch-gui` version
+`0.1.0-prerelease.20yymmdd`.
+
+1. Merge `scratch-gui`:
+   1. `cd scratch-gui`
+   2. `git pull --all --tags`
+   3. `git checkout scratch-desktop`
+   4. `git merge 0.1.0-prerelease.20yymmdd`
+   5. Resolve conflicts if necessary
+   6. `git tag scratch-desktop-v3.999.0`
+   7. `git push`
+   8. `git push --tags`
+2. Prep `scratch-desktop`:
+   1. `cd scratch-desktop`
+   2. `git pull --all --tags`
+   3. `git checkout develop`
+   4. `npm install --save-dev 'scratch-gui@github:LLK/scratch-gui#scratch-desktop-v3.999.0'`
+   5. `git add package.json package-lock.json`
+   6. Make sure the app works, the diffs look reasonable, etc.
+   7. `git commit -m "bump scratch-gui to scratch-desktop-v3.999.0"`
+   8. `npm version 3.999.0`
+   9. `git push`
+   10. `git push --tags`
+3. Wait for the CI build and collect the release from the build artifacts
+
 ### A note about `scratch-gui`
 
 Eventually, the `scratch-desktop` branch of the Scratch GUI repository will be merged with that repository's main
@@ -104,3 +131,27 @@ configuration like this:
         ]
     },
 ```
+
+### Resetting the Telemetry System
+
+This application includes a telemetry system which is only active if the user opts in. When testing this system, it's
+sometimes helpful to reset it by deleting the `telemetry.json` file.
+
+The location of this file depends on your operating system and whether or not you're running a packaged build. Running
+from `npm start` or equivalent is a non-packaged build.
+
+In addition, macOS may store the file in one of two places depending on the OS version and a few other variables. If
+in doubt, I recommend removing both.
+
+- Windows, packaged build: `%APPDATA%\Scratch\telemetry.json`
+- Windows, non-packaged: `%APPDATA%\Electron\telemetry.json`
+- macOS, packaged build: `~/Library/Application Support/Scratch/telemetry.json` or
+  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Scratch/telemetry.json`
+- macOS, non-packaged build: `~/Library/Application Support/Electron/telemetry.json` or
+  `~/Library/Containers/edu.mit.scratch.scratch-desktop/Data/Library/Application Support/Electron/telemetry.json`
+
+Deleting this file will:
+
+- Remove any pending telemetry packets
+- Reset the opt in/out state: the app should display the opt in/out modal on next launch
+- Remove the random client UUID: the app will generate a new one on next launch

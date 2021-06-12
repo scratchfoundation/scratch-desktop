@@ -1,4 +1,4 @@
-import {BrowserWindow, Menu, app, dialog, ipcMain, systemPreferences} from 'electron';
+import {BrowserWindow, Menu, app, dialog, ipcMain, shell, systemPreferences} from 'electron';
 import fs from 'fs-extra';
 import path from 'path';
 import {URL} from 'url';
@@ -193,8 +193,16 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
         }
     });
 
+    webContents.on('new-window', (event, newWindowUrl) => {
+        shell.openExternal(newWindowUrl);
+        event.preventDefault();
+    });
+
     const fullUrl = makeFullUrl(url, search);
     window.loadURL(fullUrl);
+    window.once('ready-to-show', () => {
+        webContents.send('ready-to-show');
+    });
 
     return window;
 };
@@ -206,6 +214,17 @@ const createAboutWindow = () => {
         parent: _windows.main,
         search: 'route=about',
         title: `About ${productName}`
+    });
+    return window;
+};
+
+const createPrivacyWindow = () => {
+    const window = createWindow({
+        width: _windows.main.width * 0.8,
+        height: _windows.main.height * 0.8,
+        parent: _windows.main,
+        search: 'route=privacy',
+        title: `${productName} Privacy Policy`
     });
     return window;
 };
@@ -371,10 +390,19 @@ app.on('ready', () => {
         event.preventDefault();
         _windows.about.hide();
     });
+    _windows.privacy = createPrivacyWindow();
+    _windows.privacy.on('close', event => {
+        event.preventDefault();
+        _windows.privacy.hide();
+    });
 });
 
 ipcMain.on('open-about-window', () => {
     _windows.about.show();
+});
+
+ipcMain.on('open-privacy-policy-window', () => {
+    _windows.privacy.show();
 });
 
 // start loading initial project data before the GUI needs it so the load seems faster
