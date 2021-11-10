@@ -171,6 +171,7 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
         useContentSize: true,
         show: false,
         webPreferences: {
+            contextIsolation: false,
             nodeIntegration: true
         },
         ...browserWindowOptions
@@ -291,6 +292,7 @@ const createMainWindow = () => {
                     // don't clean up until after the message box to allow troubleshooting / recovery
                     await dialog.showMessageBox(window, {
                         type: 'error',
+                        title: 'Failed to save project',
                         message: `Save failed:\n${userChosenPath}`,
                         detail: e.message
                     });
@@ -311,6 +313,7 @@ const createMainWindow = () => {
 
     webContents.on('will-prevent-unload', ev => {
         const choice = dialog.showMessageBoxSync(window, {
+            title: productName,
             type: 'question',
             message: 'Leave Scratch?',
             detail: 'Any unsaved changes will be lost.',
