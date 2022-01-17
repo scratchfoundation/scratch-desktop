@@ -10,6 +10,7 @@ const AboutElement = () => (
             alt={`${productName} icon`}
             src={logo}
             className={styles.aboutLogo}
+            draggable={false}
         /></div>
         <div className={styles.aboutText}>
             <h2>{productName}</h2>
