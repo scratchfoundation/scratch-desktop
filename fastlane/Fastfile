@@ -15,9 +15,15 @@
 
 default_platform(:mac)
 
-#platform :mac do
-#  desc "Description of what the lane does"
-#  lane :custom_lane do
-#    # add actions here: https://docs.fastlane.tools/actions
-#  end
-#end
+platform :mac do
+  desc "Use Fastlane Match to install development certificates"
+  lane :match_dev do
+    match(type: "development", platform: "macos")
+  end
+
+  desc "Use Fastlane Match to install distribution certificates"
+  lane :match_dist do
+    match(type: "appstore", platform: "macos")
+    match(type: "developer_id", platform: "macos", additional_cert_types: "developer_id_installer")
+  end
+end
