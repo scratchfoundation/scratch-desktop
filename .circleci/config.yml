@@ -29,10 +29,9 @@ aliases:
 jobs:
   build_for_macos:
     macos:
-      # CircleCI's Xcode 11.1.0 image is the last of their images to be based on macOS 10.14
-      # I've had trouble building for earlier versions of macOS on Catalina but it's unclear whether that was due to
-      # Catalina or the version of Xcode. We should investigate this further.
-      xcode: 11.1.0
+      # CircleCI's Xcode 12.4.0 image is the last of their images to be based on macOS 10.15
+      # CircleCI no longer supports Xcode 11+ on macOS 10.14
+      xcode: 12.4.0
     steps:
       - checkout
       - npm_install:
@@ -90,9 +89,6 @@ jobs:
             git -C ~/app-builder checkout b85740334fec875f5dd8dcd22eb1f729599109db
             make --directory=~/app-builder build
             ln -sfv ~/app-builder/dist/app-builder_darwin_amd64/app-builder ./node_modules/app-builder-bin/mac/
-      - run:
-          name: Upgrade to Node 14
-          command: brew install node@14
       - save_cache:
           name: Save Homebrew cache
           paths:
