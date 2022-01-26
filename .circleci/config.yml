@@ -43,6 +43,7 @@ jobs:
           condition:
             *should_sign
           steps:
+            - add_ssh_keys
             - run:
                 name: Import CI context
                 command: |
