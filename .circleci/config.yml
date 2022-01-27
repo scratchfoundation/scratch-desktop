@@ -48,8 +48,7 @@ jobs:
                 name: Import CI context
                 command: |
                   set -e
-                  fastlane match_dev
-                  fastlane match_dist
+                  fastlane circleci
       - restore_cache:
           # Caching Homebrew's files (see the save_cache step below) means that Homebrew doesn't have to update as
           # much. The Homebrew update can take several minutes without this, but with the cache it tends to take less

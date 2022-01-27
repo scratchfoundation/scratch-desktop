@@ -31,6 +31,14 @@ Use Fastlane Match to install development certificates
 
 Use Fastlane Match to install distribution certificates
 
+### mac circleci
+
+```sh
+[bundle exec] fastlane mac circleci
+```
+
+Prepare for a CircleCI signed build
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
