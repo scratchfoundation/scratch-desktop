@@ -27,7 +27,7 @@ platform :mac do
 
   desc "Use Fastlane Match to install distribution certificates"
   lane :match_dist do
-    match(type: "appstore", platform: "macos", output_path: "build", readonly: is_ci)
+    match(type: "appstore", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "mac_installer_distribution")
     match(type: "developer_id", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "developer_id_installer")
   end
 end
