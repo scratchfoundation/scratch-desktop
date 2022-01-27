@@ -16,6 +16,10 @@
 default_platform(:mac)
 
 platform :mac do
+  before_all do
+    setup_circle_ci
+  end
+
   desc "Use Fastlane Match to install development certificates"
   lane :match_dev do
     match(type: "development", platform: "macos", output_path: "build", readonly: is_ci)
