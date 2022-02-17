@@ -1,0 +1,3 @@
+app_identifier "edu.mit.scratch.scratch-desktop" # The bundle identifier of your app
+apple_id "bot-apple@scratch.mit.edu" # Your Apple email address
+team_id "W7AR3WMP87"

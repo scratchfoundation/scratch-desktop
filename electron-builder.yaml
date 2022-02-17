@@ -15,7 +15,7 @@ mac:
   gatekeeperAssess: true
   hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
-  provisioningProfile: embedded.provisionprofile
+  provisioningProfile: build/AppStore_edu.mit.scratch.scratch-desktop.provisionprofile
   artifactName: "Scratch ${version}.${ext}"
   target:
     - dmg
@@ -30,7 +30,7 @@ mas:
   icon: buildResources/ScratchDesktop.icns
 masDev:
   type: development
-  provisioningProfile: mas-dev.provisionprofile
+  provisioningProfile: build/Development_edu.mit.scratch.scratch-desktop.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:

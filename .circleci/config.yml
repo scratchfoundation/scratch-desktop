@@ -29,10 +29,9 @@ aliases:
 jobs:
   build_for_macos:
     macos:
-      # CircleCI's Xcode 11.1.0 image is the last of their images to be based on macOS 10.14
-      # I've had trouble building for earlier versions of macOS on Catalina but it's unclear whether that was due to
-      # Catalina or the version of Xcode. We should investigate this further.
-      xcode: 11.1.0
+      # CircleCI's Xcode 12.4.0 image is the last of their images to be based on macOS 10.15
+      # CircleCI no longer supports Xcode 11+ on macOS 10.14
+      xcode: 12.4.0
     steps:
       - checkout
       - npm_install:
@@ -44,37 +43,12 @@ jobs:
           condition:
             *should_sign
           steps:
+            - add_ssh_keys
             - run:
                 name: Import CI context
                 command: |
                   set -e
-                  function decodeToFile () {
-                    if [ -z "$1" ]; then
-                      echo "Missing or invalid filename"
-                      return 1
-                    fi
-                    if [ -z "$2" ]; then
-                      echo "Missing environment variable contents for file: $1"
-                      return 2
-                    fi
-                    echo "$2" | base64 --decode > "$1"
-                  }
-                  decodeToFile embedded.provisionprofile "${MAC_PROVISION_PROFILE}"
-                  decodeToFile mas-dev.provisionprofile "${MAC_DEV_PROVISION_PROFILE}"
-                  decodeToFile macos-certs-scratch-foundation.p12.gz "${CSC_MACOS_GZ}"
-                  decodeToFile apple-dev-cert.p12 "${MAC_DEV_CERT}"
-                  gunzip macos-certs-scratch-foundation.p12.gz
-                  security -v create-keychain -p circleci circleci.keychain
-                  security -v default-keychain -s circleci.keychain
-                  security -v import macos-certs-scratch-foundation.p12 -k circleci.keychain -P "${CSC_MACOS_PASSWORD}" -T /usr/bin/codesign -T /usr/bin/productbuild
-                  security -v import apple-dev-cert.p12 -k circleci.keychain -P "${MAC_DEV_CERT_PASSWORD}" -T /usr/bin/codesign -T /usr/bin/productbuild
-                  security -v unlock-keychain -p circleci circleci.keychain
-                  # "set-key-partition-list" prints extensive not-so-useful output and adding "-q" (even multiple times) doesn't suppress it.
-                  # The "grep -v" at the end of this line suppresses all of that so any errors or warnings might be more visible.
-                  security -v set-key-partition-list -S apple-tool:,apple:,codesign: -s -k circleci circleci.keychain | grep -v '^    0x'
-                  security -v set-keychain-settings -lut 600 circleci.keychain
-                  security -v find-identity circleci.keychain
-                  rm macos-certs-scratch-foundation.p12 apple-dev-cert.p12
+                  fastlane circleci
       - restore_cache:
           # Caching Homebrew's files (see the save_cache step below) means that Homebrew doesn't have to update as
           # much. The Homebrew update can take several minutes without this, but with the cache it tends to take less
@@ -90,9 +64,6 @@ jobs:
             git -C ~/app-builder checkout b85740334fec875f5dd8dcd22eb1f729599109db
             make --directory=~/app-builder build
             ln -sfv ~/app-builder/dist/app-builder_darwin_amd64/app-builder ./node_modules/app-builder-bin/mac/
-      - run:
-          name: Upgrade to Node 14
-          command: brew install node@14
       - save_cache:
           name: Save Homebrew cache
           paths:

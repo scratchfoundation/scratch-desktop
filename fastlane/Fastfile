@@ -1,0 +1,36 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:mac)
+
+platform :mac do
+  desc "Use Fastlane Match to install development certificates"
+  lane :match_dev do
+    match(type: "development", platform: "macos", output_path: "build", readonly: is_ci)
+  end
+
+  desc "Use Fastlane Match to install distribution certificates"
+  lane :match_dist do
+    match(type: "appstore", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "mac_installer_distribution")
+    match(type: "developer_id", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "developer_id_installer")
+  end
+
+  desc "Prepare for a CircleCI signed build"
+  lane :circleci do
+    setup_circle_ci
+    match_dev
+    match_dist
+  end
+end

@@ -25,3 +25,10 @@ npm-*
 # generated translation files
 /translations
 /locale
+
+# Fastlane
+**/fastlane/Matchfile
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output

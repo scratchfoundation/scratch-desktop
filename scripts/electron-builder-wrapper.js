@@ -9,6 +9,8 @@
 const {spawnSync} = require('child_process');
 const fs = require('fs');
 
+const masDevProfile = 'build/Development_edu.mit.scratch.scratch-desktop.provisionprofile';
+
 /**
  * Strip any code signing configuration (CSC) from a set of environment variables.
  * @param {object} environment - a collection of environment variables which might include code signing configuration.
@@ -58,7 +60,7 @@ const runBuilder = function (wrapperConfig, target) {
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
         if (target.name === 'mas-dev') {
-            allArgs.push('--c.mac.provisioningProfile=mas-dev.provisionprofile');
+            allArgs.push(`--c.mac.provisioningProfile=${masDevProfile}`);
         }
         if (wrapperConfig.doSign) {
             // really this is "notarize only if we also sign"
@@ -95,7 +97,6 @@ const runBuilder = function (wrapperConfig, target) {
  * same time but doing so limits has unwanted side effects on both macOS and Windows (see function body).
  */
 const calculateTargets = function (wrapperConfig) {
-    const masDevProfile = 'mas-dev.provisionprofile';
     const availableTargets = {
         macAppStore: {
             name: 'mas',
