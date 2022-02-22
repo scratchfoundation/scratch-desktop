@@ -55,7 +55,7 @@ jobs:
           # than a minute most of the time. The cache will expire periodically and be replaced by a more up-to-date
           # cache, which should effectively cap the amount of updating that Homebrew needs to do on top of the cache.
           name: Restore Homebrew cache
-          key: homebrew-cache-v1
+          key: homebrew-cache-v2
       - run:
           name: Work around electron-userland/electron-builder#4964
           command: |
@@ -68,8 +68,8 @@ jobs:
           name: Save Homebrew cache
           paths:
             - ~/Library/Caches/Homebrew
-            - /usr/local/Homebrew
-          key: homebrew-cache-v1
+            - /Library/Caches/Homebrew
+          key: homebrew-cache-v2
       - build
       - run:
           name: Move DMG to artifacts directory
