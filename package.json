@@ -34,7 +34,7 @@
     "@babel/plugin-transform-async-to-generator": "^7.8.3",
     "@babel/preset-env": "^7.9.6",
     "@babel/preset-react": "^7.9.4",
-    "async": "^3.2.0",
+    "async": "^3.2.2",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-react-intl": "^7.5.7",
