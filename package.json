@@ -2,7 +2,7 @@
   "name": "scratch-desktop",
   "productName": "Scratch",
   "description": "Scratch 3.0 as a self-contained desktop application",
-  "author": "Scratch Foundation",
+  "author": "Scratch Foundation <help@scratch.mit.edu>",
   "version": "3.29.1",
   "license": "BSD-3-Clause",
   "scripts": {
@@ -19,6 +19,32 @@
     "distDev": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dev",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color --ext .jsx,.js ."
+  },
+  "build": {
+        "productName": "scratch",
+        "appId": "edu.mit.scratch",
+        "directories": {
+            "output": "./build"
+        },
+        "linux": {
+            "icon": "./../icons",
+            "category": "Education",
+            "target": [
+                "AppImage",
+                {
+                    "target": "deb",
+                    "arch": [
+                        "x64"
+                    ]
+                },
+                "pacman",
+                "snap",
+                "rpm"
+            ]
+        },
+        "snap": {
+            "plugs": ["default", "camera", "audio-playback", "audio-record", "bluetooth-control"]
+        }
   },
   "repository": {
     "type": "git",
