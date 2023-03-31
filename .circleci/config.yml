@@ -9,7 +9,7 @@ workflows:
       - build_for_windows:
           context: scratch-desktop-and-link
 orbs:
-  windows: circleci/windows@2.4.0
+  windows: circleci/windows@2.4.1
 aliases:
   # condition to indicate whether or not we should sign this build
   - &should_sign
