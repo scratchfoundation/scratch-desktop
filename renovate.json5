@@ -1,6 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-        "local>LLK/renovate-config"
+        "local>LLK/scratch-renovate-config"
     ]
 }
