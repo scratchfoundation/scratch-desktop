@@ -3,5 +3,15 @@
 
   "extends": [
     "github>LLK/scratch-renovate-config"
+  ],
+
+  "packageRules": [
+    {
+      // enable auto-merge for non-major updates of all packages which use semver
+      "matchCurrentVersion": "!/^0/",
+      "matchUpdateTypes": ["minor", "patch", "lockFileMaintenance"],
+      "automerge": true,
+      "rebaseWhen": "behind-base-branch"
+    }
   ]
 }
