@@ -47,7 +47,7 @@
     "electron-webpack": "^2.8.2",
     "eslint": "^7.0.0",
     "eslint-config-scratch": "^6.0.0",
-    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-import": "2.27.5",
     "eslint-plugin-react": "^7.20.0",
     "fs-extra": "^9.0.1",
     "intl": "1.2.5",
