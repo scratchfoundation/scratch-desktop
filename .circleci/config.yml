@@ -9,6 +9,7 @@ workflows:
       - build_for_windows:
           context: scratch-desktop-and-link
 orbs:
+  node: circleci/node@5.1.0
   windows: circleci/windows@2.4.1
 aliases:
   # condition to indicate whether or not we should sign this build
@@ -34,9 +35,11 @@ jobs:
       xcode: 11.7.0
     resource_class: macos.x86.medium.gen2 # "medium" has been deprecated
     steps:
+      - node/install:
+          node-version: "16.*"
+      - run: node --version && npm --version
       - checkout
-      - npm_install:
-          npmCacheDir: ~/.npm
+      - node/install-packages
       - run:
           name: Test
           command: npm run test
@@ -101,7 +104,9 @@ jobs:
       - store_artifacts:
           path: Artifacts/
   build_for_windows:
-    executor: windows/default
+    executor:
+      name: windows/default
+      shell: bash.exe # defaulting to bash at the executor level makes the Node orb kinda work
     steps:
       - run:
           # work around https://github.com/appveyor/ci/issues/2420 which seems to affect CircleCI too
@@ -112,15 +117,26 @@ jobs:
             echo 'Adding libexec/git-core to PATH...'
             echo 'For more details see https://github.com/appveyor/ci/issues/2420'
             echo 'export PATH="$PATH:/c/Program Files/Git/mingw64/libexec/git-core"' >> $BASH_ENV
-      - run:
-          # nvm for Windows doesn't accept partial version numbers, so specify exact :(
-          name: Upgrade to Node 14.17.0
+      - run: # node/install doesn't work right on Windows
+          name: Install Node
+          # as of today, the Windows image comes with nvm 1.1.7
+          # nvm version 1.1.9 fixes an issue leading to "npm ERR! Unexpected token '.'"
+          # nvm version 1.1.10 will support "nvm install 16"
+          # but for now it needs the exact version
           command: |
-            nvm install 14.17.0
-            nvm use 14.17.0
+            choco upgrade --yes nvm.portable
+            nvm --version
+            nvm install 16.20.0
+            nvm use 16.20.0
+      - run:
+          name: Increase NPM log level to avoid timeouts while installing packages
+          command: npm config set loglevel http
+      - run: node --version && npm --version
       - checkout
-      - npm_install:
-          npmCacheDir: "C:/Users/circleci/AppData/Roaming/npm-cache"
+      - node/install-packages:
+          # the Node orb doesn't understand the default cache path on Windows
+          # make sure to use a path that works with Windows Node.js AND MSYS/MinGW bash
+          cache-path: "C:/tmp/npm-cache"
       - run:
           name: Test
           command: npm run test
@@ -170,27 +186,6 @@ jobs:
       - store_artifacts:
           path: Artifacts/
 commands:
-  npm_install:
-    description: Run 'npm install' with caching
-    parameters:
-      npmCacheDir:
-        type: string
-        description: NPM cache directory (`npm config cache get`) - usually either ~/.npm or %AppData%/npm-cache
-    steps:
-      - restore_cache:
-          keys:
-            - npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: Install node_modules
-          shell: bash # harmless on macOS, required on Windows to work around git-sh-setup issue
-          # --prefer-offline "will make npm skip any conditional requests (304 checks) for stale cache data, and only
-          #   hit the network if something is missing from the cache"
-          command: npm ci --prefer-offline
-          environment: *clear_context
-      - save_cache:
-          paths:
-            - << parameters.npmCacheDir >>
-          key: npm-cache-{{ arch }}-{{ checksum "package-lock.json" }}
   build:
     steps:
       - when:
