@@ -39,7 +39,8 @@ jobs:
           node-version: "16.*"
       - run: node --version && npm --version
       - checkout
-      - node/install-packages
+      - node/install-packages:
+          include-branch-in-cache-key: false
       - run:
           name: Test
           command: npm run test
@@ -137,6 +138,7 @@ jobs:
           # the Node orb doesn't understand the default cache path on Windows
           # make sure to use a path that works with Windows Node.js AND MSYS/MinGW bash
           cache-path: "C:/tmp/npm-cache"
+          include-branch-in-cache-key: false
       - run:
           name: Test
           command: npm run test
