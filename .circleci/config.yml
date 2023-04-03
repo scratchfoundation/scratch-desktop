@@ -131,7 +131,7 @@ jobs:
             nvm use 16.20.0
       - run:
           name: Increase NPM log level to avoid timeouts while installing packages
-          command: npm config set loglevel http
+          command: npm config set loglevel info
       - run: node --version && npm --version
       - checkout
       - node/install-packages:
