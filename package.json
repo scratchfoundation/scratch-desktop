@@ -65,7 +65,7 @@
     "rimraf": "^3.0.2",
     "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.29.0",
     "uuid": "^8.0.0",
-    "webpack": "^4.43.0"
+    "webpack": "^5.0.0"
   },
   "resolutions": {
     "upath": "^1.0.5"
