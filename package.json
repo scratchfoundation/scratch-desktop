@@ -55,7 +55,7 @@
     "lodash.defaultsdeep": "^4.6.1",
     "minilog": "^3.1.0",
     "minimist": "^1.2.5",
-    "mkdirp": "^1.0.4",
+    "mkdirp": "^2.0.0",
     "nets": "^3.2.0",
     "react": "16.2.0",
     "react-dom": "16.2.1",
