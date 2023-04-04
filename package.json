@@ -61,7 +61,7 @@
     "react-dom": "16.2.1",
     "react-intl": "2.9.0",
     "react-redux": "5.0.7",
-    "redux": "3.7.2",
+    "redux": "4.2.1",
     "rimraf": "^3.0.2",
     "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.29.0",
     "uuid": "^8.0.0",
