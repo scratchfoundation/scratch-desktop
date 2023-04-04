@@ -41,6 +41,7 @@ jobs:
       - checkout
       - node/install-packages:
           include-branch-in-cache-key: false
+          override-ci-command: npm ci --loglevel info --prefer-offline
       - run:
           name: Test
           command: npm run test
@@ -129,9 +130,6 @@ jobs:
             nvm --version
             nvm install 16.20.0
             nvm use 16.20.0
-      - run:
-          name: Increase NPM log level to avoid timeouts while installing packages
-          command: npm config set loglevel info
       - run: node --version && npm --version
       - checkout
       - node/install-packages:
@@ -139,6 +137,7 @@ jobs:
           # make sure to use a path that works with Windows Node.js AND MSYS/MinGW bash
           cache-path: "C:/tmp/npm-cache"
           include-branch-in-cache-key: false
+          override-ci-command: npm ci --loglevel info --prefer-offline
       - run:
           name: Test
           command: npm run test
