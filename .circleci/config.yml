@@ -108,7 +108,6 @@ jobs:
   build_for_windows:
     executor:
       name: windows/default
-      size: large
       shell: bash.exe # defaulting to bash at the executor level makes the Node orb kinda work
     steps:
       - run:
