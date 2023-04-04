@@ -10,7 +10,7 @@ workflows:
           context: scratch-desktop-and-link
 orbs:
   node: circleci/node@5.1.0
-  windows: circleci/windows@2.4.1
+  windows: circleci/windows@5.0.0
 aliases:
   # condition to indicate whether or not we should sign this build
   - &should_sign
