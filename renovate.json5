@@ -6,17 +6,7 @@
   ],
 
   "vulnerabilityAlerts": {
-    "packageRules": [
-      {
-        "matchCurrentVersion": "!/^0/",
-        "matchUpdateTypes": [
-          "minor",
-          "patch",
-          "lockFileMaintenance"
-        ],
-        "automerge": true,
-        "rebaseWhen": "behind-base-branch"
-      }
-    ]
+    "automerge": true,
+    "rebaseWhen": "behind-base-branch"
   }
 }
