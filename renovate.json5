@@ -3,5 +3,20 @@
 
   "extends": [
     "github>LLK/scratch-renovate-config"
-  ]
+  ],
+
+  "vulnerabilityAlerts": {
+    "packageRules": [
+      {
+        "matchCurrentVersion": "!/^0/",
+        "matchUpdateTypes": [
+          "minor",
+          "patch",
+          "lockFileMaintenance"
+        ],
+        "automerge": true,
+        "rebaseWhen": "behind-base-branch"
+      }
+    ]
+  }
 }
