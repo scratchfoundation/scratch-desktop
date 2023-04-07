@@ -9,8 +9,8 @@ const merge = require('webpack-merge');
 
 // PostCss
 const autoprefixer = require('autoprefixer');
-const postcssVars = require('postcss-simple-vars');
 const postcssImport = require('postcss-import');
+const postcssVars = require('postcss-simple-vars');
 
 const isProduction = (process.env.NODE_ENV === 'production');
 

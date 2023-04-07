@@ -35,6 +35,7 @@
     "@babel/preset-env": "^7.9.6",
     "@babel/preset-react": "^7.9.4",
     "async": "^3.2.0",
+    "autoprefixer": "9.8.8",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-react-intl": "^7.5.7",
@@ -57,6 +58,8 @@
     "minimist": "^1.2.5",
     "mkdirp": "^1.0.4",
     "nets": "^3.2.0",
+    "postcss-import": "12.0.1",
+    "postcss-simple-vars": "5.0.2",
     "react": "16.14.0",
     "react-dom": "16.14.0",
     "react-intl": "2.9.0",
@@ -65,7 +68,8 @@
     "rimraf": "^3.0.2",
     "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.29.0",
     "uuid": "^8.0.0",
-    "webpack": "^4.43.0"
+    "webpack": "^4.43.0",
+    "webpack-merge": "4.2.2"
   },
   "resolutions": {
     "upath": "^1.0.5"
