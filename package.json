@@ -69,7 +69,7 @@
     "scratch-gui": "github:LLK/scratch-gui#scratch-desktop-v3.29.0",
     "uuid": "^8.0.0",
     "webpack": "^4.43.0",
-    "webpack-merge": "4.2.2"
+    "webpack-merge": "5.8.0"
   },
   "resolutions": {
     "upath": "^1.0.5"
