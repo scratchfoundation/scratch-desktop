@@ -24,7 +24,9 @@ const makeConfig = function (defaultConfig, options) {
         plugins: [
             '@babel/plugin-syntax-dynamic-import',
             '@babel/plugin-transform-async-to-generator',
-            '@babel/plugin-proposal-object-rest-spread'
+            '@babel/plugin-proposal-object-rest-spread',
+            '@babel/plugin-transform-nullish-coalescing-operator',
+            '@babel/plugin-transform-optional-chaining'
         ],
         presets: [
             ['@babel/preset-env', {targets: {electron: electronVersion}}]
@@ -101,6 +103,15 @@ const makeConfig = function (defaultConfig, options) {
                     options: {
                         outputPath: 'static/assets/'
                     }
+                },
+                {
+                    test: /\.hex$/,
+                    use: [{
+                        loader: 'url-loader',
+                        options: {
+                            limit: 16 * 1024
+                        }
+                    }]
                 }
             ]
         },

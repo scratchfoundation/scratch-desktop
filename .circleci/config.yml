@@ -209,4 +209,7 @@ commands:
           steps:
             - run:
                 command: npm run distDev
-                environment: *clear_context
+                environment:
+                    <<: *clear_context
+                    # increased Node memory needed for macOS build
+                    NODE_OPTIONS: --max-old-space-size=4096

@@ -1,0 +1,75 @@
+html, body {
+    background-color: white;
+    color: #575E75;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: normal;
+    line-height: 150%;
+    margin: 0;
+}
+
+html, body, :global(#app), main {
+    height: 100%;
+}
+
+:global(#app) {
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+.devices {
+    border: 1px solid hsla(0, 0%, 0%, 0.15);
+    flex-grow: 1;
+    margin-block: 1em;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.device.selected {
+    background-color: #855CD6;
+    color: white;
+}
+
+.device input[type="radio"] {
+    /* Hide the radio button but keep it accessible for keyboard */
+    opacity: 0;
+    position: absolute;
+}
+
+.device label {
+    box-sizing: border-box;
+    display: block;
+    padding-inline: .5em;
+}
+
+.buttons {
+    align-self: flex-end;
+}
+
+button {
+    border-radius: .25rem;
+    cursor: pointer;
+    font-weight: 600;
+    margin: 0.25rem;
+    padding: 0.6rem 0.75rem;
+}
+
+.cancelButton {
+    background: white;
+    border: 1px solid #855CD6;
+    color: #855CD6;
+}
+
+.connectButton {
+    background: #855CD6;
+    border: 1px solid #855CD6;
+    color: white;
+}
+
+.connectButton:disabled {
+    opacity: 50%;
+}

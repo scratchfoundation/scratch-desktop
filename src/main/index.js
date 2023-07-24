@@ -230,6 +230,52 @@ const createPrivacyWindow = () => {
     return window;
 };
 
+const createUsbWindow = () => {
+    const window = createWindow({
+        width: 400,
+        height: 300,
+        parent: _windows.main,
+        search: 'route=usb',
+        modal: true,
+        frame: false
+    });
+
+    // Filters from navigator.usb.requestDevice do not appear to be available here.
+    // Hard code to micro:bit since that is the only device that currently uses this api.
+    const getIsMicroBit = device => device.vendorId === 0x0d28 && device.productId === 0x0204;
+    let deviceList = [];
+    let selectedDeviceCallback;
+
+    _windows.main.webContents.session.on('select-usb-device', (event, details, callback) => {
+        deviceList = details.deviceList.filter(getIsMicroBit);
+        selectedDeviceCallback = callback;
+
+        window.webContents.send('usb-device-list', deviceList);
+        window.show();
+
+        event.preventDefault();
+    });
+
+    _windows.main.webContents.session.on('usb-device-added', (_event, device) => {
+        if (!getIsMicroBit(device)) return;
+        deviceList.push(device);
+        window.webContents.send('usb-device-list', deviceList);
+    });
+
+    _windows.main.webContents.session.on('usb-device-removed', (_event, device) => {
+        if (!getIsMicroBit(device)) return;
+        deviceList = deviceList.filter(existing => existing.deviceId !== device.deviceId);
+        window.webContents.send('usb-device-list', deviceList);
+    });
+
+    ipcMain.on('usb-device-selected', (_event, message) => {
+        selectedDeviceCallback(message);
+        window.hide();
+    });
+
+    return window;
+};
+
 const getIsProjectSave = downloadItem => {
     switch (downloadItem.getMimeType()) {
     case 'application/x.scratch.sb3':
@@ -398,6 +444,8 @@ app.on('ready', () => {
         event.preventDefault();
         _windows.privacy.hide();
     });
+
+    _windows.usb = createUsbWindow();
 });
 
 ipcMain.on('open-about-window', () => {
