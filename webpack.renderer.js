@@ -20,19 +20,31 @@ module.exports = defaultConfig =>
                 /node_modules[\\/]+@vernier[\\/]+godirect/
             ],
             plugins: [
-                new CopyWebpackPlugin([{
-                    from: path.join(getModulePath('scratch-blocks'), 'media'),
-                    to: 'static/blocks-media'
-                }]),
-                new CopyWebpackPlugin([{
-                    from: 'extension-worker.{js,js.map}',
-                    context: path.join(getModulePath('scratch-vm'), 'dist', 'web')
-                }]),
-                new CopyWebpackPlugin([{
-                    from: path.join(getModulePath('scratch-gui'), 'src', 'lib', 'libraries', '*.json'),
-                    to: 'static/libraries',
-                    flatten: true
-                }])
+                new CopyWebpackPlugin([
+                    {
+                        from: path.join(getModulePath('scratch-blocks'), 'media'),
+                        to: 'static/blocks-media/default'
+                    },
+                    {
+                        from: path.join(getModulePath('scratch-blocks'), 'media'),
+                        to: 'static/blocks-media/high-contrast'
+                    },
+                    {
+                        from: path.join(getModulePath('scratch-gui'),
+                            'src', 'lib', 'themes', 'high-contrast', 'blocks-media'),
+                        to: 'static/blocks-media/high-contrast',
+                        force: true
+                    },
+                    {
+                        from: 'extension-worker.{js,js.map}',
+                        context: path.join(getModulePath('scratch-vm'), 'dist', 'web')
+                    },
+                    {
+                        from: path.join(getModulePath('scratch-gui'), 'src', 'lib', 'libraries', '*.json'),
+                        to: 'static/libraries',
+                        flatten: true
+                    }
+                ])
             ]
         }
     );

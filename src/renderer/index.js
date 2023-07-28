@@ -24,6 +24,9 @@ case 'about':
 case 'privacy':
     routeModulePromise = import('./privacy.jsx');
     break;
+case 'usb':
+    routeModulePromise = import('./usb.jsx');
+    break;
 }
 
 routeModulePromise.then(routeModule => {
