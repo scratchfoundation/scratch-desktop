@@ -15,9 +15,9 @@ aliases:
   # condition to indicate whether or not we should sign this build
   - &should_sign
     or:
-      - equal: [ develop, disable-<< pipeline.git.branch >> ]
-      - equal: [ main, disable-<< pipeline.git.branch >> ]
-      - equal: [ master, disable-<< pipeline.git.branch >> ]
+      - equal: [ develop, << pipeline.git.branch >> ]
+      - equal: [ main, << pipeline.git.branch >> ]
+      - equal: [ master, << pipeline.git.branch >> ]
   # clear large environment variables from the "scratch-desktop-and-link" context
   # this helps when a program (like NPM) encounters errors with a large environment
   - &clear_context
