@@ -203,6 +203,8 @@ commands:
                   WIN_CSC_LINK: ~/codesign.pfx
                   # blank CIRCLE_BUILD_NUM to work around electron-userland/electron-builder#5016
                   CIRCLE_BUILD_NUM: ""
+                  # increased Node memory needed for macOS build
+                  NODE_OPTIONS: --max-old-space-size=4096
       - unless:
           condition:
             *should_sign
