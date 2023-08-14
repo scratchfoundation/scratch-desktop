@@ -30,9 +30,8 @@ aliases:
 jobs:
   build_for_macos:
     macos:
-      # CircleCI's Xcode 11.7.0 image is the last of their images to be based on macOS 10.15
-      # CircleCI no longer supports macOS 10.14, and Xcode 12 on macOS 10.15 has been removed as well
-      xcode: 11.7.0
+      # See https://circleci.com/docs/using-macos/#supported-xcode-versions for CircleCI's supported Xcode versions
+      xcode: 12.5.1
     resource_class: macos.x86.medium.gen2 # "medium" has been deprecated
     steps:
       - node/install:
