@@ -8,6 +8,7 @@ mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
   extendInfo:
+    ITSAppUsesNonExemptEncryption: false
     NSCameraUsageDescription: >-
         This app requires camera access when using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
