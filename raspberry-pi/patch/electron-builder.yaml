@@ -1,0 +1,37 @@
+directories:
+  buildResources: buildResources
+  output: dist
+appId: edu.mit.scratch.scratch-desktop
+productName: "Scratch Desktop"
+afterSign: "scripts/afterSign.js"
+mac:
+  category: public.app-category.education
+  entitlements: buildResources/entitlements.mac.plist
+  extendInfo:
+    NSCameraUsageDescription: >-
+        This app requires camera access when taking a photo in the paint editor or using the video sensing blocks.
+    NSMicrophoneUsageDescription: >-
+        This app requires microphone access when recording sounds or detecting loudness.
+  gatekeeperAssess: true
+  hardenedRuntime: true
+  icon: buildResources/ScratchDesktop.icns
+  provisioningProfile: embedded.provisionprofile
+  target:
+    - dmg
+    - mas
+  type: distribution
+mas:
+  category: public.app-category.education
+  entitlements: buildResources/entitlements.mas.plist
+  icon: buildResources/ScratchDesktop.icns
+win:
+  icon: buildResources/ScratchDesktop.ico
+  target:
+    - appx
+    - nsis
+appx:
+  identityName: ScratchFoundation.ScratchDesktop
+  publisherDisplayName: "Scratch Foundation"
+  publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
+nsis:
+  oneClick: false # allow user to choose per-user or per-machine

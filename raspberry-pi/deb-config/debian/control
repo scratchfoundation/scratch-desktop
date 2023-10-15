@@ -1,0 +1,13 @@
+Source: scratch3
+Maintainer: RPF Digital Team <web@raspberrypi.org>
+
+Package: scratch3
+Architecture: armhf
+Depends: rtimucli, ${shlibs:Depends}, ${misc:Depends}
+Section: x11
+Priority: extra
+Description: Electron build of Scratch 3 offline
+ Scratch 3.0 is the third and current major version of Scratch. Released on 
+ January 2, 2019, it's a complete redesign and reimplementation of Scratch 
+ written in HTML5 and JavaScript.
+

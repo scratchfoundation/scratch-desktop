@@ -1,0 +1,24 @@
+*** electron-builder-wrapper.js	2020-06-10 08:55:44.489840642 +0100
+--- electron-builder-wrapper2.js	2020-06-10 12:45:41.402987431 +0100
+***************
+*** 32,36 ****
+      case 'win32': return '--windows';
+      case 'darwin': return '--macos';
+!     case 'linux': return '--linux';
+      }
+      throw new Error(`Could not determine platform flag for platform: ${process.platform}`);
+--- 32,36 ----
+      case 'win32': return '--windows';
+      case 'darwin': return '--macos';
+!     case 'linux': return '--linux --armv7l';
+      }
+      throw new Error(`Could not determine platform flag for platform: ${process.platform}`);
+***************
+*** 76,79 ****
+--- 76,81 ----
+  const calculateTargets = function () {
+      switch (process.platform) {
++     case 'linux':
++         return ['appimage'];
+      case 'win32':
+          // run in two passes so we can skip signing the appx
