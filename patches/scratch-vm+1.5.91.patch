@@ -1,0 +1,1620 @@
+diff --git a/node_modules/scratch-vm/src/engine/runtime.js b/node_modules/scratch-vm/src/engine/runtime.js
+index d79337c..3b921ed 100644
+--- a/node_modules/scratch-vm/src/engine/runtime.js
++++ b/node_modules/scratch-vm/src/engine/runtime.js
+@@ -90,6 +90,12 @@ const ArgumentTypeMap = (() => {
+             fieldName: 'MATRIX'
+         }
+     };
++map[ArgumentType.MATRIX8] = {
++        shadow: {
++            type: 'matrix8',
++            fieldName: 'MATRIX8'
++        }
++    };
+     map[ArgumentType.NOTE] = {
+         shadow: {
+             type: 'note',
+diff --git a/node_modules/scratch-vm/src/extension-support/argument-type.js b/node_modules/scratch-vm/src/extension-support/argument-type.js
+index f52cd45..d602a5a 100644
+--- a/node_modules/scratch-vm/src/extension-support/argument-type.js
++++ b/node_modules/scratch-vm/src/extension-support/argument-type.js
+@@ -33,6 +33,11 @@ const ArgumentType = {
+      */
+     MATRIX: 'matrix',
+ 
++    /**
++     * String value with 8x8 matrix field
++     */
++    MATRIX8: 'matrix8',
++
+     /**
+      * MIDI note number with note picker (piano) field
+      */
+diff --git a/node_modules/scratch-vm/src/extension-support/extension-manager.js b/node_modules/scratch-vm/src/extension-support/extension-manager.js
+index a5e2c4e..88c5ba2 100644
+--- a/node_modules/scratch-vm/src/extension-support/extension-manager.js
++++ b/node_modules/scratch-vm/src/extension-support/extension-manager.js
+@@ -22,6 +22,9 @@ const builtinExtensions = {
+     videoSensing: () => require('../extensions/scratch3_video_sensing'),
+     ev3: () => require('../extensions/scratch3_ev3'),
+     makeymakey: () => require('../extensions/scratch3_makeymakey'),
++    pigpio: () => require('../extensions/scratch3_pigpio'),
++    pisensehat: () => require('../extensions/scratch3_pisensehat'),
++    pivsgpio: () => require('../extensions/scratch3_pivsgpio'),
+     boost: () => require('../extensions/scratch3_boost'),
+     gdxfor: () => require('../extensions/scratch3_gdx_for')
+ };
+diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
+new file mode 100644
+index 0000000..29193ce
+--- /dev/null
++++ b/node_modules/scratch-vm/src/extensions/scratch3_pigpio/index.js
+@@ -0,0 +1,247 @@
++const formatMessage = require('format-message');
++const ArgumentType = require('../../extension-support/argument-type');
++const BlockType = require('../../extension-support/block-type');
++const Cast = require('../../util/cast');
++const path = window.require('path');
++const gpio = window.require(path.join(__static,'gpiolib.node'))
++
++/**
++ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
++ * @type {string}
++ */
++// eslint-disable-next-line max-len
++const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICB3aWR0aD0iODAwIgogICBoZWlnaHQ9IjgwMCIKICAgaWQ9InN2ZzM0MTAiCiAgIGlua3NjYXBlOnZlcnNpb249IjAuOTEgcjEzNzI1IgogICBzb2RpcG9kaTpkb2NuYW1lPSJyYXNwYmVycnktcGktbG9nb20uc3ZnIj4KICA8bWV0YWRhdGEKICAgICBpZD0ibWV0YWRhdGEzNDQ0Ij4KICAgIDxyZGY6UkRGPgogICAgICA8Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+CiAgICAgICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICAgICAgPGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPgogICAgICAgIDxkYzp0aXRsZT48L2RjOnRpdGxlPgogICAgICA8L2NjOldvcms+CiAgICA8L3JkZjpSREY+CiAgPC9tZXRhZGF0YT4KICA8ZGVmcwogICAgIGlkPSJkZWZzMzQ0MiIgLz4KICA8c29kaXBvZGk6bmFtZWR2aWV3CiAgICAgcGFnZWNvbG9yPSIjZmZmZmZmIgogICAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2IgogICAgIGJvcmRlcm9wYWNpdHk9IjEiCiAgICAgb2JqZWN0dG9sZXJhbmNlPSIxMCIKICAgICBncmlkdG9sZXJhbmNlPSIxMCIKICAgICBndWlkZXRvbGVyYW5jZT0iMTAiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAiCiAgICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiIKICAgICBpbmtzY2FwZTp3aW5kb3ctd2lkdGg9IjEzODEiCiAgICAgaW5rc2NhcGU6d2luZG93LWhlaWdodD0iOTY1IgogICAgIGlkPSJuYW1lZHZpZXczNDQwIgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBmaXQtbWFyZ2luLWxlZnQ9Ijc1IgogICAgIGZpdC1tYXJnaW4tcmlnaHQ9Ijc1IgogICAgIGlua3NjYXBlOnpvb209IjAuNzg4NjIwNDgiCiAgICAgaW5rc2NhcGU6Y3g9IjMyMC44NjU1IgogICAgIGlua3NjYXBlOmN5PSIzNjAiCiAgICAgaW5rc2NhcGU6d2luZG93LXg9IjQxMCIKICAgICBpbmtzY2FwZTp3aW5kb3cteT0iMCIKICAgICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIwIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9InN2ZzM0MTAiIC8+CiAgPHBhdGgKICAgICBkPSJtIDI2Ny40MjYxOSw0My42MTUxMzggYyAtMy42MTkzLDAuMTEyMzE5IC03LjUxNzE1LDEuNDQ5MzI3IC0xMS45Mzc1LDQuOTM3NSAtMTAuODI2OTYsLTQuMTc2MyAtMjEuMzI3MDksLTUuNjI3MTg5IC0zMC43MTg3NSwyLjg3NSAtMTQuNDkzODYsLTEuODgwNzU4IC0xOS4yMTAyOSwyLjAwMDc0NCAtMjIuNzgxMjUsNi41MzEyNSAtMy4xODI1NSwtMC4wNjU4NyAtMjMuODE4ODUsLTMuMjcyMDcgLTMzLjI4MTI1LDEwLjg0Mzc1IC0yMy43ODE2NSwtMi44MTM0MiAtMzEuMjk2NzgsMTMuOTg3ODggLTIyLjc4MTI1LDI5LjY1NjI1IC00Ljg1NjkxLDcuNTE4OTUyIC05Ljg4OTUxLDE0Ljk0NzIzMiAxLjQ2ODc1LDI5LjI4MTI1MiAtNC4wMTgwMSw3Ljk4MzUxIC0xLjUyNzQzLDE2LjY0NDAzIDcuOTM3NSwyNy4xMjUgLTIuNDk3ODYsMTEuMjIyNiAyLjQxMjA3LDE5LjE0MDg2IDExLjIxODc1LDI1LjMxMjUgLTEuNjQ3MDksMTUuMzU3NTYgMTQuMDgzNSwyNC4yODc0MyAxOC43ODEyNSwyNy40Njg3NSAxLjgwMzY3LDguOTQ4NjggNS41NjI5MSwxNy4zOTI3IDIzLjUzMTI1LDIyLjA2MjUgMi45NjMyMywxMy4zMzYxIDEzLjc2MjA2LDE1LjYzOTA2IDI0LjIxODc1LDE4LjQzNzUgLTM0LjU2MTkzLDIwLjA4OTU0IC02NC4yMDA2Nyw0Ni41MjI2NiAtNjQsMTExLjM3NSBsIC01LjA2MjUsOS4wMzEyNSBjIC0zOS42MzA4NywyNC4xMDIyOSAtNzUuMjg1Mjk5LDEwMS41NjYyNiAtMTkuNTMxMjUsMTY0LjUzMTI1IDMuNjQxODcsMTkuNzA4MzggOS43NDk1OSwzMy44NjM5NiAxNS4xODc1LDQ5LjUzMTI1IDguMTMzODMsNjMuMTMwNTggNjEuMjE3NjMsOTIuNjkxNjEgNzUuMjE4NzUsOTYuMTg3NSAyMC41MTY1MywxNS42MjgxMiA0Mi4zNjgxOCwzMC40NTY3MiA3MS45Mzc1LDQwLjg0Mzc1IDI3Ljg3NTE1LDI4Ljc0OTQ2IDU4LjA3Mzg4LDM5LjcwNjQgODguNDM3NSwzOS42ODc1IDAuNDQ1MTUsLTIuOGUtNCAwLjg5ODUzLDAuMDA1IDEuMzQzNzUsMCAzMC4zNjM2MywwLjAxODkgNjAuNTYyMzUsLTEwLjkzODA0IDg4LjQzNzUsLTM5LjY4NzUgMjkuNTY5MzIsLTEwLjM4NzAzIDUxLjQyMDk3LC0yNS4yMTU2MyA3MS45Mzc1LC00MC44NDM3NSAxNC4wMDExMiwtMy40OTU4OSA2Ny4wODQ5MiwtMzMuMDU2OTIgNzUuMjE4NzUsLTk2LjE4NzUgNS40Mzc5MSwtMTUuNjY3MjkgMTEuNTQ1NjIsLTI5LjgyMjg3IDE1LjE4NzUsLTQ5LjUzMTI1IDU1Ljc1NDA0LC02Mi45NjQ5OSAyMC4wOTk2MSwtMTQwLjQyODk2IC0xOS41MzEyNSwtMTY0LjUzMTI1IGwgLTUuMDYyNSwtOS4wMzEyNSBjIDAuMjAwNjcsLTY0Ljg1MjM0IC0yOS40MzgwNywtOTEuMjg1NDYgLTY0LC0xMTEuMzc1IDEwLjQ1NjY5LC0yLjc5ODQ0IDIxLjI1NTUyLC01LjEwMTQgMjQuMjE4NzUsLTE4LjQzNzUgMTcuOTY4MzQsLTQuNjY5OCAyMS43Mjc1OCwtMTMuMTEzODIgMjMuNTMxMjUsLTIyLjA2MjUgNC42OTc3NSwtMy4xODEzMiAyMC40MjgzNCwtMTIuMTExMTkgMTguNzgxMjUsLTI3LjQ2ODc1IDguODA2NjgsLTYuMTcxNjQgMTMuNzE2NjEsLTE0LjA4OTkgMTEuMjE4NzUsLTI1LjMxMjUgOS40NjQ5NCwtMTAuNDgwOTcgMTEuOTU1NSwtMTkuMTQxNDkgNy45Mzc1LC0yNy4xMjUgMTEuMzU4MjUsLTE0LjMzNDAyIDYuMzI1NjYsLTIxLjc2MjMgMS40Njg3NSwtMjkuMjgxMjUyIDguNTE1NTMsLTE1LjY2ODM3IDEuMDAwNCwtMzIuNDY5NjcgLTIyLjc4MTI1LC0yOS42NTYyNSAtOS40NjI0LC0xNC4xMTU4MiAtMzAuMDk4NywtMTAuOTA5NjE1IC0zMy4yODEyNSwtMTAuODQzNzUgLTMuNTcwOTYsLTQuNTMwNTA2IC04LjI4NzM5LC04LjQxMjAwOCAtMjIuNzgxMjUsLTYuNTMxMjUgLTkuMzkxNjYsLTguNTAyMTg5IC0xOS44OTE3OSwtNy4wNTEzIC0zMC43MTg3NSwtMi44NzUgLTEyLjg1OTIsLTEwLjE0NzQxMyAtMjEuMzcyMjYsLTIuMDEzMjk2IC0zMS4wOTM3NSwxLjA2MjUgLTE1LjU3Mzg1LC01LjA4Nzc3OCAtMTkuMTMzMDIsMS44ODA5MDggLTI2Ljc4MTI1LDQuNzE4NzUgLTE2Ljk3NTI1LC0zLjU4ODA3NiAtMjIuMTM1Niw0LjIyMzUzMiAtMzAuMjgxMjUsMTIuNDY4NzUgbCAtOS40Njg3NSwtMC4xODc1IGMgLTI1LjYxMDU0LDE1LjA5MzExIC0zOC4zMzM3OCw0NS44MjU1MDIgLTQyLjg0Mzc1LDYxLjYyNTAwMiAtNC41MTIwNiwtMTUuODAxOTggLTE3LjIwNjQ3LC00Ni41MzQ1NDIgLTQyLjgxMjUsLTYxLjYyNTAwMiBsIC05LjQ2ODc1LDAuMTg3NSBjIC04LjE0NTY1LC04LjI0NTIxOCAtMTMuMzA2LC0xNi4wNTY4MjcgLTMwLjI4MTI1LC0xMi40Njg3NSAtNy42NDgyMywtMi44Mzc4NDIgLTExLjIwNzQsLTkuODA2NTI3IC0yNi43ODEyNSwtNC43MTg3NSAtNi4zNzk3MywtMi4wMTg0OTEgLTEyLjI0NjY3LC02LjIxNDQyOCAtMTkuMTU2MjUsLTYgeiIKICAgICBzdHlsZT0iZmlsbDojMDAwMDAwIgogICAgIGlkPSJwYXRoMzQxMiIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIiAvPgogIDxwYXRoCiAgICAgZD0ibSAyMTYuNDQzMDMsMTEwLjAxNDQ3IGMgNjcuOTQ3NjcsMzUuMDMxMzYgMTA3LjQ0Njg5LDYzLjM2ODk3IDEyOS4wODcxNyw4Ny41MDQ0NyAtMTEuMDgyMzUsNDQuNDE3NTkgLTY4Ljg5NjM4LDQ2LjQ0NDY0IC05MC4wMzU1OSw0NS4xOTg1OCA0LjMyODQyLC0yLjAxNDc0IDcuOTM5ODgsLTQuNDI3NzggOS4yMjA1MSwtOC4xMzU3NCAtNS4zMDQ0OSwtMy43Njk4MSAtMjQuMTEyODksLTAuMzk3MTkgLTM3LjI0MzYzLC03Ljc3NDE2IDUuMDQ0MDcsLTEuMDQ0OTkgNy40MDM0OCwtMi4wNjMwMiA5Ljc2Mjg5LC01Ljc4NTQyIC0xMi40MDU3MSwtMy45NTY3IC0yNS43Njg2MiwtNy4zNjY0MiAtMzMuNjI3NzUsLTEzLjkyMTE2IDQuMjQxMjUsMC4wNTI0IDguMjAxMTYsMC45NDg4IDEzLjc0MDM3LC0yLjg5MjcxIC0xMS4xMTE3LC01Ljk4ODE5IC0yMi45NjkxMSwtMTAuNzMzNTEgLTMyLjE4MTM5LC0xOS44ODczOCA1Ljc0NTIxLC0wLjE0MDYzIDExLjkzOTQ1LC0wLjA1NjggMTMuNzQwMzcsLTIuMTY5NTMgLTEwLjE3MDQ0LC02LjMwMDY4IC0xOC43NTEyNCwtMTMuMzA3ODcgLTI1Ljg1MzU5LC0yMC45NzIxNSA4LjAzOTk4LDAuOTcwNTIgMTEuNDM1MjgsMC4xMzQ3OCAxMy4zNzg3OCwtMS4yNjU1NiAtNy42ODc4LC03Ljg3NDE5IC0xNy40MTc1NiwtMTQuNTIzMTkgLTIyLjA1NjkxLC0yNC4yMjY0NCA1Ljk2OTYsMi4wNTc0OCAxMS40MzEyNSwyLjg0NTA2IDE1LjM2NzUyLC0wLjE4MDc5IC0yLjYxMjM3LC01Ljg5MzQ2IC0xMy44MDU0MiwtOS4zNjk2MiAtMjAuMjQ4OTcsLTIzLjE0MTY4IDYuMjg0MzYsMC42MDkzOCAxMi45NDk2MSwxLjM3MTExIDE0LjI4Mjc1LDAgLTIuOTIyMywtMTEuODg4NTYgLTcuOTI3NDUsLTE4LjU3MDAzMiAtMTIuODM2MzksLTI1LjQ5MjAwMiAxMy40NTAwNCwtMC4xOTk3MyAzMy44Mjc3NSwwLjA1MjMgMzIuOTA0NTcsLTEuMDg0NzcgbCAtOC4zMTY1NCwtOC40OTczMyBjIDEzLjEzNzYxLC0zLjUzNzI1IDI2LjU4MDY1LDAuNTY4MTYgMzYuMzM5NjYsMy42MTU4OCA0LjM4MTg2LC0zLjQ1NzY4IC0wLjA3NzYsLTcuODI5OTggLTUuNDIzODMsLTEyLjI5NDAxIDExLjE2NDk2LDEuNDkwNjQgMjEuMjUzODIsNC4wNTczOSAzMC4zNzM0NSw3LjU5MzM2IDQuODcyMzgsLTQuMzk5MzMgLTMuMTYzODksLTguNzk4NjYgLTcuMDUwOTgsLTEzLjE5Nzk5IDE3LjI0OTM2LDMuMjcyNTcgMjQuNTU3MTYsNy44NzA2OCAzMS44MTk4MSwxMi40NzQ4MSA1LjI2OTM1LC01LjA1MDggMC4zMDE2NiwtOS4zNDMzIC0zLjI1NDMsLTEzLjc0MDM2OSAxMy4wMDU2Niw0LjgxNzA0OSAxOS43MDQ3OCwxMS4wMzU1NDkgMjYuNzU3NTYsMTcuMTc1NDU5IDIuMzkxMTksLTMuMjI3MDUgNi4wNzQ5NCwtNS41OTI0IDEuNjI3MTUsLTEzLjM3ODc4IDkuMjM0MTYsNS4zMjI3MyAxNi4xODkyNiwxMS41OTUwNiAyMS4zMzM3NCwxOC42MjE4MiA1LjcxMzM2LC0zLjYzNzk0IDMuNDAzODcsLTguNjEzMDIgMy40MzUwOSwtMTMuMTk3OTkgOS41OTY2NSw3LjgwNjUyIDE1LjY4Njg3LDE2LjExMzk1IDIzLjE0MTY4LDI0LjIyNjQ1IDEuNTAxNjksLTEuMDkzNDQgMi44MTY2MSwtNC44MDE3MSAzLjk3NzQ3LC0xMC42NjY4NyAyMi44OTUzOSwyMi4yMTE4MTIgNTUuMjQ1OTEsNzguMTU4MjQyIDguMzE2NTQsMTAwLjM0MDg2MiAtMzkuOTE4NzcsLTMyLjk0NzE2IC04Ny42MTYxMywtNTYuODg3NTMgLTE0MC40NzcyMSwtNzQuODQ4ODYgeiIKICAgICBzdHlsZT0iZmlsbDojNzVhOTI4IgogICAgIGlkPSJwYXRoMzQxNCIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIiAvPgogIDxwYXRoCiAgICAgZD0ibSA1NzYuOTc2MDYsMTEwLjAxNDQ3IGMgLTY3Ljk0NzY3LDM1LjAzMTM2IC0xMDcuNDQ2ODksNjMuMzY4OTcgLTEyOS4wODcxNyw4Ny41MDQ0NyAxMS4wODIzNSw0NC40MTc1OSA2OC44OTYzOCw0Ni40NDQ2NCA5MC4wMzU1OSw0NS4xOTg1OCAtNC4zMjg0MiwtMi4wMTQ3NCAtNy45Mzk4OCwtNC40Mjc3OCAtOS4yMjA1MSwtOC4xMzU3NCA1LjMwNDQ5LC0zLjc2OTgxIDI0LjExMjg5LC0wLjM5NzE5IDM3LjI0MzYzLC03Ljc3NDE2IC01LjA0NDA3LC0xLjA0NDk5IC03LjQwMzQ4LC0yLjA2MzAyIC05Ljc2Mjg5LC01Ljc4NTQyIDEyLjQwNTcxLC0zLjk1NjcgMjUuNzY4NjIsLTcuMzY2NDIgMzMuNjI3NzUsLTEzLjkyMTE2IC00LjI0MTI2LDAuMDUyNCAtOC4yMDExNiwwLjk0ODggLTEzLjc0MDM3LC0yLjg5MjcxIDExLjExMTY5LC01Ljk4ODE5IDIyLjk2OTExLC0xMC43MzM1MSAzMi4xODEzOSwtMTkuODg3MzggLTUuNzQ1MjEsLTAuMTQwNjMgLTExLjkzOTQ1LC0wLjA1NjggLTEzLjc0MDM3LC0yLjE2OTUzIDEwLjE3MDQ0LC02LjMwMDY4IDE4Ljc1MTI0LC0xMy4zMDc4NyAyNS44NTM1OSwtMjAuOTcyMTUgLTguMDM5OTgsMC45NzA1MiAtMTEuNDM1MjgsMC4xMzQ3OCAtMTMuMzc4NzgsLTEuMjY1NTYgNy42ODc3OSwtNy44NzQxOSAxNy40MTc1NiwtMTQuNTIzMTkgMjIuMDU2OTEsLTI0LjIyNjQ0IC01Ljk2OTYxLDIuMDU3NDggLTExLjQzMTI1LDIuODQ1MDYgLTE1LjM2NzUyLC0wLjE4MDc5IDIuNjEyMzcsLTUuODkzNDYgMTMuODA1NDEsLTkuMzY5NjIgMjAuMjQ4OTcsLTIzLjE0MTY4IC02LjI4NDM2LDAuNjA5MzggLTEyLjk0OTYxLDEuMzcxMTEgLTE0LjI4Mjc2LDAgMi45MjIzMSwtMTEuODg4NTYgNy45Mjc0NiwtMTguNTcwMDIyIDEyLjgzNjQsLTI1LjQ5MjAwMiAtMTMuNDUwMDQsLTAuMTk5NzMgLTMzLjgyNzc1LDAuMDUyNCAtMzIuOTA0NTcsLTEuMDg0NzcgbCA4LjMxNjU0LC04LjQ5NzMzIGMgLTEzLjEzNzYyLC0zLjUzNzI1IC0yNi41ODA2NSwwLjU2ODE2IC0zNi4zMzk2NiwzLjYxNTg4IC00LjM4MTg2LC0zLjQ1NzY4IDAuMDc3NiwtNy44Mjk5OCA1LjQyMzgzLC0xMi4yOTQwMSAtMTEuMTY0OTYsMS40OTA2NCAtMjEuMjUzODIsNC4wNTczOSAtMzAuMzczNDUsNy41OTMzNiAtNC44NzIzOCwtNC4zOTkzMyAzLjE2Mzg5LC04Ljc5ODY2IDcuMDUwOTgsLTEzLjE5Nzk5IC0xNy4yNDkzNiwzLjI3MjU3IC0yNC41NTcxNiw3Ljg3MDY4IC0zMS44MTk4MSwxMi40NzQ4MSAtNS4yNjkzNSwtNS4wNTA4IC0wLjMwMTY2LC05LjM0MzMgMy4yNTQzLC0xMy43NDAzNjkgLTEzLjAwNTY2LDQuODE3MDQ5IC0xOS43MDQ3OCwxMS4wMzU1NDkgLTI2Ljc1NzU2LDE3LjE3NTQ1OSAtMi4zOTExOSwtMy4yMjcwNSAtNi4wNzQ5NCwtNS41OTI0IC0xLjYyNzE1LC0xMy4zNzg3OCAtOS4yMzQxNiw1LjMyMjczIC0xNi4xODkyNiwxMS41OTUwNiAtMjEuMzMzNzQsMTguNjIxODIgLTUuNzEzMzYsLTMuNjM3OTQgLTMuNDAzODcsLTguNjEzMDIgLTMuNDM1MDksLTEzLjE5Nzk5IC05LjU5NjY1LDcuODA2NTIgLTE1LjY4Njg3LDE2LjExMzk1IC0yMy4xNDE2OCwyNC4yMjY0NSAtMS41MDE2OSwtMS4wOTM0NCAtMi44MTY2MSwtNC44MDE3MSAtMy45Nzc0NywtMTAuNjY2ODcgLTIyLjg5NTM5LDIyLjIxMTgxMiAtNTUuMjQ1OTEsNzguMTU4MjQyIC04LjMxNjU0LDEwMC4zNDA4NjIgMzkuOTE4NzcsLTMyLjk0NzE2IDg3LjYxNjEzLC01Ni44ODc1MyAxNDAuNDc3MjEsLTc0Ljg0ODg2IHoiCiAgICAgc3R5bGU9ImZpbGw6Izc1YTkyOCIKICAgICBpZD0icGF0aDM0MTYiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gNDc4Ljk5NzUzLDU2Mi4zMTk5MyBhIDgxLjM5MDExMSw3NS4wNTE3NjIgMCAwIDEgLTE2Mi43ODAyMiwwIDgxLjM5MDExMSw3NS4wNTE3NjIgMCAxIDEgMTYyLjc4MDIyLDAgeiIKICAgICBzdHlsZT0iZmlsbDojYmMxMTQyIgogICAgIGlkPSJwYXRoMzQxOCIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIiAvPgogIDxwYXRoCiAgICAgZD0iTSAzNTAuNTA1MjEsMzQ3LjkyMTMxIEEgNzIuOTk4ODM5LDg2LjEyOTY3NCAzNC4wMzQyMjYgMCAxIDI1NS41MzczNyw0OTEuNjMzNTcgNzIuOTk4ODM5LDg2LjEyOTY3NCAzNC4wMzQyMjYgMSAxIDM1MC41MDUyMSwzNDcuOTIxMzEgWiIKICAgICBzdHlsZT0iZmlsbDojYmMxMTQyIgogICAgIGlkPSJwYXRoMzQyMCIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIiAvPgogIDxwYXRoCiAgICAgZD0iTSA0NDEuNTM3MzksMzQzLjkyMTMxIEEgODYuMTI5Njc0LDcyLjk5ODgzOSA1NS45NjU3NzQgMCAwIDUzNi41MDUyMyw0ODcuNjMzNTcgODYuMTI5Njc0LDcyLjk5ODgzOSA1NS45NjU3NzQgMSAwIDQ0MS41MzczOSwzNDMuOTIxMzEgWiIKICAgICBzdHlsZT0iZmlsbDojYmMxMTQyIgogICAgIGlkPSJwYXRoMzQyMiIKICAgICBpbmtzY2FwZTpjb25uZWN0b3ItY3VydmF0dXJlPSIwIiAvPgogIDxwYXRoCiAgICAgZD0ibSAxODEuOTYxNDQsMzg0LjA0NjY5IGMgMzYuNDE0MjIsLTkuNzU2OTIgMTIuMjkxNTksMTUwLjYzNjUxIC0xNy4zMzMzOCwxMzcuNDc1NzcgLTMyLjU4Njc3LC0yNi4yMTI2OCAtNDMuMDgzMDcsLTEwMi45NzU0MyAxNy4zMzMzOCwtMTM3LjQ3NTc3IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MjQiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gNjAyLjcyOTQ3LDM4Mi4wNDY2OSBjIC0zNi40MTQyMiwtOS43NTY5MiAtMTIuMjkxNiwxNTAuNjM2NTEgMTcuMzMzMzgsMTM3LjQ3NTc3IDMyLjU4Njc3LC0yNi4yMTI2OCA0My4wODMwNywtMTAyLjk3NTQzIC0xNy4zMzMzOCwtMTM3LjQ3NTc3IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MjYiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gNDc5LjAyMjc3LDI2Mi42MTIyOSBjIDYyLjgzNDg2LC0xMC42MTAxMyAxMTUuMTE1OTQsMjYuNzIyMjkgMTEzLjAxMTM4LDk0Ljg1Nzk2IC0yLjA2NjkzLDI2LjEyMTEyIC0xMzYuMTU4NzIsLTkwLjk2OTA3IC0xMTMuMDExMzgsLTk0Ljg1Nzk2IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MjgiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gMzA1LjQxMDk0LDI2MC42MTIyOSBjIC02Mi44MzQ4NiwtMTAuNjEwMTMgLTExNS4xMTU5NCwyNi43MjIyOSAtMTEzLjAxMTM4LDk0Ljg1Nzk2IDIuMDY2OTMsMjYuMTIxMTIgMTM2LjE1ODcyLC05MC45NjkwNyAxMTMuMDExMzgsLTk0Ljg1Nzk2IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MzAiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gMzk1LjY3MDUxLDI0NC43MTQ1NyBjIC0zNy41MDI1OSwtMC45NzU0OCAtNzMuNDk1NDgsMjcuODM0MTggLTczLjU4MTU4LDQ0LjU0NDQzIC0wLjEwNDYyLDIwLjMwNDI2IDI5LjY1MTIsNDEuMDkyNjYgNzMuODM3MjYsNDEuNjIwMzUgNDUuMTIzMDUsMC4zMjMyMSA3My45MTU2MSwtMTYuNjQwNDkgNzQuMDYxMSwtMzcuNTk0MDkgMC4xNjQ4NCwtMjMuNzM5OTYgLTQxLjAzODc5LC00OC45Mzc0NCAtNzQuMzE2NzgsLTQ4LjU3MDY5IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MzIiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gMzk3Ljk2MDU2LDY2MS4wNzU2NCBjIDMyLjY5NzQ0LC0xLjQyNzExIDc2LjU3MDgzLDEwLjUzMTk2IDc2LjY1NjgsMjYuMzk1OTggMC41NDI3LDE1LjQwNTIgLTM5Ljc4OTY5LDUwLjIxMDU1IC03OC44MjYzNCw0OS41Mzc2NSAtNDAuNDI3MjksMS43NDM5MSAtODAuMDY5MDgsLTMzLjExNTU5IC03OS41NDk1MSwtNDUuMTk4NTkgLTAuNjA1MDYsLTE3LjcxNTkzIDQ5LjIyNiwtMzEuNTQ3OTYgODEuNzE5MDUsLTMwLjczNTA0IHoiCiAgICAgc3R5bGU9ImZpbGw6I2JjMTE0MiIKICAgICBpZD0icGF0aDM0MzQiCiAgICAgaW5rc2NhcGU6Y29ubmVjdG9yLWN1cnZhdHVyZT0iMCIgLz4KICA8cGF0aAogICAgIGQ9Im0gMjc3LjE4OTkzLDU2Ny4wNjI1OCBjIDIzLjI3OTEsMjguMDQ1NzMgMzMuODkwNjYsNzcuMzE4OTkgMTQuNDYzNTUsOTEuODQzNTMgLTE4LjM3OTE3LDExLjA4Nzg0IC02My4wMTIyOCw2LjUyMTYyIC05NC43MzYyNCwtMzkuMDUxNTcgLTIxLjM5NTA1LC0zOC4yNDE2OCAtMTguNjM3NTgsLTc3LjE1NjYzIC0zLjYxNTg5LC04OC41ODkyNCAyMi40NjQ0MywtMTMuNjg0MjkgNTcuMTczNDMsNC43OTkwMiA4My44ODg1OCwzNS43OTcyOCB6IgogICAgIHN0eWxlPSJmaWxsOiNiYzExNDIiCiAgICAgaWQ9InBhdGgzNDM2IgogICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiIC8+CiAgPHBhdGgKICAgICBkPSJtIDUxNC4wNzIwOSw1NTguMTcwNjYgYyAtMjUuMTg2ODIsMjkuNTAxNjUgLTM5LjIxMjI3LDgzLjMwOTUxIC0yMC44Mzc4NSwxMDAuNjQyOCAxNy41NjgyOCwxMy40NjM2MSA2NC43MjkyLDExLjU4MTYyIDk5LjU2NTY2LC0zNi43NTU3NCAyNS4yOTU5OSwtMzIuNDY0NzEgMTYuODIwMTMsLTg2LjY4MjI1IDIuMzcwNzcsLTEwMS4wNzUxMSAtMjEuNDY0MDgsLTE2LjYwMjEzIC01Mi4yNzY5MSw0LjY0NDg5IC04MS4wOTg1OCwzNy4xODgwNSB6IgogICAgIHN0eWxlPSJmaWxsOiNiYzExNDIiCiAgICAgaWQ9InBhdGgzNDM4IgogICAgIGlua3NjYXBlOmNvbm5lY3Rvci1jdXJ2YXR1cmU9IjAiIC8+Cjwvc3ZnPgo='
++
++/**
++ * Class for the Raspberry Pi GPIO blocks in Scratch 3.0
++ * @constructor
++ */
++class Scratch3PiGPIOBlocks {
++    /**
++     * @return {string} - the name of this extension.
++     */
++    static get EXTENSION_NAME () {
++        return 'Raspberry Pi GPIO';
++    }
++
++    /**
++     * @return {string} - the ID of this extension.
++     */
++    static get EXTENSION_ID () {
++        return 'pigpio';
++    }
++    
++    constructor (runtime) {
++        /**
++         * The runtime instantiating this block package.
++         * @type {Runtime}
++         */
++        this.runtime = runtime;
++    }
++
++
++    /**
++     * @returns {object} metadata for this extension and its blocks.
++     */
++    getInfo () {
++        return {
++            id: Scratch3PiGPIOBlocks.EXTENSION_ID,
++            name: Scratch3PiGPIOBlocks.EXTENSION_NAME,
++            blockIconURI: blockIconURI,
++            blocks: [
++                {
++                    opcode: 'when_gpio',
++                    text: formatMessage({
++                        id: 'pigpio.when_gpio',
++                        default: 'when gpio [GPIO] is [HILO]',
++                        description: 'when the gpio is in the specified state'
++                    }),
++                    blockType: BlockType.HAT,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'hilo',
++                            defaultValue: 'high'
++                        }
++                    }
++                },
++                {
++                    opcode: 'get_gpio',
++                    text: formatMessage({
++                        id: 'pigpio.get_gpio',
++                        default: 'gpio [GPIO] is [HILO] ?',
++                        description: 'is the gpio in the specified state?'
++                    }),
++                    blockType: BlockType.BOOLEAN,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'hilo',
++                            defaultValue: 'high'
++                        }
++                    }
++                },
++                {
++                    opcode: 'set_gpio',
++                    text: formatMessage({
++                        id: 'pigpio.set_gpio',
++                        default: 'set gpio [GPIO] to output [HILO]',
++                        description: 'set the gpio as output to the specified state'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'hilo',
++                            defaultValue: 'high'
++                        }
++                    }
++                },
++                {
++                    opcode: 'set_pull',
++                    text: formatMessage({
++                        id: 'pigpio.set_pull',
++                        default: 'set gpio [GPIO] to input [PULL]',
++                        description: 'set the gpio as input pulled up or down'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        PULL: {
++                            type: ArgumentType.STRING,
++                            menu: 'pull',
++                            defaultValue: 'high'
++                        }
++                    }
++                },
++            ],
++            menus: {
++                gpios: {
++                    acceptReporters: true,
++                    items: ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
++                },
++                hilo: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pigpio.high',
++                                default: 'high',
++                                description: 'logic state high'
++                            }),
++                            value: 'high'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pigpio.low',
++                                default: 'low',
++                                description: 'logic state low'
++                            }),
++                            value: 'low'
++                        }
++                    ]
++                },
++                pull: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pigpio.pull_high',
++                                default: 'pulled high',
++                                description: 'pulled high'
++                            }),
++                            value: 'high'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pigpio.pull_low',
++                                default: 'pulled low',
++                                description: 'pulled low'
++                            }),
++                            value: 'low'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pigpio.pull_none',
++                                default: 'not pulled',
++                                description: 'not pulled'
++                            }),
++                            value: 'none'
++                        }
++                    ]
++                }
++            }
++        };
++    }
++
++    // Get pin state (leave pin as input/output)
++    when_gpio (args)
++    {
++        const pin = Cast.toNumber (args.GPIO);
++        const val = Cast.toString (args.HILO);
++        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
++
++        binary = 0
++        if(val == 'high') 
++            binary = 1
++
++        return state == binary
++    }
++
++    // Get pin state (leave pin as input/output)
++    get_gpio (args)
++    {
++        const pin = Cast.toNumber (args.GPIO);
++        const val = Cast.toString (args.HILO);
++        state = gpio.get(pin,-1,-1) // Get state of pin, leave pin as input/output, leave pull state
++    
++        binary = 0
++        if(val == 'high') 
++            binary = 1
++
++        return state == binary
++    }
++
++    // Set pin as output and set drive
++    set_gpio (args)
++    {
++        drive = 0
++        if(Cast.toString(args.HILO) == "high")
++            drive = 1;
++
++        gpio.set(Cast.toNumber(args.GPIO),drive);   
++    }
++
++    // Set pin as input, and set pull paramter
++    set_pull (args)
++    {
++        const pin = Cast.toNumber (args.GPIO);
++        const val = Cast.toString (args.PULL);
++
++        let op = 2;
++        if (val == 'low') op = 1;
++        if (val == 'none') op = 0;
++
++        gpio.pull(pin,op);
++    }
++
++}
++
++module.exports = Scratch3PiGPIOBlocks;
+diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pisensehat/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pisensehat/index.js
+new file mode 100644
+index 0000000..7db91a0
+--- /dev/null
++++ b/node_modules/scratch-vm/src/extensions/scratch3_pisensehat/index.js
+@@ -0,0 +1,1068 @@
++const formatMessage = require('format-message');
++const ArgumentType = require('../../extension-support/argument-type');
++const BlockType = require('../../extension-support/block-type');
++const Cast = require('../../util/cast');
++const fs = window.require('fs');
++const cp = window.require('child_process');
++
++/**
++ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
++ * @type {string}
++ */
++// eslint-disable-next-line max-len
++const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6IzM1N2M1Mzt9LmNscy0ye2ZpbGw6IzMzMzt9LmNscy0ze2ZpbGw6I2ZmZjt9LmNscy00e2ZpbGw6I2M4YzhjODt9LmNscy01e2ZpbGw6IzczNjM1Nzt9LmNscy02e2ZpbGw6I2Q5YWM1Mzt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlNlbnNlIEhBVCBTY3JhdGNoIEljb248L3RpdGxlPjxnIGlkPSJMYXllcl8xIiBkYXRhLW5hbWU9IkxheWVyIDEiPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTk2LDhINGE0LDQsMCwwLDAtNCw0VjMzYTIsMiwwLDAsMCwyLDJINi4xNWEyLDIsMCwwLDEsMiwyVjYzYTIsMiwwLDAsMS0yLDJIMmEyLDIsMCwwLDAtMiwyVjg4YTQsNCwwLDAsMCw0LDRIOTZhNCw0LDAsMCwwLDQtNFYxMkE0LDQsMCwwLDAsOTYsOFpNNS41LDkwQTMuNSwzLjUsMCwxLDEsOSw4Ni41LDMuNSwzLjUsMCwwLDEsNS41LDkwWm0wLTczQTMuNSwzLjUsMCwxLDEsOSwxMy41LDMuNSwzLjUsMCwwLDEsNS41LDE3Wm04OSw3M0EzLjUsMy41LDAsMSwxLDk4LDg2LjUsMy41LDMuNSwwLDAsMSw5NC41LDkwWm0wLTczQTMuNSwzLjUsMCwxLDEsOTgsMTMuNSwzLjUsMy41LDAsMCwxLDk0LjUsMTdaIi8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSIxMCIgeT0iMTAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI3Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxMSIgeT0iMjEiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjE0IiBjeT0iMjQiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjEyIiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iMTIiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSIxNiIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjE2IiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iMjAiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSIyMCIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjI0IiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iMjQiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSIyOCIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjI4IiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iMzIiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSIzMiIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjM2IiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iMzYiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI0MCIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjQwIiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNDQiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI0NCIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjQ4IiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNDgiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI1MiIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjUyIiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNTYiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI1NiIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjYwIiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNjAiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI2NCIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjY0IiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNjgiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI2OCIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9IjcyIiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iNzIiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI3NiIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9Ijc2IiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iODAiIHk9IjExIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI4MCIgeT0iMTUiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9Ijg0IiB5PSIxMSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtNSIgeD0iODQiIHk9IjE1IiB3aWR0aD0iMSIgaGVpZ2h0PSIxIi8+PHJlY3QgY2xhc3M9ImNscy01IiB4PSI4OCIgeT0iMTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiLz48cmVjdCBjbGFzcz0iY2xzLTUiIHg9Ijg4IiB5PSIxNSIgd2lkdGg9IjEiIGhlaWdodD0iMSIvPjxyZWN0IGNsYXNzPSJjbHMtMiIgeD0iMzMiIHk9IjgwIiB3aWR0aD0iOSIgaGVpZ2h0PSI5Ii8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSI4MiIgeT0iMjciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiLz48cmVjdCBjbGFzcz0iY2xzLTIiIHg9IjY5IiB5PSIyNSIgd2lkdGg9IjciIGhlaWdodD0iMTEiLz48cmVjdCBjbGFzcz0iY2xzLTIiIHg9IjcwIiB5PSI0NyIgd2lkdGg9IjYiIGhlaWdodD0iNCIvPjxyZWN0IGNsYXNzPSJjbHMtMiIgeD0iOTEiIHk9IjQ1IiB3aWR0aD0iNCIgaGVpZ2h0PSI0Ii8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSI5MCIgeT0iNTQiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiLz48cmVjdCBjbGFzcz0iY2xzLTIiIHg9Ijc4IiB5PSI2MiIgd2lkdGg9IjciIGhlaWdodD0iNSIvPjxyZWN0IGNsYXNzPSJjbHMtNCIgeD0iNzUuNiIgeT0iNzYuNjkiIHdpZHRoPSIxMC43NiIgaGVpZ2h0PSIxMC43NiIgcng9IjIuMTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0zNC4zMSA4MS4zKSByb3RhdGUoLTQ1KSIvPjxjaXJjbGUgY2xhc3M9ImNscy0yIiBjeD0iODEiIGN5PSI4MiIgcj0iMyIvPjxwYXRoIGNsYXNzPSJjbHMtNiIgZD0iTTk0LjUsMThBNC41LDQuNSwwLDEsMCw5MCwxMy41LDQuNDksNC40OSwwLDAsMCw5NC41LDE4Wm0wLTYuNzVhMi4yNSwyLjI1LDAsMSwxLTIuMjUsMi4yNUEyLjI1LDIuMjUsMCwwLDEsOTQuNSwxMS4yNVoiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjE4IiB5PSIyMSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjEiIGN5PSIyNCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMjUiIHk9IjIxIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIyOCIgY3k9IjI0IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzMiIgeT0iMjEiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjM1IiBjeT0iMjQiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSIyMSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDIiIGN5PSIyNCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDYiIHk9IjIxIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI0OSIgY3k9IjI0IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI1MyIgeT0iMjEiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjU2IiBjeT0iMjQiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjYwIiB5PSIyMSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNjMiIGN5PSIyNCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTEiIHk9IjI4IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIxNCIgY3k9IjMxIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOCIgeT0iMjgiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjIxIiBjeT0iMzEiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjI1IiB5PSIyOCIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjgiIGN5PSIzMSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMzIiIHk9IjI4IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIzNSIgY3k9IjMxIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iMjgiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjQyIiBjeT0iMzEiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjQ2IiB5PSIyOCIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDkiIGN5PSIzMSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTMiIHk9IjI4IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI1NiIgY3k9IjMxIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI2MCIgeT0iMjgiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjYzIiBjeT0iMzEiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjExIiB5PSIzNSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMTQiIGN5PSIzOCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTgiIHk9IjM1IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIyMSIgY3k9IjM4IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIyNSIgeT0iMzUiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjI4IiBjeT0iMzgiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjMyIiB5PSIzNSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMzUiIGN5PSIzOCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMzkiIHk9IjM1IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI0MiIgY3k9IjM4IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI0NiIgeT0iMzUiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjQ5IiBjeT0iMzgiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjUzIiB5PSIzNSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNTYiIGN5PSIzOCIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNjAiIHk9IjM1IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI2MyIgY3k9IjM4IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxMSIgeT0iNDIiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjE0IiBjeT0iNDUiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjE4IiB5PSI0MiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjEiIGN5PSI0NSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMjUiIHk9IjQyIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIyOCIgY3k9IjQ1IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzMiIgeT0iNDIiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjM1IiBjeT0iNDUiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI0MiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDIiIGN5PSI0NSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDYiIHk9IjQyIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI0OSIgY3k9IjQ1IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI1MyIgeT0iNDIiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjU2IiBjeT0iNDUiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjYwIiB5PSI0MiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNjMiIGN5PSI0NSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTEiIHk9IjQ5IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIxNCIgY3k9IjUyIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOCIgeT0iNDkiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjIxIiBjeT0iNTIiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjI1IiB5PSI0OSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjgiIGN5PSI1MiIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMzIiIHk9IjQ5IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIzNSIgY3k9IjUyIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNDkiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjQyIiBjeT0iNTIiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjQ2IiB5PSI0OSIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDkiIGN5PSI1MiIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTMiIHk9IjQ5IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI1NiIgY3k9IjUyIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI2MCIgeT0iNDkiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjYzIiBjeT0iNTIiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjExIiB5PSI1NiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMTQiIGN5PSI1OSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTgiIHk9IjU2IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIyMSIgY3k9IjU5IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIyNSIgeT0iNTYiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjI4IiBjeT0iNTkiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjMyIiB5PSI1NiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMzUiIGN5PSI1OSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMzkiIHk9IjU2IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI0MiIgY3k9IjU5IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI0NiIgeT0iNTYiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjQ5IiBjeT0iNTkiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjUzIiB5PSI1NiIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNTYiIGN5PSI1OSIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNjAiIHk9IjU2IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI2MyIgY3k9IjU5IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxMSIgeT0iNjMiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjE0IiBjeT0iNjYiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjE4IiB5PSI2MyIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjEiIGN5PSI2NiIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMjUiIHk9IjYzIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIyOCIgY3k9IjY2IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzMiIgeT0iNjMiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjM1IiBjeT0iNjYiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjM5IiB5PSI2MyIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDIiIGN5PSI2NiIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNDYiIHk9IjYzIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI0OSIgY3k9IjY2IiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI1MyIgeT0iNjMiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjU2IiBjeT0iNjYiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjYwIiB5PSI2MyIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNjMiIGN5PSI2NiIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMTEiIHk9IjcwIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIxNCIgY3k9IjczIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIxOCIgeT0iNzAiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjIxIiBjeT0iNzMiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjI1IiB5PSI3MCIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iMjgiIGN5PSI3MyIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iMzIiIHk9IjcwIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSIzNSIgY3k9IjczIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIzOSIgeT0iNzAiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjQyIiBjeT0iNzMiIHI9IjIuNzUiLz48cmVjdCBjbGFzcz0iY2xzLTMiIHg9IjQ2IiB5PSI3MCIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPjxjaXJjbGUgY2xhc3M9ImNscy00IiBjeD0iNDkiIGN5PSI3MyIgcj0iMi43NSIvPjxyZWN0IGNsYXNzPSJjbHMtMyIgeD0iNTMiIHk9IjcwIiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+PGNpcmNsZSBjbGFzcz0iY2xzLTQiIGN4PSI1NiIgY3k9IjczIiByPSIyLjc1Ii8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSI2MCIgeT0iNzAiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz48Y2lyY2xlIGNsYXNzPSJjbHMtNCIgY3g9IjYzIiBjeT0iNzMiIHI9IjIuNzUiLz48cGF0aCBjbGFzcz0iY2xzLTYiIGQ9Ik01LjUsMThBNC41LDQuNSwwLDEsMCwxLDEzLjUsNC40OSw0LjQ5LDAsMCwwLDUuNSwxOFptMC02Ljc1QTIuMjUsMi4yNSwwLDEsMSwzLjI1LDEzLjUsMi4yNSwyLjI1LDAsMCwxLDUuNSwxMS4yNVoiLz48cGF0aCBjbGFzcz0iY2xzLTYiIGQ9Ik05NC41LDkxQTQuNSw0LjUsMCwxLDAsOTAsODYuNSw0LjQ5LDQuNDksMCwwLDAsOTQuNSw5MVptMC02Ljc1YTIuMjUsMi4yNSwwLDEsMS0yLjI1LDIuMjVBMi4yNSwyLjI1LDAsMCwxLDk0LjUsODQuMjVaIi8+PHBhdGggY2xhc3M9ImNscy02IiBkPSJNNS41LDkxQTQuNSw0LjUsMCwxLDAsMSw4Ni41LDQuNDksNC40OSwwLDAsMCw1LjUsOTFabTAtNi43NUEyLjI1LDIuMjUsMCwxLDEsMy4yNSw4Ni41LDIuMjUsMi4yNSwwLDAsMSw1LjUsODQuMjVaIi8+PC9nPjwvc3ZnPg=='
++
++/**
++ * Class for the SenseHAT blocks in Scratch 3.0
++ * @constructor
++ */
++class Scratch3PiSenseHatBlocks {
++    /**
++     * @return {string} - the name of this extension.
++     */
++    static get EXTENSION_NAME () {
++        return 'Raspberry Pi Sense HAT';
++    }
++
++    /**
++     * @return {string} - the ID of this extension.
++     */
++    static get EXTENSION_ID () {
++        return 'pisensehat';
++    }
++
++    constructor (runtime) {
++        /**
++         * The runtime instantiating this block package.
++         * @type {Runtime}
++         */
++        this.runtime = runtime;
++
++        // set up canvases for scaling graphics to display on the matrix
++        this.bigCanvas = document.createElement('canvas');
++        this.bigCanvas.width = 480 * 2;
++        this.bigCanvas.height = 360 * 2;
++        this.bigCtx = this.bigCanvas.getContext('2d');
++        this.bigCtx.imageSmoothingEnabled = true;
++        this.bigCtx.imageSmoothingQuality = 'high';
++
++        this.smallCanvas = document.createElement('canvas');
++        this.smallCanvas.width = 8;
++        this.smallCanvas.height = 8;
++        this.smallCtx = this.smallCanvas.getContext('2d');
++        this.smallCtx.imageSmoothingEnabled = true;
++        this.smallCtx.imageSmoothingQuality = 'high';
++
++        // global colours
++        this._fg = [255, 255, 255];
++        this._bg = [0, 0, 0];
++
++        // global rotation
++        this._orient = 0;
++
++        // movement timeout
++        this._moved = 0;
++        this._movtim = 0;
++
++        // tilt triggered
++        this._xtilt = 0;
++        this._ytilt = 0;
++
++        this._imu = [0,0,0,0,0,0,0,0,0];
++
++        // find the framebuffer on the SenseHAT
++        this.fbfile = "";
++        var fbtest = 0;
++        while (1)
++        {
++            var fname = "/sys/class/graphics/fb" + fbtest.toString () + "/name";
++            if (fs.existsSync (fname))
++            {
++                var data = fs.readFileSync (fname, 'utf8');
++                if (data.indexOf ('RPi-Sense FB') != -1)
++                {
++                    this.fbfile = "/dev/fb" + fbtest.toString ();
++
++                    const read = cp.spawn ("RTIMUCLI");
++
++                    read.stdout.on ('data', (readd) => {
++                        const str = String.fromCharCode.apply (null, readd);
++                        this._imu = str.split (":");
++                    });
++
++                    break;
++                }
++            }
++            else
++            {
++                // fall back to the emulator if possible
++                cp.spawn ("sense_emu_gui");
++                this.fbfile = "/dev/shm/rpi-sense-emu-screen";
++                break;
++            }
++            fbtest++;
++        }
++    }
++
++    /**
++     * @returns {object} metadata for this extension and its blocks.
++     */
++    getInfo () {
++        return {
++            id: Scratch3PiSenseHatBlocks.EXTENSION_ID,
++            name: Scratch3PiSenseHatBlocks.EXTENSION_NAME,
++            blockIconURI: blockIconURI,
++            blocks: [
++                {
++                    opcode: 'scroll_message',
++                    text: formatMessage({
++                        id: 'pisensehat.scroll_message',
++                        default: 'display text [MESSAGE]',
++                        description: 'scroll message across in foreground colour'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        MESSAGE: {
++                            type: ArgumentType.STRING,
++                            defaultValue: 'Hello!'
++                        }
++                    }
++                },
++                {
++                    opcode: 'show_letter',
++                    text: formatMessage({
++                        id: 'pisensehat.show_letter',
++                        default: 'display character [LETTER]',
++                        description: 'show letter in foreground colour'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        LETTER: {
++                            type: ArgumentType.STRING,
++                            defaultValue: 'A'
++                        },
++                    }
++                },
++                {
++                    opcode: 'display_symbol',
++                    text: formatMessage({
++                        id: 'pisensehat.display_symbol',
++                        default: 'display [MATRIX]',
++                        description: 'display a pattern on the LEDs'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        MATRIX: {
++                            type: ArgumentType.MATRIX8,
++                            defaultValue: '0110011001111110001111000011110001111110011111100011110000011000'
++                        }
++                    }
++                },
++                {
++                    opcode: 'display_sprite',
++                    text: formatMessage({
++                        id: 'pisensehat.display_sprite',
++                        default: 'display sprite',
++                        description: 'display the current sprite on the LED matrix'
++                    }),
++                    blockType: BlockType.COMMAND
++                },
++                {
++                    opcode: 'display_stage',
++                    text: formatMessage({
++                        id: 'pisensehat.display_stage',
++                        default: 'display stage',
++                        description: 'display the stage on the LED matrix'
++                    }),
++                    blockType: BlockType.COMMAND
++                },
++                {
++                    opcode: 'all_off',
++                    text: formatMessage({
++                        id: 'pisensehat.all_off',
++                        default: 'clear display',
++                        description: 'turn off all LEDs'
++                    }),
++                    blockType: BlockType.COMMAND
++                },
++                {
++                    opcode: 'set_fg',
++                    text: formatMessage({
++                        id: 'pisensehat.set_fg',
++                        default: 'set colour to [COLOUR]',
++                        description: 'set foreground colour from colour picker'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        COLOUR: {
++                            type: ArgumentType.COLOR
++                        }
++                    }
++                },
++                {
++                    opcode: 'set_bg',
++                    text: formatMessage({
++                        id: 'pisensehat.set_bg',
++                        default: 'set background to [COLOUR]',
++                        description: 'set background colour from colour picker'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        COLOUR: {
++                            type: ArgumentType.COLOR
++                        }
++                    }
++                },
++                {
++                    opcode: 'set_pixel',
++                    text: formatMessage({
++                        id: 'pisensehat.set_pixel',
++                        default: 'set pixel x [X] y [Y] to [COLOUR]',
++                        description: 'set pixel from colour picker'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        X: {
++                            type: ArgumentType.STRING,
++                            menu: 'coords',
++                            defaultValue: '0'
++                        },
++                        Y: {
++                            type: ArgumentType.STRING,
++                            menu: 'coords',
++                            defaultValue: '0'
++                        },
++                        COLOUR: {
++                            type: ArgumentType.COLOR
++                        }
++                    }
++                },
++                {
++                    opcode: 'set_orient',
++                    text: formatMessage({
++                        id: 'pisensehat.set_orient',
++                        default: 'set rotation to [ROT] degrees',
++                        description: 'set rotation of LED matrix'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        ROT: {
++                            type: ArgumentType.STRING,
++                            menu: 'rots',
++                            defaultValue: '0'
++                        }
++                    }
++                },
++                '---',
++                {
++                    opcode: 'when_joystick',
++                    text: formatMessage({
++                        id: 'pisensehat.when_joystick',
++                        default: 'when joystick pushed [STICK]',
++                        description: 'when the joystick is pushed'
++                    }),
++                    blockType: BlockType.HAT,
++                    arguments: {
++                        STICK: {
++                            type: ArgumentType.STRING,
++                            menu: 'stick',
++                            defaultValue: 'up arrow'
++                        }
++                    }
++                },
++                {
++                    opcode: 'joystick_pushed',
++                    text: formatMessage({
++                        id: 'pisensehat.joystick_pushed',
++                        default: 'joystick pushed [STICK] ?',
++                        description: 'is the joystick pushed?'
++                    }),
++                    blockType: BlockType.BOOLEAN,
++                    arguments: {
++                        STICK: {
++                            type: ArgumentType.STRING,
++                            menu: 'stick',
++                            defaultValue: 'up arrow'
++                        }
++                    }
++                },
++                {
++                    opcode: 'when_moved',
++                    text: formatMessage({
++                        id: 'pisensehat.when_moved',
++                        default: 'when shaken',
++                        description: 'when the SenseHAT is shaken'
++                    }),
++                    blockType: BlockType.HAT
++                },
++                {
++                    opcode: 'when_tilted',
++                    text: formatMessage({
++                        id: 'pisensehat.when_tilted',
++                        default: 'when tilted [TILT]',
++                        description: 'when the SenseHAT is tilted'
++                    }),
++                    blockType: BlockType.HAT,
++                    arguments: {
++                        TILT: {
++                            type: ArgumentType.STRING,
++                            menu: 'tilt',
++                            defaultValue: 'forward'
++                        }
++                    }
++                },
++                '---',
++                {
++                    opcode: 'get_temp',
++                    text: formatMessage({
++                        id: 'pisensehat.get_temp',
++                        default: 'temperature',
++                        description: 'gets temperature'
++                    }),
++                    blockType: BlockType.REPORTER
++                },
++                {
++                    opcode: 'get_press',
++                    text: formatMessage({
++                        id: 'pisensehat.get_press',
++                        default: 'pressure',
++                        description: 'gets pressure'
++                    }),
++                    blockType: BlockType.REPORTER
++                },
++                {
++                    opcode: 'get_humid',
++                    text: formatMessage({
++                        id: 'pisensehat.get_humid',
++                        default: 'humidity',
++                        description: 'gets humidity'
++                    }),
++                    blockType: BlockType.REPORTER
++                },
++                {
++                    opcode: 'get_ox',
++                    text: formatMessage({
++                        id: 'pisensehat.get_ox',
++                        default: 'roll',
++                        description: 'gets roll'
++                    }),
++                    blockType: BlockType.REPORTER
++                },
++                {
++                    opcode: 'get_oy',
++                    text: formatMessage({
++                        id: 'pisensehat.get_oy',
++                        default: 'pitch',
++                        description: 'gets pitch'
++                    }),
++                    blockType: BlockType.REPORTER
++                },
++                {
++                    opcode: 'get_oz',
++                    text: formatMessage({
++                        id: 'pisensehat.get_oz',
++                        default: 'yaw',
++                        description: 'gets yaw'
++                    }),
++                    blockType: BlockType.REPORTER
++                }
++            ],
++            menus: {
++                coords: {
++                    acceptReporters: true,
++                    items: ['0','1','2','3','4','5','6','7']
++                },
++                rots: {
++                    items: ['0', '90', '180', '270']
++                },
++                stick: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.jup',
++                                default: 'up',
++                                description: 'joystick up'
++                            }),
++                            value: 'up arrow'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.jdown',
++                                default: 'down',
++                                description: 'joystick down'
++                            }),
++                            value: 'down arrow'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.jleft',
++                                default: 'left',
++                                description: 'joystick left'
++                            }),
++                            value: 'left arrow'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.jright',
++                                default: 'right',
++                                description: 'joystick right'
++                            }),
++                            value: 'right arrow'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.jcentre',
++                                default: 'centre',
++                                description: 'joystick centre'
++                            }),
++                            value: 'enter'
++                        }
++                    ]
++                },
++                tilt: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.forward',
++                                default: 'forward',
++                                description: 'tilt forward'
++                            }),
++                            value: 'forward'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.backward',
++                                default: 'backward',
++                                description: 'tilt backward'
++                            }),
++                            value: 'backward'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.left',
++                                default: 'left',
++                                description: 'tilt left'
++                            }),
++                            value: 'left'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pisensehat.right',
++                                default: 'right',
++                                description: 'tilt right'
++                            }),
++                            value: 'right'
++                        }
++                    ]
++                }
++            }
++        };
++    }
++
++    get_temp ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (20);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-pressure", "r");
++            fs.readSync (fd, data, 0, 20, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 20);
++            return Number((view.getInt16 (16, true) / 480) + 37).toFixed (2);
++        }
++        else return Number (this._imu[4]);
++    };
++
++    get_press ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (20);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-pressure", "r");
++            fs.readSync (fd, data, 0, 20, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 20);
++            return Number (view.getInt32 (12, true) / 4096).toFixed (2);
++        }
++        else return Number (this._imu[3]);
++    };
++
++    get_humid ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (28);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-humidity", "r");
++            fs.readSync (fd, data, 0, 28, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 28);
++            return Number (view.getInt16 (22, true) / 256).toFixed (2);
++        }
++        else return Number (this._imu[5]);
++    };
++
++    get_ox ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (56);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-imu", "r");
++            fs.readSync (fd, data, 0, 56, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 56);
++            return Number (view.getInt16 (50, true) >= 0 ? view.getInt16 (50, true) * 360 / 32768 : 360 + (view.getInt16 (50, true) * 360 / 32768)).toFixed (2);
++        }
++        else return Number (this._imu[0]);
++    };
++
++    get_oy ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (56);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-imu", "r");
++            fs.readSync (fd, data, 0, 56, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 56);
++            return Number (view.getInt16 (52, true) >= 0 ? view.getInt16 (52, true) * 360 / 32768 : 360 + (view.getInt16 (52, true) * 360 / 32768)).toFixed (2);
++        }
++        else return Number (this._imu[1]);
++    };
++
++    get_oz ()
++    {
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (56);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-imu", "r");
++            fs.readSync (fd, data, 0, 56, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 56);
++            return Number (view.getInt16 (54, true) >= 0 ? view.getInt16 (54, true) * 360 / 32768 : 360 + (view.getInt16 (54, true) * 360 / 32768)).toFixed (2);
++        }
++        else return Number (this._imu[2]);
++    };
++
++    _pixel_remap (pos)
++    {
++        const x = pos % 8;
++        const y = (pos - x) / 8;
++
++        if (this._orient == 90)
++            return (x * 8 + (7 - y));
++        else if (this._orient == 180)
++            return (63 - (y * 8 + x));
++        else if (this._orient == 270)
++            return ((7 - x) * 8 + y);
++        else
++            return pos;
++    }
++
++    set_pixel (args)
++    {
++        const x = Cast.toNumber (args.X);
++        const y = Cast.toNumber (args.Y);
++
++        if (x >= 0 && x <= 7 && y >= 0 && y <= 7)
++        {
++            const colour = Cast.toRgbColorList (args.COLOUR);
++            const val = (Math.trunc (colour[2] / 32) * 1024) + (Math.trunc (colour[0] / 32) * 32) + Math.trunc (colour[1] / 32);
++
++            let pix = new Uint8Array (2);
++            pix[0] = val / 256;
++            pix[1] = val % 256;
++
++            const pos = this._pixel_remap ((y * 8) + x);
++
++            const fd = fs.openSync (this.fbfile, "r+");
++            fs.writeSync (fd, pix, 0, 2, pos * 2);
++            fs.closeSync (fd);
++        }
++    }
++
++    display_symbol (args)
++    {
++        const symbol = Cast.toString(args.MATRIX).replace(/\s/g, '');
++        const valf = (Math.trunc (this._fg[2] / 32) * 1024) + (Math.trunc (this._fg[0] / 32) * 32) + Math.trunc (this._fg[1] / 32);
++        const valb = (Math.trunc (this._bg[2] / 32) * 1024) + (Math.trunc (this._bg[0] / 32) * 32) + Math.trunc (this._bg[1] / 32);
++
++        let pix = new Uint8Array (128);
++        for (count = 0; count < 64; count++)
++        {
++            if (symbol.charAt (count) == '1') val = valf;
++            else val = valb;
++
++            const pos = this._pixel_remap (count);
++            pix[pos * 2] = val / 256;
++            pix[pos * 2 + 1] = val % 256;
++        }
++
++        const fd = fs.openSync (this.fbfile, "r+");
++        fs.writeSync (fd, pix, 0, 128, 0);
++        fs.closeSync (fd);
++    }
++
++    display_stage ()
++    {
++      this.runtime.renderer.draw();
++      const gl = this.runtime.renderer._gl;
++
++      const xOffset = (gl.canvas.width - gl.canvas.height) / 2;
++      this.smallCtx.drawImage(gl.canvas, xOffset, 0, gl.canvas.height, gl.canvas.height, 0, 0, 8, 8);
++      const matrixImageData = this.smallCtx.getImageData(0, 0, 8, 8);
++
++      this._displayImageData(matrixImageData);
++
++      this.smallCtx.clearRect(0, 0, this.smallCanvas.width, this.smallCanvas.height);
++
++      // Yield for a frame
++      return Promise.resolve();
++    }
++
++    display_sprite (args, util) {
++      const drawable = this.runtime.renderer.extractDrawable(util.target.drawableID, util.target.x, util.target.y);
++      if ((drawable.width < 1) || (drawable.height < 1)) return;
++
++      // fit the sprite in a square
++      let xOffset = 0;
++      let yOffset = 0;
++      let squareSize = 0;
++      if (drawable.width > drawable.height) {
++          squareSize = drawable.width;
++          yOffset = (drawable.width - drawable.height) / 2;
++      } else {
++          squareSize = drawable.height;
++          xOffset = (drawable.height - drawable.width) / 2;
++      }
++
++      const imageData = this.bigCtx.createImageData(drawable.width, drawable.height);
++      imageData.data.set(drawable.data);
++      this.bigCtx.putImageData(imageData, xOffset, yOffset);
++      this.smallCtx.drawImage(this.bigCanvas,
++          0, 0, squareSize, squareSize,
++          0, 0, 8, 8);
++      const matrixImageData = this.smallCtx.getImageData(0, 0, 8, 8);
++
++      this._displayImageData(matrixImageData);
++
++      this.smallCtx.clearRect(0, 0, this.smallCanvas.width, this.smallCanvas.height);
++      this.bigCtx.clearRect(0, 0, this.bigCanvas.width, this.bigCanvas.height);
++
++      // Yield for a frame
++      return Promise.resolve();
++    }
++
++    _displayImageData (imageData) {
++      let pix = new Uint8Array (128);
++      for (let count = 0; count < 64; count++)
++      {
++        const r = imageData.data[count * 4];
++        const g = imageData.data[(count * 4) + 1];
++        const b = imageData.data[(count * 4) + 2];
++
++        const val = (Math.trunc (b / 32) * 1024) + (Math.trunc (r / 32) * 32) + Math.trunc (g / 32);
++
++        const pos = this._pixel_remap (count);
++        pix[pos * 2] = val / 256;
++        pix[pos * 2 + 1] = val % 256;
++      }
++
++      const fd = fs.openSync (this.fbfile, "r+");
++      fs.writeSync (fd, pix, 0, 128, 0);
++      fs.closeSync (fd);
++    }
++
++    _all_pixels (val)
++    {
++        let pix = new Uint8Array (128);
++        let count = 0;
++        while (count < 64)
++        {
++            pix[count * 2] = val / 256;
++            pix[count * 2 + 1] = val % 256;
++            count++;
++        }
++        const fd = fs.openSync (this.fbfile, "r+");
++        fs.writeSync (fd, pix, 0, 128, 0);
++        fs.closeSync (fd);
++    }
++
++    all_off ()
++    {
++        this._all_pixels (0);
++    }
++
++    set_fg (args)
++    {
++        const colour = Cast.toRgbColorList(args.COLOUR);
++        this._fg[0] = colour[0];
++        this._fg[1] = colour[1];
++        this._fg[2] = colour[2];
++    }
++
++    set_bg (args)
++    {
++        const colour = Cast.toRgbColorList(args.COLOUR);
++        this._bg[0] = colour[0];
++        this._bg[1] = colour[1];
++        this._bg[2] = colour[2];
++        const val = (Math.trunc (this._bg[2] / 32) * 1024) + (Math.trunc (this._bg[0] / 32) * 32) + Math.trunc (this._bg[1] / 32);
++
++        this._all_pixels (val)
++    }
++
++    set_orient (args)
++    {
++        const orient = Cast.toNumber(args.ROT);
++        this._orient = orient;
++    }
++
++    _map_orient (pos, orient)
++    {
++        if (orient == 0)
++        {
++            let x = pos % 8;
++            let y = (pos - x) / 8;
++            if (x > 5) return 48;
++            else return ((x * 1) + 1) * 8 - 1 - (y * 1);
++        }
++        else if (orient == 90)
++        {
++            if (pos < 48) return pos;
++            else return 48;
++        }
++        else if (orient == 180)
++        {
++            let x = pos % 8;
++            let y = (pos - x) / 8;
++            if (x < 2) return 48;
++            else return (7 - (x * 1)) * 8 + (y * 1);
++        }
++        else if (orient == 270)
++        {
++            if (pos > 16) return 63 - pos;
++            else return 48;
++        }
++        return 48;
++    }
++
++    _load_letter (lett)
++    {
++        const dict = " +-*/!\"#$><0123456789.=)(ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz?,;:|@%[&_']\\~"
++        let lgr = new Uint8Array (80);
++        let inv = 90 - dict.indexOf (lett);
++        if (inv > 90) inv = 90;
++        const fd = fs.openSync ('/usr/lib/scratch3/sense_hat_text.bmp', 'r');
++        for (count = 0; count < 5; count++)
++            fs.readSync (fd, lgr, count * 16, 16, 3098 + inv * 80 + (64 - count * 16));
++        fs.closeSync (fd);
++        return lgr;
++    }
++
++    _letter (lett, orient, valf, valb)
++    {
++        let pix = new Uint8Array (128);
++        const lgr = this._load_letter (lett);
++        for (count = 0; count < 64; count++)
++        {
++            const map = this._map_orient (count, orient);
++            if (map > 7 && map < 48 && lgr[(map - 8) * 2] == 0xFF) val = valf;
++            else val = valb;
++            pix[count * 2] = val / 256;
++            pix[count * 2 + 1] = val % 256;
++        }
++        const fd = fs.openSync (this.fbfile, "r+");
++        fs.writeSync (fd, pix, 0, 128, 0);
++        fs.closeSync (fd);
++    };
++
++    show_letter (args)
++    {
++        const lett = Cast.toString(args.LETTER);
++        const valf = (Math.trunc (this._fg[2] / 32) * 1024) + (Math.trunc (this._fg[0] / 32) * 32) + Math.trunc (this._fg[1] / 32);
++        const valb = (Math.trunc (this._bg[2] / 32) * 1024) + (Math.trunc (this._bg[0] / 32) * 32) + Math.trunc (this._bg[1] / 32);
++
++        if (lett.length != 1) return;
++        this._letter (lett, this._orient, valf, valb);
++    }
++
++    _message (message, orient, valf, valb)
++    {
++        let pix = new Uint8Array (128);
++        let char_ind = 0;
++        let lett_ind = 0;
++        const pix0 = valf / 256;
++        const pix1 = valf % 256;
++        const bg0 = valb / 256;
++        const bg1 = valb % 256;
++
++        // clear the grid to off and output
++        for (pel = 0; pel < 64; pel++)
++        {
++            pix[pel*2] = bg0;
++            pix[pel*2 + 1] = bg1;
++        }
++        const fd = fs.openSync (this.fbfile, "r+");
++        fs.writeSync (fd, pix, 0, 128, 0);
++        fs.closeSync (fd);
++
++        for (lett_ind = 0; lett_ind < message.length + 2; lett_ind++)
++        {
++            const lgrid = this._load_letter (message[lett_ind]);
++            for (char_ind = 0; char_ind < 6; char_ind++)
++            {
++                // scroll the grid
++                for (col = 0; col < 7; col++)
++                {
++                    for (row = 0; row < 8; row++)
++                    {
++                        if (orient == 0)
++                        {
++                            // from right to left
++                            pix[(row * 16) + (col * 2)] = pix[(row * 16) + (col + 1) * 2];
++                            pix[(row * 16) + (col * 2) + 1] = pix[(row * 16) + (col + 1) * 2 + 1];
++                        }
++                        else if (orient == 90)
++                        {
++                            // from the bottom up
++                            pix[(col * 16) + (row * 2)] = pix[((col + 1) * 16) + (row * 2)];
++                            pix[(col * 16) + (row * 2) + 1] = pix[((col + 1) * 16) + (row * 2) + 1];
++                        }
++                        else if (orient == 180)
++                        {
++                            // from left to right inverted
++                            pix[(row * 16) + ((7 - col) * 2)] = pix[(row * 16) + (6 - col) * 2];
++                            pix[(row * 16) + ((7 - col) * 2) + 1] = pix[(row * 16) + (6 - col) * 2 + 1];
++                        }
++                        else if (orient == 270)
++                        {
++                            // from the top down
++                            pix[((7 - col) * 16) + (row * 2)] = pix[((6 - col) * 16) + (row * 2)];
++                            pix[((7 - col) * 16) + (row * 2) + 1] = pix[((6 - col) * 16) + (row * 2) + 1];
++                        }
++                    }
++                }
++
++                // add the new line of pixels
++                for (row = 0; row < 8; row++)
++                {
++                    if (orient == 0)
++                    {
++                        if (char_ind > 5)
++                        {
++                            pix[(row * 16) + 14] = bg0;
++                            pix[(row * 16) + 15] = bg1;
++                        }
++                        else if (lgrid[char_ind * 16 + (14 - row * 2)] == 0xFF)
++                        {
++                            pix[(row * 16) + 14] = pix0;
++                            pix[(row * 16) + 15] = pix1;
++                        }
++                        else
++                        {
++                            pix[(row * 16) + 14] = bg0;
++                            pix[(row * 16) + 15] = bg1;
++                        }
++                    }
++                    else if (orient == 90)
++                    {
++                        if (char_ind > 5)
++                        {
++                            pix[112 + (14 - row * 2)] = bg0;
++                            pix[113 + (14 - row * 2)] = bg1;
++                        }
++                        else if (lgrid[char_ind * 16 + (14 - row * 2)] == 0xFF)
++                        {
++                            pix[112 + (14 - row * 2)] = pix0;
++                            pix[113 + (14 - row * 2)] = pix1;
++                        }
++                        else
++                        {
++                            pix[112 + (14 - row * 2)] = bg0;
++                            pix[113 + (14 - row * 2)] = bg1;
++                        }
++                    }
++                    else if (orient == 180)
++                    {
++                        if (char_ind > 5)
++                        {
++                            pix[((7 - row) * 16)] = bg0;
++                            pix[((7 - row) * 16) + 1] = bg1;
++                        }
++                        else if (lgrid[char_ind * 16 + (14 - row * 2)] == 0xFF)
++                        {
++                            pix[((7 - row) * 16)] = pix0;
++                            pix[((7 - row) * 16) + 1] = pix1;
++                        }
++                        else
++                        {
++                            pix[((7 - row) * 16)] = bg0;
++                            pix[((7 - row) * 16) + 1] = bg1;
++                        }
++                    }
++                    else if (orient == 270)
++                    {
++                        if (char_ind > 5)
++                        {
++                            pix[row * 2] = bg0;
++                            pix[row * 2 + 1] = bg1;
++                        }
++                        else if (lgrid[char_ind * 16 + (14 - row * 2)] == 0xFF)
++                        {
++                            pix[row * 2] = pix0;
++                            pix[row * 2 + 1] = pix1;
++                        }
++                        else
++                        {
++                            pix[row * 2] = bg0;
++                            pix[row * 2 + 1] = bg1;
++                        }
++                    }
++                }
++
++                // output the buffer
++                const fd = fs.openSync (this.fbfile, "r+");
++                fs.writeSync (fd, pix, 0, 128, 0);
++                fs.closeSync (fd);
++
++                // pause for a bit
++                const start = new Date().getTime();
++                for (i = 0; i < 1e7; i++)
++                {
++                    if ((new Date().getTime() - start) > 100) break;
++                }
++            }
++        }
++    }
++
++    scroll_message (args)
++    {
++        const message = Cast.toString (args.MESSAGE);
++        const valf = (Math.trunc (this._fg[2] / 32) * 1024) + (Math.trunc (this._fg[0] / 32) * 32) + Math.trunc (this._fg[1] / 32);
++        const valb = (Math.trunc (this._bg[2] / 32) * 1024) + (Math.trunc (this._bg[0] / 32) * 32) + Math.trunc (this._bg[1] / 32);
++
++        this._message (message, this._orient, valf, valb);
++    }
++
++    when_joystick (args, util)
++    {
++        return util.ioQuery('keyboard', 'getKeyIsDown', [args.STICK]);
++    }
++
++    joystick_pushed (args, util)
++    {
++        return util.ioQuery('keyboard', 'getKeyIsDown', [args.STICK]);
++    }
++
++    _unlock_move (obj)
++    {
++        obj._moved = 0;
++        obj._movtim = 0;
++    }
++
++    when_moved ()
++    {
++        let x = 0;
++        let y = 0;
++        let z = 0;
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (56);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-imu", "r");
++            fs.readSync (fd, data, 0, 56, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 56);
++            x = Number (view.getInt16 (32, true) * 8 / 32768);
++            y = Number (view.getInt16 (34, true) * 8 / 32768);
++            z = Number (view.getInt16 (36, true) * 8 / 32768);
++        }
++        else
++        {
++            x = Number (this._imu[6]);
++            y = Number (this._imu[7]);
++            z = Number (this._imu[8]);
++        }
++
++        const targ = 1.6 * 1.6;
++        const mag = x * x + y * y + z * z;
++        if (mag > targ)
++        {
++            if (this._movtim != 0) clearTimeout (this._movtim);
++            this._movtim = setTimeout (this._unlock_move, 500, this);
++            if (this._moved == 0)
++            {
++                this._moved = 1;
++                return true;
++            }
++        }
++        return false;
++    }
++
++    when_tilted (args)
++    {
++        const tilt = Cast.toString (args.TILT);
++
++        let x = 0;
++        let y = 0;
++        if (this.fbfile == "/dev/shm/rpi-sense-emu-screen")
++        {
++            let data = new Uint8Array (56);
++            const fd = fs.openSync ("/dev/shm/rpi-sense-emu-imu", "r");
++            fs.readSync (fd, data, 0, 56, 0);
++            fs.closeSync (fd);
++            const view = new DataView (data.buffer, 0, 56);
++            x = view.getInt16 (50, true) * 360 / 32768;
++            y = view.getInt16 (52, true) * 360 / 32768;
++        }
++        else
++        {
++            x = Number (this._imu[0]);
++            y = Number (this._imu[1]);
++            if (x > 180.0) x -= 360.0;
++            if (y > 180.0) y -= 360.0;
++        }
++
++        let dir = 0;
++        if (tilt === "forward") dir = 1;
++        else if (tilt === "right") dir = 2;
++        else if (tilt === "backward") dir = 3;
++        else if (tilt === "left") dir = 4;
++
++        if (this._orient == 90) dir += 1;
++        else if (this._orient == 180) dir += 2;
++        else if (this._orient == 270) dir += 3;
++        if (dir > 4) dir -= 4;
++
++        let x_tilt = 0;
++        if (x < -15 && x > -90) x_tilt = 1;
++        if (x > 15 && x < 90) x_tilt = -1;
++
++        let y_tilt = 0;
++        if (y < -15 && y > -90) y_tilt = 1;
++        if (y > 15 && y < 90) y_tilt = -1;
++
++        if (this._xtilt != x_tilt)
++        {
++            if ((dir == 1 && x_tilt == 1) || (dir == 3 && x_tilt == -1))
++            {
++                this._xtilt = x_tilt;
++                return true;
++            }
++            if (x_tilt == 0) this._xtilt = x_tilt;
++        }
++
++        if (this._ytilt != y_tilt)
++        {
++            if ((dir == 2 && y_tilt == 1) || (dir == 4 && y_tilt == -1))
++            {
++                this._ytilt = y_tilt;
++                return true;
++            }
++            if (y_tilt == 0) this._ytilt = y_tilt;
++        }
++
++        return false;
++     }
++}
++
++module.exports = Scratch3PiSenseHatBlocks;
+diff --git a/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
+new file mode 100644
+index 0000000..3f493d9
+--- /dev/null
++++ b/node_modules/scratch-vm/src/extensions/scratch3_pivsgpio/index.js
+@@ -0,0 +1,240 @@
++const formatMessage = require('format-message');
++const ArgumentType = require('../../extension-support/argument-type');
++const BlockType = require('../../extension-support/block-type');
++const Cast = require('../../util/cast');
++const path = window.require('path');
++const gpio = window.require(path.join(__static,'gpiolib.node'))
++
++/**
++ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
++ * @type {string}
++ */
++// eslint-disable-next-line max-len
++const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2YxNWEyNDt9LmNscy0ye2ZpbGw6I2M4YzhjODt9LmNscy0ze2ZpbGw6I2VkMWMyNDt9LmNscy00e2ZpbGw6IzE1OGU2ODt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlNpbXBsZSBFbGVjdHJvbmljcyBTY3JhdGNoIEljb24gTEVEPC90aXRsZT48ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIj48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zMC41NiwxOS40NFY1MEg1Mi43OFYxOS40NEExMS4xMiwxMS4xMiwwLDAsMCw0MS42Nyw4LjMzaDBBMTEuMTEsMTEuMTEsMCwwLDAsMzAuNTYsMTkuNDRaIi8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSIzMS4yNSIgeT0iNTAiIHdpZHRoPSI2LjI1IiBoZWlnaHQ9IjQxLjY3Ii8+PHJlY3QgY2xhc3M9ImNscy0yIiB4PSI0NS44MyIgeT0iNTAiIHdpZHRoPSI2LjI1IiBoZWlnaHQ9IjMzLjMzIi8+PHJlY3QgY2xhc3M9ImNscy0zIiB4PSIyOS4xNyIgeT0iNDEuNjciIHdpZHRoPSIyNSIgaGVpZ2h0PSI4LjMzIi8+PHBhdGggY2xhc3M9ImNscy00IiBkPSJNODkuNTEsNzQuNjhsLS4yMi0uMzlhNC45MSw0LjkxLDAsMCwwLTIuODYtNC44MmMuNDctLjEyLjk1LS4yMiwxLjA4LS44LjgtLjIsMS0uNTcsMS0xLC4yMS0uMTQuOTEtLjUyLjg0LTEuMTlhMSwxLDAsMCwwLC41LTEuMDljLjQyLS40Ni41My0uODMuMzUtMS4xOEEuODcuODcsMCwwLDAsOTAuMzIsNjNjLjM4LS42NywwLTEuNC0xLTEuMjgtLjQyLS42MS0xLjM0LS40Ny0xLjQ4LS40Ny0uMTYtLjItLjM3LS4zNi0xLS4yOGExLjI0LDEuMjQsMCwwLDAtMS4zNy0uMTNjLS41Ny0uNDQtMS0uMDktMS4zOSwwLS42OS0uMjItLjg1LjA4LTEuMTkuMi0uNzYtLjE1LTEsLjE5LTEuMzUuNTRoLS40MmE0LjY2LDQuNjYsMCwwLDAtMS45MSwyLjY3LDQuNzYsNC43NiwwLDAsMC0xLjkxLTIuNjdoLS40M2MtLjM2LS4zNS0uNTktLjY5LTEuMzUtLjU0LS4zNC0uMTItLjUtLjQyLTEuMTktLjJhMi42NywyLjY3LDAsMCwwLS44Ni0uMjZoMGEuODguODgsMCwwLDAtLjUzLjIxLDEuMjQsMS4yNCwwLDAsMC0xLjM3LjEzYy0uNjUtLjA4LS44Ni4wOC0xLC4yOC0uMTUsMC0xLjA3LS4xNC0xLjQ5LjQ3LTEuMDYtLjEyLTEuNC42MS0xLDEuMjhhLjg4Ljg4LDAsMCwwLC4wNywxLjI3Yy0uMTguMzUtLjA3LjcyLjM1LDEuMThhMSwxLDAsMCwwLC41LDEuMDljLS4wNy42Ny42MywxLjA2Ljg0LDEuMTkuMDguMzkuMjUuNzYsMSwxLC4xMy41OC42Mi42OCwxLjA4LjhhNC44OSw0Ljg5LDAsMCwwLTIuODUsNC44MmwtLjIzLjM5QTQuNjgsNC42OCwwLDAsMCw2OCw4MS44MSwxMy4xNSwxMy4xNSwwLDAsMCw2OC42Myw4NCw1LjI2LDUuMjYsMCwwLDAsNzIsODguMTJhMTEuNCwxMS40LDAsMCwwLDMuMjEsMS43Nyw1LjQ0LDUuNDQsMCwwLDAsNCwxLjcyaC4wNmE1LjQyLDUuNDIsMCwwLDAsMy45NC0xLjcyLDExLjI2LDExLjI2LDAsMCwwLDMuMjEtMS43N0E1LjI3LDUuMjcsMCwwLDAsODkuNzEsODRhMTMuMTgsMTMuMTgsMCwwLDAsLjY3LTIuMTRBNC42OCw0LjY4LDAsMCwwLDg5LjUxLDc0LjY4Wm0tMS4zNi0uNDhjLS4wOSwxLjEzLTYuMDctMy45NC01LTQuMTFDODUuOTEsNjkuNjMsODguMjUsNzEuMjUsODguMTUsNzQuMlptLTIuNjQsNS42NGEzLjY2LDMuNjYsMCwwLDEtNC44NC0xLjM4LDMuMzksMy4zOSwwLDAsMSwuNi00Ljg0QTMuNjcsMy42NywwLDAsMSw4Ni4xMiw3NSwzLjQsMy40LDAsMCwxLDg1LjUxLDc5Ljg0Wk04MS4zNCw2Mi4zOGEuODQuODQsMCwwLDAsLjE4LjQ2LDkuMiw5LjIsMCwwLDEsMS0xLjA1YzAsLjItLjEuNDIuMTUuNTdhMywzLDAsMCwxLDEtLjhjLS4yLjM0LDAsLjQ0LjA3LjU4YTMuMzksMy4zOSwwLDAsMSwxLjE5LS43NWMtLjE2LjE5LS4zOC4zOC0uMTQuNmEzLjQ3LDMuNDcsMCwwLDEsMS40Mi0uNTRjLS4xOC4xOS0uNTQuMzgtLjMyLjU3YTYuNjEsNi42MSwwLDAsMSwxLjM2LS4zM2MtLjI0LjE5LS40NC4zOC0uMjUuNTNhMywzLDAsMCwxLDEuNjItLjE1bC0uMzcuMzZhMTAuNDYsMTAuNDYsMCwwLDAsMS40NywwLDIuODgsMi44OCwwLDAsMC0uNTcsMS4xMWMuMDYuMDYuMzYsMCwuNjQsMC0uMjkuNTktLjc5Ljc0LS45MSwxYS43NS43NSwwLDAsMCwuNjksMCw0LjY2LDQuNjYsMCwwLDEtMSwxLjA1Yy4wOS4wNi4yNC4wOS42LDBhNS42Myw1LjYzLDAsMCwxLTEuMTUuOTFjLjA4LjA5LjM1LjA5LjYxLjA5YTUuNzksNS43OSwwLDAsMS0xLjQzLjg2Ljg1Ljg1LDAsMCwwLC42MS4xMyw0Ljk0LDQuOTQsMCwwLDEtMS41LjYuNTMuNTMsMCwwLDAsLjQzLjI1Yy0uNTguMzItMS40Mi4xOC0xLjY2LjM0YS43My43MywwLDAsMCwuNDEuMzVjLS45NC4wNi0zLjUyLDAtNC0yYTIwLjQ5LDIwLjQ5LDAsMCwxLDUuNzYtMy43OUExOS44NSwxOS44NSwwLDAsMCw4MSw2Ni43M0M3OC44OCw2NS43Nyw4MC4zMiw2My4zNCw4MS4zNCw2Mi4zOFptLTIuMTEsNi45NGgwYzEuNDgsMCwzLjMyLDEuMDcsMy4zMSwyLjFzLTEuMjksMS42NC0zLjMsMS42My0zLjMtLjkyLTMuMjktMS44Uzc3LjU1LDY5LjI4LDc5LjIzLDY5LjMyWm0tNy41Ni0uNzhhLjU1LjU1LDAsMCwwLC40NC0uMjUsNC45NCw0Ljk0LDAsMCwxLTEuNS0uNi44NS44NSwwLDAsMCwuNjEtLjEzLDUuNzksNS43OSwwLDAsMS0xLjQzLS44NmMuMjUsMCwuNTMsMCwuNjEtLjA5YTUuMzcsNS4zNywwLDAsMS0xLjE1LS45MWMuMzYsMCwuNTEsMCwuNTksMGE0Ljg0LDQuODQsMCwwLDEtMS0xLjA1Ljc1Ljc1LDAsMCwwLC42OSwwYy0uMTItLjI2LS42Mi0uNDEtLjkxLTEsLjI4LDAsLjU4LjA2LjY0LDBhMi44OCwyLjg4LDAsMCwwLS41Ny0xLjExLDEzLjI0LDEzLjI0LDAsMCwwLDEuNDYsMGwtLjM3LS4zN2EzLDMsMCwwLDEsMS42Mi4xNWMuMi0uMTUsMC0uMzQtLjI0LS41M2E2LjYxLDYuNjEsMCwwLDEsMS4zNi4zM2MuMjEtLjE5LS4xNC0uMzgtLjMyLS41N2EzLjQ3LDMuNDcsMCwwLDEsMS40Mi41NGMuMjQtLjIyLDAtLjQxLS4xNC0uNmEzLjM5LDMuMzksMCwwLDEsMS4xOS43NWMuMTEtLjE0LjI3LS4yNC4wNy0uNThhMywzLDAsMCwxLDEsLjhjLjI1LS4xNS4xNS0uMzcuMTUtLjU3YTkuMiw5LjIsMCwwLDEsMSwxLjA1Yy4wNywwLC4xMy0uMjEuMTgtLjQ2LDEsMSwyLjQ2LDMuMzkuMzcsNC4zNWExOS42OCwxOS42OCwwLDAsMC02LjI2LTMuMjQsMjAuNTIsMjAuNTIsMCwwLDEsNS43NSwzLjc4Yy0uNDksMS45My0zLjA3LDItNCwyYS43Mi43MiwwLDAsMCwuNDItLjM1QzczLjEsNjguNzIsNzIuMjYsNjguODYsNzEuNjcsNjguNTRaTTc1LjM3LDcwYzEsLjE3LTUsNS4yNC01LDQuMTFDNzAuMjMsNzEuMTYsNzIuNTYsNjkuNTUsNzUuMzcsNzBaTTY5LDgxLjMyYTMuNjksMy42OSwwLDAsMSwuNzctNkM3MS40MSw3NC45NCw3MC4zNCw4MS44OSw2OSw4MS4zMlptNS41OCw1Ljk0Yy0uODIuNDgtMi44MS4yOC00LjIyLTEuNjktMS0xLjY2LS44My0zLjM1LS4xNi0zLjg0LDEtLjU5LDIuNTUuMjEsMy43NCwxLjU1Uzc1LjQ3LDg2LjYzLDc0LjYsODcuMjZaTTczLDgwYTMuMzksMy4zOSwwLDAsMS0uNjEtNC44NCwzLjY2LDMuNjYsMCwwLDEsNC44NC0xLjM4LDMuMzksMy4zOSwwLDAsMSwuNjEsNC44NEEzLjY2LDMuNjYsMCwwLDEsNzMsODBabTYuMjgsMTAuNjNjLTEuOC4wOC0zLjU3LTEuNDMtMy41NS0yLDAtLjc2LDIuMi0xLjM2LDMuNjUtMS4zM3MzLjQxLjQ2LDMuNDIsMS4xNVM4MSw5MC42Nyw3OS4yNiw5MC42NFptMy42MS03LjU3YTMuNjUsMy42NSwwLDAsMS03LjI2LDB2MGEzLjY1LDMuNjUsMCwwLDEsNy4yNiwwWm01LjA2LDIuNTljLTEuNTYsMi4xLTMuNjYsMi4xOC00LjQ1LDEuNTktLjgyLS43NS0uMTktMy4wOC45My00LjM2aDBjMS4yOS0xLjQsMi42Ni0yLjMzLDMuNjItMS42MUEzLjkyLDMuOTIsMCwwLDEsODcuOTMsODUuNjZabTEuNC00LjQzYy0xLjMyLjU3LTIuNC02LjM4LS43Ny02QTMuNywzLjcsMCwwLDEsODkuMzMsODEuMjNaIi8+PHBvbHlnb24gY2xhc3M9ImNscy00IiBwb2ludHM9IjcxLjE4IDYzLjQ4IDcxLjE5IDYzLjQ5IDcxLjE4IDYzLjQ4IDcxLjE4IDYzLjQ4Ii8+PHBvbHlnb24gY2xhc3M9ImNscy00IiBwb2ludHM9Ijg3LjIzIDYzLjQ4IDg3LjIzIDYzLjQ4IDg3LjI0IDYzLjQ4IDg3LjIzIDYzLjQ4Ii8+PC9nPjwvc3ZnPg=='
++
++/**
++ * Class for the Raspberry Pi GPIO blocks in Scratch 3.0
++ * @constructor
++ */
++class Scratch3PiVSGPIOBlocks {
++    /**
++     * @return {string} - the name of this extension.
++     */
++    static get EXTENSION_NAME () {
++        return 'Raspberry Pi Simple Electronics';
++    }
++
++    /**
++     * @return {string} - the ID of this extension.
++     */
++    static get EXTENSION_ID () {
++        return 'pivsgpio';
++    }
++    
++    constructor (runtime) {
++        /**
++         * The runtime instantiating this block package.
++         * @type {Runtime}
++         */
++        this.runtime = runtime;
++    }
++
++
++    /**
++     * @returns {object} metadata for this extension and its blocks.
++     */
++    getInfo () {
++        return {
++            id: Scratch3PiVSGPIOBlocks.EXTENSION_ID,
++            name: Scratch3PiVSGPIOBlocks.EXTENSION_NAME,
++            blockIconURI: blockIconURI,
++            blocks: [
++                {
++                    opcode: 'when_gpio',
++                    text: formatMessage({
++                        id: 'pivsgpio.when_gpio',
++                        default: 'when button [GPIO] is [HILO]',
++                        description: 'when the button is in the specified state'
++                    }),
++                    blockType: BlockType.HAT,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'pressed',
++                            defaultValue: 'pressed'
++                        }
++                    }
++                },
++                {
++                    opcode: 'get_gpio',
++                    text: formatMessage({
++                        id: 'pivsgpio.get_gpio',
++                        default: 'button [GPIO] is [HILO] ?',
++                        description: 'is the button in the specified state?'
++                    }),
++                    blockType: BlockType.BOOLEAN,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'pressed',
++                            defaultValue: 'pressed'
++                        }
++                    }
++                },
++                { 
++                    opcode: 'set_gpio',
++                    text: formatMessage({
++                        id: 'pivsgpio.set_gpio',
++                        default: 'turn LED [GPIO] [HILO]',
++                        description: 'set the LED to the specified state'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        },
++                        HILO: {
++                            type: ArgumentType.STRING,
++                            menu: 'onoff',
++                            defaultValue: 'on'
++                        }
++                    }
++                },
++                { 
++                    opcode: 'toggle_gpio',
++                    text: formatMessage({
++                        id: 'pivsgpio.toggle_gpio',
++                        default: 'toggle LED [GPIO]',
++                        description: 'change the state of the LED'
++                    }),
++                    blockType: BlockType.COMMAND,
++                    arguments: {
++                        GPIO: {
++                            type: ArgumentType.STRING,
++                            menu: 'gpios',
++                            defaultValue: '0'
++                        }
++                    }
++                },
++            ],
++            menus: {
++                gpios: {
++                    acceptReporters: true,
++                    items: ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25','26','27']
++                },
++                pressed: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pivsgpio.pressed',
++                                default: 'pressed',
++                                description: 'button pressed'
++                            }),
++                            value: 'pressed'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pivsgpio.released',
++                                default: 'released',
++                                description: 'button released'
++                            }),
++                            value: 'released'
++                        }
++                    ]
++                },
++                onoff: {
++                    items: [
++                        {
++                            text: formatMessage({
++                                id: 'pivsgpio.on',
++                                default: 'on',
++                                description: 'LED on'
++                            }),
++                            value: 'on'
++                        },
++                        {
++                            text: formatMessage({
++                                id: 'pivsgpio.off',
++                                default: 'off',
++                                description: 'LED off'
++                            }),
++                            value: 'off'
++                        }
++                    ]
++                }
++            }
++        };
++    }
++
++    // Get pin state (set pin as input)    
++    when_gpio (args)
++    {
++        const pin = Cast.toNumber (args.GPIO);
++        const val = Cast.toString (args.HILO);
++
++        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++
++        if (state == 1)
++        {
++            if (val == 'released') return true;
++            else return false;
++        }
++        else
++        {
++            if (val == 'pressed') return true;
++            else return false;
++        }
++    }
++
++    // Get pin state (set pin as input)    
++    get_gpio (args)
++    {
++        const pin = Cast.toNumber (args.GPIO);
++        const val = Cast.toString (args.HILO);
++
++        state = gpio.get(pin,0,2) // Get state of pin, set pin as input, make pull up
++
++        if (state == 1)
++        {
++            if (val == 'released') return true;
++            else return false;
++        }
++        else
++        {
++            if (val == 'pressed') return true;
++            else return false;
++        }
++    }
++
++    // Set pin as output and set drive
++    set_gpio (args)
++    {
++        if(Cast.toString(args.HILO) == "on")
++            drive = 1;
++        else
++            drive = 0;
++
++        gpio.set(Cast.toNumber(args.GPIO),drive);        
++    }
++
++    // Toggle output pin state
++    toggle_gpio (args)
++    {
++        gpio.toggle(Cast.toNumber(args.GPIO));
++    }
++
++}
++
++module.exports = Scratch3PiVSGPIOBlocks;
