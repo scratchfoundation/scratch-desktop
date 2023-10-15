@@ -1,0 +1,96 @@
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx b/node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx
+index ba18b91..b2ffb2a 100644
+--- a/node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx
++++ b/node_modules/scratch-gui/src/lib/libraries/extensions/index.jsx
+@@ -19,6 +19,15 @@ import translateInsetIconURL from './translate/translate-small.png';
+ import makeymakeyIconURL from './makeymakey/makeymakey.png';
+ import makeymakeyInsetIconURL from './makeymakey/makeymakey-small.svg';
+ 
++import pigpioIconURL from './pigpio/pigpio.png';
++import pigpioInsetIconURL from './pigpio/pigpio-small.svg';
++
++import pisensehatIconURL from './pisensehat/pisensehat.png';
++import pisensehatInsetIconURL from './pisensehat/pisensehat-small.svg';
++
++import pivsgpioIconURL from './pivsgpio/pivsgpio.png';
++import pivsgpioInsetIconURL from './pivsgpio/pivsgpio-small.svg';
++
+ import microbitIconURL from './microbit/microbit.png';
+ import microbitInsetIconURL from './microbit/microbit-small.svg';
+ import microbitConnectionIconURL from './microbit/microbit-illustration.svg';
+@@ -166,6 +175,51 @@ export default [
+         ),
+         featured: true
+     },
++{
++        name: 'Raspberry Pi GPIO',
++        extensionId: 'pigpio',
++        collaborator: 'Raspberry Pi',
++        iconURL: pigpioIconURL,
++        insetIconURL: pigpioInsetIconURL,
++        description: (
++            <FormattedMessage
++                defaultMessage="Control Raspberry Pi GPIO lines"
++                description="Description for the 'Pi GPIO' extension"
++                id="gui.extension.pigpio.description"
++            />
++        ),
++        featured: true
++    },
++    {
++        name: 'Raspberry Pi Sense HAT',
++        extensionId: 'pisensehat',
++        collaborator: 'Raspberry Pi',
++        iconURL: pisensehatIconURL,
++        insetIconURL: pisensehatInsetIconURL,
++        description: (
++            <FormattedMessage
++                defaultMessage="Control Raspberry Pi Sense HAT"
++                description="Description for the 'Pi Sense HAT' extension"
++                id="gui.extension.pisensehat.description"
++            />
++        ),
++        featured: true
++    },
++    {
++        name: 'Raspberry Pi Simple Electronics',
++        extensionId: 'pivsgpio',
++        collaborator: 'Raspberry Pi',
++        iconURL: pivsgpioIconURL,
++        insetIconURL: pivsgpioInsetIconURL,
++        description: (
++            <FormattedMessage
++                defaultMessage="Simple electronics with Raspberry Pi"
++                description="Description for the 'Pi Simple Electronics' extension"
++                id="gui.extension.pivsgpio.description"
++            />
++        ),
++        featured: true
++    },
+     {
+         name: 'micro:bit',
+         extensionId: 'microbit',
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio-small.svg b/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio-small.svg
+new file mode 100644
+index 0000000..cf13aec
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio-small.svg differ
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio.png b/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio.png
+new file mode 100644
+index 0000000..b0ec083
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pigpio/pigpio.png differ
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat-small.svg b/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat-small.svg
+new file mode 100644
+index 0000000..3f5314f
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat-small.svg differ
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat.png b/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat.png
+new file mode 100644
+index 0000000..d57f79f
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pisensehat/pisensehat.png differ
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio-small.svg b/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio-small.svg
+new file mode 100644
+index 0000000..d67a282
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio-small.svg differ
+diff --git a/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio.png b/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio.png
+new file mode 100644
+index 0000000..995fafe
+Binary files /dev/null and b/node_modules/scratch-gui/src/lib/libraries/extensions/pivsgpio/pivsgpio.png differ
