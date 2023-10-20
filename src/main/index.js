@@ -470,6 +470,7 @@ const initialProjectDataPromise = (async () => {
         const projectData = await promisify(fs.readFile)(projectPath, null);
         return projectData;
     } catch (e) {
+        return;
         dialog.showMessageBox(_windows.main, {
             type: 'error',
             title: 'Failed to load project',
