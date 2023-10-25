@@ -45,3 +45,13 @@ appx:
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
   artifactName: "Scratch ${version} Setup.${ext}"
+linux:
+  category: public.app-category.education
+  icon: buildResources/ScratchDesktop.icns
+  target:
+    - deb
+deb:
+  depends: ["libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+
+
+
