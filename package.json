@@ -74,6 +74,6 @@
     "webpack-merge": "4.2.2"
   },
   "resolutions": {
-    "upath": "^1.0.5"
+    "upath": "^2.0.0"
   }
 }
