@@ -119,7 +119,7 @@ const calculateTargets = function (wrapperConfig) {
             platform: 'win32'
         },
         linuxDirectDownload:{
-            name: 'deb:x64',
+            name: 'deb:x64 deb:arm64',
             platform: 'linux'
         }
     };

@@ -28,6 +28,9 @@
   "overrides": {
     "scratch-blocks": "github:raspberrypifoundation/scratch-blocks"
   },
+  "dependencies": {
+    "source-map-support": "^0.5.19"
+  },
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@babel/plugin-proposal-object-rest-spread": "^7.9.6",
@@ -71,7 +74,6 @@
     "redux": "3.7.2",
     "rimraf": "^3.0.2",
     "scratch-gui": "github:scratchfoundation/scratch-gui#scratch-desktop-v3.30.1",
-    "source-map-support": "^0.5.19",
     "uuid": "^8.0.0",
     "webpack": "^4.43.0",
     "webpack-merge": "4.2.2"
