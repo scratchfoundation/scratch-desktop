@@ -51,6 +51,7 @@ linux:
   target:
     - deb
 deb:
+  maintainer: "web@raspberrypi.org"
   depends: ["libnotify4", "libappindicator1", "libxtst6", "libnss3"]
 
 
