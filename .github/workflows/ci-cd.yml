@@ -1,0 +1,84 @@
+name: CI/CD
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.head_ref || github.ref }}'
+
+permissions:
+  contents: write # publish a GitHub release
+  pages: write # deploy to GitHub Pages
+  issues: write # comment on released issues
+  pull-requests: write # comment on released pull requests
+
+jobs:
+  ci-cd:
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    environment:
+      name: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+          node-version-file: '.nvmrc'
+      - name: Debug info
+        run: |
+          cat <<EOF
+          Node version: $(node --version)
+          NPM version: $(npm --version)
+          GitHub ref: ${{ github.ref }}
+          GitHub head ref: ${{ github.head_ref }}
+          Working directory: $(pwd)
+          EOF
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Test
+        run: npm run test
+      - name: Fastlane
+        if: matrix.os == 'macos-latest' && vars.SCRATCH_SHOULD_SIGN
+        run: fastlane circleci
+      - name: Build
+        timeout-minutes: 30 # macOS notarization can take a while
+        env:
+          # TODO: fix whatever is causing excessive memory usage during build
+          NODE_OPTIONS: --max-old-space-size=4096
+          # These will be blank on macOS and on unsigned builds
+          # macOS CSC info was set by Fastlane above
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: npm run ${{ vars.SCRATCH_SHOULD_SIGN && 'dist' || 'distDev' }}
+      - name: Zip MAS-Dev build
+        if: matrix.os == 'macos-latest'
+        run: |
+          NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
+          cd dist/mas-dev
+          ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
+            Scratch*.app ../mas-dev-${NPM_APP_VERSION}.zip
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'macos-latest'
+        with:
+          name: macOS
+          path: |
+            dist/Scratch*.dmg
+            dist/mas/Scratch*.pkg
+            dist/mas-dev-*.zip
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v2
+        if: matrix.os == 'windows-latest'
+        with:
+          name: Windows
+          path: |
+            dist/Scratch*.appx
+            dist/Scratch*.exe
