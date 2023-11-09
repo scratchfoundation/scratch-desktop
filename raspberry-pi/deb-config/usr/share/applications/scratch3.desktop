@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Scratch 3
+Comment=Scratch 3 programming environment
+TryExec=/usr/lib/scratch3/scratch-desktop
+Exec=/usr/lib/scratch3/scratch-desktop
+Icon=scratch-desktop
+Terminal=false
+Categories=Application;Development;
+MimeType=application/x-scratch3
+StartupNotify=true

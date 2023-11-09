@@ -91,6 +91,22 @@ really.
 
 See this issue for more detail: <https://github.com/electron/electron-osx-sign/issues/218>
 
+#### Workaround for Raspberry Pi OS
+
+FPM is not included in RPiOS so please install via ruby
+
+`sudo apt-get install ruby-full`
+
+`sudo gem install fpm`
+
+To use the above FPM rather than the x86 version that is downloaded with electron-builder use the following export
+
+`export USE_SYSTEM_FPM="true"`
+
+To build reliably use node 16.13.1 and use all available memory using the following export
+
+`export NODE_OPTIONS="--max-old-space-size=4096"`
+
 ### Make a semi-packaged build
 
 This will simulate a packaged build without actually packaging it: instead the files will be copied to a subdirectory

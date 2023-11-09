@@ -1,0 +1,42 @@
+scratch3 (1.0.6) buster; urgency=medium
+
+  * Now uses C library for GPIO operations
+
+ -- Chris Richardson <chrisrichardsonuk@gmail.com>  Mon, 14 Sep 2020 09:47:48 +0100
+
+scratch3 (1.0.5) buster; urgency=medium
+
+  * Use command-line utility to access SenseHAT IMU
+
+ -- Simon Long <simon@raspberrypi.org>  Wed, 04 Mar 2020 13:23:49 +0000
+
+scratch3 (1.0.4) buster; urgency=medium
+
+  * Add new blocks to SenseHAT extension to display stage and sprite
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 14 Jan 2020 14:08:34 +0000
+
+scratch3 (1.0.3) buster; urgency=medium
+
+  * Add loading of project file from command line
+
+ -- Simon Long <simon@raspberrypi.org>  Thu, 28 Nov 2019 11:30:50 +0000
+
+scratch3 (1.0.2) buster; urgency=medium
+
+  * Allow pull on GPIO input block to be set to none
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 13 Aug 2019 16:20:37 +0100
+
+scratch3 (1.0.1) buster; urgency=medium
+
+  * Add blocking behaviour to SenseHAT IMU reads; new electronics icon
+
+ -- Simon Long <simon@raspberrypi.org>  Fri, 02 Aug 2019 14:53:41 +0100
+
+scratch3 (1.0) buster; urgency=medium
+
+  * First release version
+
+ -- Simon Long <simon@raspberrypi.org>  Tue, 30 Jul 2019 13:08:39 +0100
+

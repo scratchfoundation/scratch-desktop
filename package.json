@@ -18,11 +18,15 @@
     "dist": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dist",
     "distDev": "npm run clean && npm run compile && npm run fetch && npm run doBuild -- --mode=dev",
     "test": "npm run test:lint",
-    "test:lint": "eslint --cache --color --ext .jsx,.js ."
+    "test:lint": "eslint --cache --color --ext .jsx,.js .",
+    "postinstall": "git apply patches/*.patch"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
+  },
+  "overrides": {
+    "scratch-blocks": "github:raspberrypifoundation/scratch-blocks"
   },
   "dependencies": {
     "source-map-support": "^0.5.19"
@@ -43,8 +47,9 @@
     "babel-plugin-react-intl": "^7.5.7",
     "copy-webpack-plugin": "^5.1.1",
     "electron": "^23.3.12",
-    "electron-builder": "^22.13.1",
+    "electron-builder": "^23.6.0",
     "electron-devtools-installer": "^3.2.0",
+    "electron-installer-debian": "^3.2.0",
     "electron-notarize": "^1.1.1",
     "electron-store": "^8.0.1",
     "electron-webpack": "^2.8.2",

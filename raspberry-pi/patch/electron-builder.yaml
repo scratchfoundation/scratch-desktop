@@ -2,36 +2,28 @@ directories:
   buildResources: buildResources
   output: dist
 appId: edu.mit.scratch.scratch-desktop
-productName: "Scratch 3"
-publish: # empty provider list = don't publish
+productName: "Scratch Desktop"
+afterSign: "scripts/afterSign.js"
 mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
   extendInfo:
-    ITSAppUsesNonExemptEncryption: false
     NSCameraUsageDescription: >-
-        This app requires camera access when using the video sensing blocks.
+        This app requires camera access when taking a photo in the paint editor or using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
         This app requires microphone access when recording sounds or detecting loudness.
   gatekeeperAssess: true
   hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
-  provisioningProfile: build/AppStore_edu.mit.scratch.scratch-desktop.provisionprofile
-  artifactName: "Scratch ${version}.${ext}"
+  provisioningProfile: embedded.provisionprofile
   target:
     - dmg
     - mas
-dmg:
-  title: "Scratch ${version}"
+  type: distribution
 mas:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mas.plist
-  entitlementsInherit: buildResources/entitlements.mas.inherit.plist
-  hardenedRuntime: false
   icon: buildResources/ScratchDesktop.icns
-masDev:
-  type: development
-  provisioningProfile: build/Development_edu.mit.scratch.scratch-desktop.provisionprofile
 win:
   icon: buildResources/ScratchDesktop.ico
   target:
@@ -41,18 +33,5 @@ appx:
   identityName: ScratchFoundation.ScratchDesktop
   publisherDisplayName: "Scratch Foundation"
   publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
-  artifactName: "Scratch ${version} ${arch}.${ext}"
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
-  artifactName: "Scratch ${version} Setup.${ext}"
-linux:
-  category: public.app-category.education
-  icon: buildResources/ScratchDesktop.icns
-  target:
-    - deb
-deb:
-  maintainer: "web@raspberrypi.org"
-  depends: ["libnotify4", "libappindicator1", "libxtst6", "libnss3"]
-
-
-

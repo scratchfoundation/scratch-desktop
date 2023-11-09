@@ -1,0 +1,12 @@
+*** electron-builder.yaml	2020-06-10 08:55:44.639837519 +0100
+--- electron-builder2.yaml	2020-08-13 11:22:17.850092425 +0100
+***************
+*** 30,33 ****
+--- 30,36 ----
+      - appx
+      - nsis
++ linux:
++   target:
++    - dir 
+  appx:
+    identityName: ScratchFoundation.ScratchDesktop
