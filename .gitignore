@@ -27,7 +27,7 @@ npm-*
 /locale
 
 # Fastlane
-**/fastlane/Matchfile
+# **/fastlane/Matchfile
 **/fastlane/report.xml
 **/fastlane/Preview.html
 **/fastlane/screenshots
