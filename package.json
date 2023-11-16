@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
+    "url": "git+ssh://git@github.com/scratchfoundation/scratch-desktop.git"
   },
   "dependencies": {
     "source-map-support": "^0.5.19"

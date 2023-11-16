@@ -80,7 +80,7 @@ const makeConfig = function (defaultConfig, options) {
                         options: {
                             modules: true,
                             importLoaders: 1,
-                            localIdentName: '[name]_[local]_[hash:base64:5]',
+                            // localIdentName: '[name]_[local]_[hash:base64:5]',
                             camelCase: true
                         }
                     }, {

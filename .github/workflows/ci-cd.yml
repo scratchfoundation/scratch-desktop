@@ -49,7 +49,13 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
+      - name: Install Python 2.7 
+        if: matrix.os == 'macos-latest'
+        run: | 
+            brew install pyenv
+            pyenv install 2.7.18
       - name: Setup Keys for Fastlane
+        if: matrix.os == 'macos-latest'
         uses: webfactory/ssh-agent@v0.7.0
         with:
             ssh-private-key: ${{ secrets.FASTLANE_DEPLOY_KEY }}
@@ -65,6 +71,7 @@ jobs:
           # macOS CSC info was set by Fastlane above
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          PYTHON_PATH: /Users/runner/.pyenv/versions/2.7.18/bin/python
         run: npm run ${{ vars.SCRATCH_SHOULD_SIGN && 'dist' || 'distDev' }}
       - name: Zip MAS-Dev build
         if: matrix.os == 'macos-latest'
@@ -74,7 +81,7 @@ jobs:
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-${NPM_APP_VERSION}.zip
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: matrix.os == 'macos-latest'
         with:
           name: macOS
