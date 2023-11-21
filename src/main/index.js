@@ -1,15 +1,15 @@
-import {BrowserWindow, Menu, app, dialog, ipcMain, shell, systemPreferences} from 'electron';
+import { BrowserWindow, Menu, app, dialog, ipcMain, shell, systemPreferences } from 'electron';
 import fs from 'fs-extra';
 import path from 'path';
-import {URL} from 'url';
-import {promisify} from 'util';
+import { URL } from 'url';
+import { promisify } from 'util';
 
 import argv from './argv';
-import {getFilterForExtension} from './FileFilters';
+import { getFilterForExtension } from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
-import {productName, version} from '../../package.json';
+import { productName, version } from '../../package.json';
 
 // suppress deprecation warning; this will be the default in Electron 9
 app.allowRendererProcessReuse = true;
@@ -17,7 +17,7 @@ app.allowRendererProcessReuse = true;
 telemetry.appWasOpened();
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
-const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
+const defaultSize = { width: 1280, height: 800 }; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -48,33 +48,33 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
     let title;
     let message;
     switch (permissionType) {
-    case 'camera':
-        title = 'Camera Permission Denied';
-        message = 'Permission to use the camera has been denied. ' +
-            'Scratch will not be able to take a photo or use video sensing blocks.';
-        break;
-    case 'microphone':
-        title = 'Microphone Permission Denied';
-        message = 'Permission to use the microphone has been denied. ' +
-            'Scratch will not be able to record sounds or detect loudness.';
-        break;
-    default: // shouldn't ever happen...
-        title = 'Permission Denied';
-        message = 'A permission has been denied.';
+        case 'camera':
+            title = 'Camera Permission Denied';
+            message = 'Permission to use the camera has been denied. ' +
+                'Scratch will not be able to take a photo or use video sensing blocks.';
+            break;
+        case 'microphone':
+            title = 'Microphone Permission Denied';
+            message = 'Permission to use the microphone has been denied. ' +
+                'Scratch will not be able to record sounds or detect loudness.';
+            break;
+        default: // shouldn't ever happen...
+            title = 'Permission Denied';
+            message = 'A permission has been denied.';
     }
 
     let instructions;
     switch (process.platform) {
-    case 'darwin':
-        instructions = 'To change Scratch permissions, please check "Security & Privacy" in System Preferences.';
-        break;
-    default:
-        instructions = 'To change Scratch permissions, please check your system settings and restart Scratch.';
-        break;
+        case 'darwin':
+            instructions = 'To change Scratch permissions, please check "Security & Privacy" in System Preferences.';
+            break;
+        default:
+            instructions = 'To change Scratch permissions, please check your system settings and restart Scratch.';
+            break;
     }
     message = `${message}\n\n${instructions}`;
 
-    dialog.showMessageBox(browserWindow, {type: 'warning', title, message});
+    dialog.showMessageBox(browserWindow, { type: 'warning', title, message });
 };
 
 /**
@@ -137,15 +137,15 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
     let askForCamera = false;
     for (const mediaType of details.mediaTypes) {
         switch (mediaType) {
-        case 'audio':
-            askForMicrophone = true;
-            break;
-        case 'video':
-            askForCamera = true;
-            break;
-        default:
-            // deny: unhandled media type
-            return callback(false);
+            case 'audio':
+                askForMicrophone = true;
+                break;
+            case 'video':
+                askForCamera = true;
+                break;
+            default:
+                // deny: unhandled media type
+                return callback(false);
         }
     }
     const parentWindow = _windows.main; // if we ever allow media in non-main windows we'll also need to change this
@@ -166,7 +166,7 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
     return callback(true);
 };
 
-const createWindow = ({search = null, url = 'index.html', ...browserWindowOptions}) => {
+const createWindow = ({ search = null, url = 'index.html', ...browserWindowOptions }) => {
     const window = new BrowserWindow({
         useContentSize: true,
         show: false,
@@ -190,7 +190,7 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
             !input.isAutoRepeat &&
             !input.isComposing) {
             event.preventDefault();
-            webContents.openDevTools({mode: 'detach', activate: true});
+            webContents.openDevTools({ mode: 'detach', activate: true });
         }
     });
 
@@ -278,8 +278,8 @@ const createUsbWindow = () => {
 
 const getIsProjectSave = downloadItem => {
     switch (downloadItem.getMimeType()) {
-    case 'application/x.scratch.sb3':
-        return true;
+        case 'application/x.scratch.sb3':
+            return true;
     }
     return false;
 };
@@ -321,10 +321,10 @@ const createMainWindow = () => {
                         // The download was canceled or interrupted. Cancel the telemetry event and delete the file.
                         throw new Error(`save ${doneState}`); // "save cancelled" or "save interrupted"
                     }
-                    await fs.move(tempPath, userChosenPath, {overwrite: true});
+                    await fs.move(tempPath, userChosenPath, { overwrite: true });
                     if (isProjectSave) {
                         const newProjectTitle = path.basename(userChosenPath, extName);
-                        webContents.send('setTitleFromSave', {title: newProjectTitle});
+                        webContents.send('setTitleFromSave', { title: newProjectTitle });
 
                         // "setTitleFromSave" will set the project title but GUI has already reported the telemetry
                         // event using the old title. This call lets the telemetry client know that the save was
@@ -413,7 +413,7 @@ if (process.platform === 'win32') {
 app.on('ready', () => {
     if (isDevelopment) {
         import('electron-devtools-installer').then(importedModule => {
-            const {default: installExtension, ...devToolsExtensions} = importedModule;
+            const { default: installExtension, ...devToolsExtensions } = importedModule;
             const extensionsToInstall = [
                 devToolsExtensions.REACT_DEVELOPER_TOOLS,
                 devToolsExtensions.REACT_PERF,
@@ -470,13 +470,14 @@ const initialProjectDataPromise = (async () => {
         const projectData = await promisify(fs.readFile)(projectPath, null);
         return projectData;
     } catch (e) {
-        return;
-        dialog.showMessageBox(_windows.main, {
-            type: 'error',
-            title: 'Failed to load project',
-            message: `Could not load project from file:\n${projectPath}`,
-            detail: e.message
-        });
+        if (process.platform != 'linux') {
+            dialog.showMessageBox(_windows.main, {
+                type: 'error',
+                title: 'Failed to load project',
+                message: `Could not load project from file:\n${projectPath}`,
+                detail: e.message
+            });
+        }
     }
     // load failed: initial project data undefined
 })(); // IIFE
