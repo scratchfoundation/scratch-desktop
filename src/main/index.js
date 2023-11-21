@@ -470,6 +470,7 @@ const initialProjectDataPromise = (async () => {
         const projectData = await promisify(fs.readFile)(projectPath, null);
         return projectData;
     } catch (e) {
+        //Showing a UI element before the UI has initialised will crash in Linux
         if (process.platform != 'linux') {
             dialog.showMessageBox(_windows.main, {
                 type: 'error',
