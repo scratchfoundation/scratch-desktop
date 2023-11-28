@@ -19,7 +19,7 @@ jobs:
       matrix:
         os:
           - macos-latest
-        #   - windows-latest
+          - windows-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -90,7 +90,7 @@ jobs:
             dist/mas/Scratch*.pkg
             dist/mas-dev-*.zip
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: matrix.os == 'windows-latest'
         with:
           name: Windows
