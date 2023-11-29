@@ -1,8 +1,6 @@
 name: CI/CD
-
 on:
   push:
-  workflow_dispatch:
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.head_ref || github.ref }}'
@@ -27,9 +25,10 @@ jobs:
     environment:
       name: ${{ matrix.os }}
     env:
+        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'main' }}
         MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-        AC_USERNAME: ${{ secrets.AC_USERNAME }}
-        AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
+        AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -60,7 +59,7 @@ jobs:
         with:
             ssh-private-key: ${{ secrets.FASTLANE_DEPLOY_KEY }}
       - name: Fastlane
-        if: matrix.os == 'macos-latest' && vars.SCRATCH_SHOULD_SIGN
+        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == true
         run: fastlane circleci
       - name: Build
         timeout-minutes: 30 # macOS notarization can take a while
@@ -71,10 +70,10 @@ jobs:
           # macOS CSC info was set by Fastlane above
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-          PYTHON_PATH: /Users/runner/.pyenv/versions/2.7.18/bin/python
-        run: npm run ${{ vars.SCRATCH_SHOULD_SIGN && 'dist' || 'distDev' }}
+          PYTHON_PATH: ${{ matrix.os == 'macos-latest' && '/Users/runner/.pyenv/versions/2.7.18/bin/python'}}
+        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == true && 'dist' || 'distDev' }}
       - name: Zip MAS-Dev build
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == true
         run: |
           NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
           cd dist/mas-dev
