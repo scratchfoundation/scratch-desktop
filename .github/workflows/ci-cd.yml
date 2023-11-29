@@ -17,7 +17,7 @@ jobs:
       matrix:
         os:
           - macos-latest
-          - windows-latest
+          # - windows-latest
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -25,8 +25,7 @@ jobs:
     environment:
       name: ${{ matrix.os }}
     env:
-        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'main' }}
-        MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'gha' }}
         AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
         AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
     steps:
@@ -59,7 +58,11 @@ jobs:
         with:
             ssh-private-key: ${{ secrets.FASTLANE_DEPLOY_KEY }}
       - name: Fastlane
-        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == true
+        env:
+            GIT_URL: ${{ secrets.FL_GIT_URL }}
+            STORAGE_MODE: ${{secrets.FL_STORAGE_MODE}}
+            MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: fastlane circleci
       - name: Build
         timeout-minutes: 30 # macOS notarization can take a while
@@ -73,7 +76,7 @@ jobs:
           PYTHON_PATH: ${{ matrix.os == 'macos-latest' && '/Users/runner/.pyenv/versions/2.7.18/bin/python'}}
         run: npm run ${{ env.SCRATCH_SHOULD_SIGN == true && 'dist' || 'distDev' }}
       - name: Zip MAS-Dev build
-        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == true
+        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: |
           NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
           cd dist/mas-dev
