@@ -25,7 +25,7 @@ jobs:
     environment:
       name: ${{ matrix.os }}
     env:
-        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'gha' }}
+        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'main' }}
         AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
         AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
     steps:
