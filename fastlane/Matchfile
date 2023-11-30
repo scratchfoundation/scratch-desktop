@@ -1,0 +1,7 @@
+git_url(ENV.fetch("GIT_URL"))
+storage_mode(ENV.fetch("STORAGE_MODE"))
+type("development") # The default type, can be: appstore, adhoc, enterprise or development
+# app_identifier(["tools.fastlane.app", "tools.fastlane.app2"])
+# username("user@fastlane.tools") # Your Apple Developer Portal username
+app_identifier("edu.mit.scratch.scratch-desktop") # The bundle identifier of your app
+username("bot-apple@scratch.mit.edu") # Your Apple email address
