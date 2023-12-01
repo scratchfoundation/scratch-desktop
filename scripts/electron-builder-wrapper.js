@@ -6,7 +6,7 @@
  * See also: https://www.electron.build/code-signing
  */
 
-const {spawnSync} = require('child_process');
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 
 const masDevProfile = 'build/Development_edu.mit.scratch.scratch-desktop.provisionprofile';
@@ -30,11 +30,11 @@ const stripCSC = function (environment) {
 /**
  * @returns {string} - an `electron-builder` flag to build for the current platform, based on `process.platform`.
  */
-const getPlatformFlag = function () {
-    switch (process.platform) {
-    case 'win32': return '--windows';
-    case 'darwin': return '--macos';
-    case 'linux': return '--linux';
+const getPlatformFlag = function (platform) {
+    switch (platform||process.platform) {
+        case 'win32': return '--windows';
+        case 'darwin': return '--macos';
+        case 'linux': return '--linux';
     }
     throw new Error(`Could not determine platform flag for platform: ${process.platform}`);
 };
@@ -55,7 +55,8 @@ const runBuilder = function (wrapperConfig, target) {
         !(childEnvironment.CSC_LINK || childEnvironment.WIN_CSC_LINK)) {
         throw new Error(`Signing NSIS build requires CSC_LINK or WIN_CSC_LINK`);
     }
-    const platformFlag = getPlatformFlag();
+    const platformFlag =  getPlatformFlag(wrapperConfig.platform);
+    console.log(target.platform);
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
@@ -118,55 +119,61 @@ const calculateTargets = function (wrapperConfig) {
             name: 'nsis:ia32',
             platform: 'win32'
         },
-        linuxDirectDownload:{
-            name: 'deb:x64 deb:arm64',
+        linuxDirectDownload: {
+            name: 'deb:arm64 deb:armv7l',
             platform: 'linux'
         }
     };
     const targets = [];
-    switch (process.platform) {
-    case 'win32':
-        // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
-        targets.push(availableTargets.microsoftStore);
-        targets.push(availableTargets.windowsDirectDownload);
-        break;
-    case 'darwin':
-        // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
-        // Running them as separate passes means they can both get signed.
-        // Seems like a bug in electron-builder...
-        // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
-        // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
-        if (fs.existsSync(masDevProfile)) {
-            targets.push(availableTargets.macAppStoreDev);
-        } else {
-            console.log(`skipping target "${availableTargets.macAppStoreDev.name}": ${masDevProfile} missing`);
-        }
-        if (wrapperConfig.doSign) {
-            targets.push(availableTargets.macAppStore);
-        } else {
-            // electron-builder doesn't seem to support this configuration even if mac.type is "development"
-            console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
-        }
-        targets.push(availableTargets.macDirectDownload);
-        break;
-    case 'linux':
-        targets.push(availableTargets.linuxDirectDownload);
-        break;
-    default:
-        throw new Error(`Could not determine targets for platform: ${process.platform}`);
+    let platform = wrapperConfig.platform || process.platform;
+    switch (platform) {
+        case 'win32':
+            // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
+            targets.push(availableTargets.microsoftStore);
+            targets.push(availableTargets.windowsDirectDownload);
+            break;
+        case 'darwin':
+            // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
+            // Running them as separate passes means they can both get signed.
+            // Seems like a bug in electron-builder...
+            // Running the 'mas' build first means that its output is available while we wait for 'dmg' notarization.
+            // Add macAppStoreDev here to test a MAS-like build locally. You'll need a Mac Developer provisioning profile.
+            if (fs.existsSync(masDevProfile)) {
+                targets.push(availableTargets.macAppStoreDev);
+            } else {
+                console.log(`skipping target "${availableTargets.macAppStoreDev.name}": ${masDevProfile} missing`);
+            }
+            if (wrapperConfig.doSign) {
+                targets.push(availableTargets.macAppStore);
+            } else {
+                // electron-builder doesn't seem to support this configuration even if mac.type is "development"
+                console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
+            }
+            targets.push(availableTargets.macDirectDownload);
+            break;
+        case 'linux':
+            targets.push(availableTargets.linuxDirectDownload);
+            break;
+        default:
+            throw new Error(`Could not determine targets for platform: ${platform}`);
     }
     return targets;
 };
 
 const parseArgs = function () {
     const scriptArgs = process.argv.slice(2); // remove `node` and `this-script.js`
+    console.log(scriptArgs);
     const builderArgs = [];
     let mode = 'dev'; // default
+    let platform = null;
 
     for (const arg of scriptArgs) {
         const modeSplit = arg.split(/--mode(\s+|=)/);
+        const platformSplit = arg.split(/--platform(\s+|=)/);
         if (modeSplit.length === 3) {
             mode = modeSplit[2];
+        } else if (platformSplit.length === 3) {
+            platform = platformSplit[2]
         } else {
             builderArgs.push(arg);
         }
@@ -176,24 +183,25 @@ const parseArgs = function () {
     let doSign;
 
     switch (mode) {
-    case 'dev':
-        doPackage = true;
-        doSign = false;
-        break;
-    case 'dir':
-        doPackage = false;
-        doSign = false;
-        break;
-    case 'dist':
-        doPackage = true;
-        doSign = true;
+        case 'dev':
+            doPackage = true;
+            doSign = false;
+            break;
+        case 'dir':
+            doPackage = false;
+            doSign = false;
+            break;
+        case 'dist':
+            doPackage = true;
+            doSign = true;
     }
 
     return {
         builderArgs,
         doPackage, // false = build to directory
         doSign,
-        mode
+        mode,
+        platform
     };
 };
 

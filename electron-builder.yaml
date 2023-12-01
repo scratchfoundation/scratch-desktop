@@ -51,8 +51,14 @@ linux:
   target:
     - deb
 deb:
-  maintainer: "web@raspberrypi.org"
+  packageName: scratch3
+  maintainer: "RPF Digital Team <web@raspberrypi.org>"
   depends: ["libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+  priority: extra
+  description: Electron build of Scratch 3 offline
+    Scratch 3.0 is the third and current major version of Scratch. Released on 
+    January 2, 2019, it's a complete redesign and reimplementation of Scratch 
+    written in HTML5 and JavaScript.
 
 
 
