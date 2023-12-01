@@ -26,11 +26,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/LLK/scratch-desktop.git"
   },
-  "overrides": {
-    "scratch-blocks": "github:raspberrypifoundation/scratch-blocks"
-  },
   "dependencies": {
-    "scratch-blocks": "github:raspberrypifoundation/scratch-blocks",
     "source-map-support": "^0.5.19"
   },
   "devDependencies": {
