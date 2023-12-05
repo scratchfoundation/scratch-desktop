@@ -56,7 +56,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         uses: webfactory/ssh-agent@v0.7.0
         with:
-            ssh-private-key: ${{ secrets.FASTLANE_DEPLOY_KEY }}
+            ssh-private-key: ${{ secrets.FASTLANE_ACCESS_KEY }}
       - name: Fastlane
         env:
             GIT_URL: ${{ secrets.FL_GIT_URL }}
