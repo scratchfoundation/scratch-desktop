@@ -53,6 +53,8 @@ linux:
 deb:
   packageName: scratch3
   maintainer: "RPF Digital Team <web@raspberrypi.org>"
+  category: Application;Development;
+  packageCategory: x11
   depends: ["libnotify4", "libappindicator1", "libxtst6", "libnss3"]
   priority: extra
   description: Electron build of Scratch 3 offline
