@@ -471,7 +471,7 @@ const initialProjectDataPromise = (async () => {
         return projectData;
     } catch (e) {
         //Showing a UI element before the UI has initialised will crash in Linux
-        if (process.platform != 'linux') {
+        if (!(process.platform == 'linux'||process.platform == 'darwin')) {
             dialog.showMessageBox(_windows.main, {
                 type: 'error',
                 title: 'Failed to load project',
