@@ -29,7 +29,7 @@ jobs:
         AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
         AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           cache: 'npm'
