@@ -6,6 +6,8 @@ Scratch 3.0 as a standalone desktop application
 
 ### Releasing a new version
 
+For Raspberry Pi specific builds please note [**Making-a-Raspberry-Pi-Specific-Build**](#-Making-a-Raspberry-Pi-Specific-Build)
+
 Let's assume that you want to make a new release, version `3.999.0`, corresponding to `scratch-gui` version
 `0.1.0-prerelease.20yymmdd`.
 
