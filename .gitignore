@@ -22,6 +22,12 @@ npm-*
 # don't store the assets downloaded with the `fetch` script
 /static/assets/
 
+# don't store the gpio build
+/static/**
+/raspberry-pi/cpp/build/*
+#don't store the dist
+/scratch-dist
+
 # generated translation files
 /translations
 /locale
