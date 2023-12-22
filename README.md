@@ -107,6 +107,16 @@ To build reliably use node 16.13.1 and use all available memory using the follow
 
 `export NODE_OPTIONS="--max-old-space-size=4096"`
 
+### Making a Raspberry Pi Specific Build
+
+Can be done on Mac or Raspberry Pi OS (though for the Pi the above needs to be run through).
+
+`npm run dist:rpi`
+
+This will output 2 builds (arm64 and armv7l). 
+
+Please remember to increment the patch version so RPL's apt knows it's a new version.
+
 ### Make a semi-packaged build
 
 This will simulate a packaged build without actually packaging it: instead the files will be copied to a subdirectory
