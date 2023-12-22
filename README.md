@@ -4,6 +4,14 @@ Scratch 3.0 as a standalone desktop application
 
 ## Developer Instructions
 
+This version of scratch will apply patches (in the patches folder) to node_modules:
+
+- scratch-blocks
+- scratch-gui
+- scratch-vm
+
+These patches are based on the files in ./raspberry-pi though the patch creation process is not scripted.
+
 ### Releasing a new version
 
 For Raspberry Pi specific builds please note [**Making-a-Raspberry-Pi-Specific-Build**](#making-a-raspberry-pi-specific-build)
