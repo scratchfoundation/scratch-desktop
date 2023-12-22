@@ -25,6 +25,7 @@ npm-*
 # don't store the gpio build
 /static/**
 /raspberry-pi/cpp/build/*
+/cpp/build/*
 #don't store the dist
 /scratch-dist
 
