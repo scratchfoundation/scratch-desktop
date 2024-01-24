@@ -125,15 +125,15 @@ Currently NodeJS > 16 will throw certificate errors. To get around this, install
 
 `asdf install`
 
-Ensure that `static/gpiolib.node` is built for the correct architecture, ie. delete it and run `npm run compile:cpp` on the target platform.
+Ensure that `static/gpiolib.node` is built for the correct architecture, ie. delete it and run `npm run compile:cpp` on the target platform (clearly this process needs improving).
+
+Note: remember to increment the package version before building / releasing (`"version"` in `package.json`).
 
 Build the Linux / Raspberry Pi package:
 
 `npm run dist:rpi`
 
 This will output 2 builds (arm64 and armv7l).
-
-Please remember to increment the patch version so RPL's apt knows it's a new version.
 
 ### Make a semi-packaged build
 
