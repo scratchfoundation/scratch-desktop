@@ -65,7 +65,7 @@ other changes which might affect the media libraries.
 
 `npm run dist`
 
-Node that on macOS this will require installing various certificates.
+Note that on macOS this will require installing various certificates.
 
 #### Signing the NSIS installer (Windows, non-store)
 
@@ -103,7 +103,7 @@ See this issue for more detail: <https://github.com/electron/electron-osx-sign/i
 
 #### Workaround for Raspberry Pi OS
 
-FPM is not included in RPiOS so please install via ruby
+FPM is not included in RPiOS so install via Ruby:
 
 `sudo apt-get install ruby-full`
 
@@ -119,11 +119,19 @@ To build reliably use node 16.13.1 and use all available memory using the follow
 
 ### Making a Raspberry Pi Specific Build
 
-Can be done on Mac or Raspberry Pi OS (though for the Pi the above needs to be run through).
+Can be done on ~~Mac~~ (currently this will result in `gpiolib.node` being compiled for the wrong architecture, see below) or Raspberry Pi OS (though for the Pi the above needs to be run through).
+
+Currently NodeJS > 16 will throw certificate errors. To get around this, install the Node 16 version defined in `.tool-versions` via [asdf](https://asdf-vm.com/guide/getting-started.html):
+
+`asdf install`
+
+Ensure that `static/gpiolib.node` is built for the correct architecture, ie. delete it and run `npm run compile:cpp` on the target platform.
+
+Build the Linux / Raspberry Pi package:
 
 `npm run dist:rpi`
 
-This will output 2 builds (arm64 and armv7l). 
+This will output 2 builds (arm64 and armv7l).
 
 Please remember to increment the patch version so RPL's apt knows it's a new version.
 
