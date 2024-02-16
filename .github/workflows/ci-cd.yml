@@ -29,8 +29,8 @@ jobs:
         AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
         AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3
         with:
           cache: 'npm'
           node-version-file: '.nvmrc'
@@ -54,7 +54,7 @@ jobs:
             pyenv install 2.7.18
       - name: Setup Keys for Fastlane
         if: matrix.os == 'macos-latest'
-        uses: webfactory/ssh-agent@v0.7.0
+        uses: webfactory/ssh-agent@836c84ec59a0e7bc0eabc79988384eb567561ee2 # v0.7.0
         with:
             ssh-private-key: ${{ secrets.FASTLANE_ACCESS_KEY }}
       - name: Fastlane
@@ -83,7 +83,7 @@ jobs:
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-${NPM_APP_VERSION}.zip
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
         if: matrix.os == 'macos-latest'
         with:
           name: macOS
@@ -92,7 +92,7 @@ jobs:
             dist/mas/Scratch*.pkg
             dist/mas-dev-*.zip
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
         if: matrix.os == 'windows-latest'
         with:
           name: Windows
