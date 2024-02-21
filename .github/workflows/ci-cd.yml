@@ -22,12 +22,10 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment:
-      name: ${{ matrix.os }}
     env:
-        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'main' }}
-        AC_USERNAME: ${{ github.ref_name == 'main' && secrets.AC_USERNAME }}
-        AC_PASSWORD: ${{ github.ref_name == 'main' && secrets.AC_PASSWORD }}
+        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'develop' }}
+        AC_USERNAME: ${{ (github.ref_name == 'develop' && secrets.AC_USERNAME) || '' }}
+        AC_PASSWORD: ${{ (github.ref_name == 'develop' && secrets.AC_PASSWORD) || '' }}
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3
@@ -47,9 +45,9 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
-      - name: Install Python 2.7 
+      - name: Install Python 2.7
         if: matrix.os == 'macos-latest'
-        run: | 
+        run: |
             brew install pyenv
             pyenv install 2.7.18
       - name: Setup Keys for Fastlane
