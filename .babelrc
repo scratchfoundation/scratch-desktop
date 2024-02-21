@@ -1,6 +1,13 @@
 {
     "presets": [
-        ["@babel/preset-env", {"targets": {"browsers": ["Electron"]}}],
+        ["@babel/preset-env", {
+            "targets": {
+                "browsers": [
+                    "node >= 16", // Electron's main process
+                    "chrome >= 63" // Electron's render process (see Scratch FAQ)
+                ]
+            }
+        }],
         "@babel/preset-react"
     ]
 }
