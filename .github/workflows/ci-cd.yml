@@ -81,7 +81,7 @@ jobs:
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-${NPM_APP_VERSION}.zip
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
         if: matrix.os == 'macos-latest'
         with:
           name: macOS
@@ -90,7 +90,7 @@ jobs:
             dist/mas/Scratch*.pkg
             dist/mas-dev-*.zip
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
         if: matrix.os == 'windows-latest'
         with:
           name: Windows
