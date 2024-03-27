@@ -117,6 +117,14 @@ const calculateTargets = function (wrapperConfig) {
         windowsDirectDownload: {
             name: 'nsis:ia32',
             platform: 'win32'
+        },
+        linuxAppImage: {
+            name: 'AppImage',
+            platform: 'linux'
+        },
+        linuxAppImageDeb: {
+            name: 'deb',
+            platform: 'linux'
         }
     };
     const targets = [];
@@ -144,6 +152,10 @@ const calculateTargets = function (wrapperConfig) {
             console.log(`skipping target "${availableTargets.macAppStore.name}" because code-signing is disabled`);
         }
         targets.push(availableTargets.macDirectDownload);
+        break;
+    case 'linux':
+        targets.push(availableTargets.linuxAppImage);
+        targets.push(availableTargets.linuxAppImageDeb); // for generate deb file. Need change if not use debian/ubuntu
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);
