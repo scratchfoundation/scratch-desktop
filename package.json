@@ -47,7 +47,7 @@
     "electron-builder": "22.14.13",
     "electron-devtools-installer": "3.2.0",
     "electron-notarize": "1.2.2",
-    "electron-store": "8.2.0",
+    "electron-store": "10.0.0",
     "electron-webpack": "2.8.2",
     "eslint": "8.57.0",
     "eslint-config-scratch": "9.0.8",
