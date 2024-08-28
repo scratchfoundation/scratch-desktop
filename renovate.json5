@@ -1,9 +1,6 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
-  "extends": [
-    "github>scratchfoundation/scratch-renovate-config:js-app"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'github>scratchfoundation/scratch-renovate-config:js-app',
   ],
-
-  "transitiveRemediation": true
 }
