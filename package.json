@@ -39,7 +39,7 @@
     "async": "3.2.6",
     "autoprefixer": "9.8.8",
     "babel-eslint": "10.1.0",
-    "babel-loader": "8.3.0",
+    "babel-loader": "8.4.1",
     "babel-plugin-react-intl": "7.9.4",
     "copy-webpack-plugin": "5.1.2",
     "css-loader": "1.0.1",
