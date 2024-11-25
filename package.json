@@ -4,7 +4,7 @@
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Scratch Foundation",
   "version": "3.30.5",
-  "license": "BSD-3-Clause",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "clean": "rimraf ./dist ./static/assets",
     "start": "mkdirp ./dist && electron-webpack dev --bail --display-error-details --env.minify=false --no-progress",
