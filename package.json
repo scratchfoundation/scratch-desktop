@@ -35,7 +35,7 @@
     "@babel/plugin-transform-nullish-coalescing-operator": "7.25.9",
     "@babel/plugin-transform-optional-chaining": "7.25.9",
     "@babel/preset-env": "7.26.0",
-    "@babel/preset-react": "7.25.9",
+    "@babel/preset-react": "7.26.3",
     "async": "3.2.6",
     "autoprefixer": "9.8.8",
     "babel-eslint": "10.1.0",
