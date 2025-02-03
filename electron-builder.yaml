@@ -45,3 +45,12 @@ appx:
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
   artifactName: "Scratch ${version} Setup.${ext}"
+linux:
+  target: AppImage
+  executableName: scratch-desktop
+  # Currently Linux builds are supported only for development and have
+  # not been tested in a production environment.
+  category: Development
+  # Ensure sandbox permissions are set
+  asarUnpack:
+    - chrome-sandbox
