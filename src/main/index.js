@@ -20,9 +20,8 @@ telemetry.appWasOpened();
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-
-const devToolKey = ((process.platform === 'darwin') ?
-    { // macOS: command+option+i
+const devToolKey = ((process.platform === 'darwin' || process.platform === 'linux') ?
+    { // macOS / linux: command+option+i
         alt: true, // option
         control: false,
         meta: true, // command
@@ -39,6 +38,7 @@ const devToolKey = ((process.platform === 'darwin') ?
 
 // global window references prevent them from being garbage-collected
 const _windows = {};
+const PORT = process.env.PORT || 8601;
 
 // enable connecting to Scratch Link even if we DNS / Internet access is not available
 // this must happen BEFORE the app ready event!
@@ -85,9 +85,9 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
  * @returns {string} - an absolute URL as a string
  */
 const makeFullUrl = (url, search = null) => {
-    const baseUrl = (isDevelopment ?
-        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/` :
-        `file://${__dirname}/`
+    const baseUrl =  (isDevelopment ? 
+        `http://localhost:${PORT}/` :
+        `file://${path.join(__dirname, "../renderer")}/`
     );
     const fullUrl = new URL(url, baseUrl);
     if (search) {
@@ -412,6 +412,7 @@ if (process.platform === 'win32') {
 // create main BrowserWindow when electron is ready
 app.on('ready', () => {
     if (isDevelopment) {
+        // TODO: Debug errors around extensions not loading correctly
         import('electron-devtools-installer').then(importedModule => {
             const {default: installExtension, ...devToolsExtensions} = importedModule;
             const extensionsToInstall = [

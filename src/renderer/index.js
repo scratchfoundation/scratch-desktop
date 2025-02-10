@@ -4,6 +4,7 @@
 import {ipcRenderer} from 'electron';
 
 import ReactDOM from 'react-dom';
+import log from '../common/log.js';
 
 ipcRenderer.on('ready-to-show', () => {
     // Start without any element in focus, otherwise the first link starts with focus and shows an orange box.
@@ -33,4 +34,4 @@ routeModulePromise.then(routeModule => {
     const appTarget = document.getElementById('app');
     const routeElement = routeModule.default;
     ReactDOM.render(routeElement, appTarget);
-});
+}).catch(error => log.error("Error rendering app: ", error));

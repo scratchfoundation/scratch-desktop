@@ -1,9 +1,0 @@
-{
-    "main": {
-        "webpackConfig": "webpack.main.js"
-    },
-    "renderer": {
-        "template": "src/renderer/index.html",
-        "webpackConfig": "webpack.renderer.js"
-    }
-}

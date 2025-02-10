@@ -118,7 +118,10 @@ const makeConfig = function (defaultConfig, options) {
         plugins: [
             new webpack.SourceMapDevToolPlugin({
                 filename: '[file].map'
-            })
+            }),
+            new webpack.DefinePlugin({
+                __static: isProduction ? 'process.resourcesPath + "/static"' : JSON.stringify(path.resolve(process.cwd(), 'static')),
+            }),
         ].concat(options.plugins || []),
         resolve: {
             cacheWithContext: false,
@@ -126,13 +129,15 @@ const makeConfig = function (defaultConfig, options) {
             alias: {
                 // act like scratch-gui has this line in its package.json:
                 //   "browser": "./src/index.js"
-                'scratch-gui$': path.resolve(__dirname, 'node_modules', 'scratch-gui', 'src', 'index.js')
-            }
+                'scratch-gui$': path.resolve(__dirname, 'node_modules', 'scratch-gui', 'src', 'index.js'),
+            },
+            // attempt to resolve file extensions in this order
+            // (allows leaving off the extension when importing)
+            extensions: [".js", ".json", ".node", ".css"],
         }
     });
 
     // If we're not on CI, enable Webpack progress output
-    // Note that electron-webpack enables this by default, so use '--no-progress' to avoid double-adding this plugin
     if (!process.env.CI) {
         config.plugins.push(new webpack.ProgressPlugin());
     }
