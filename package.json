@@ -41,7 +41,7 @@
     "babel-eslint": "10.1.0",
     "babel-loader": "8.4.1",
     "babel-plugin-react-intl": "7.9.4",
-    "copy-webpack-plugin": "5.1.2",
+    "copy-webpack-plugin": "13.0.0",
     "css-loader": "1.0.1",
     "electron": "23.3.13",
     "electron-builder": "22.14.13",
