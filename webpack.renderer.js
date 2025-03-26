@@ -7,8 +7,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const makeConfig = require('./webpack.makeConfig.js');
 
-const getModulePath = moduleName => path.dirname(require.resolve(`${moduleName}/package.json`));
-
+const getModulePath = moduleName => path.dirname(require.resolve(`${moduleName}`));
 
 function generateIndexFile(template) {
 	let html = template;
@@ -36,6 +35,7 @@ module.exports = makeConfig(
         ],
         output: {
             filename: '[name].js',
+            assetModuleFilename: 'static/assets/[name].[hash][ext]',
             chunkFilename: '[name].bundle.js',
             libraryTarget: 'commonjs2',
             path: path.resolve(__dirname, "dist/renderer"),
@@ -59,7 +59,7 @@ module.exports = makeConfig(
         disableDefaultRulesForExtensions: ['js', 'jsx', 'css', 'svg', 'png', 'wav', 'gif', 'jpg', 'ttf'],
         babelPaths: [
             path.resolve(__dirname, 'src', 'renderer'),
-            /node_modules[\\/]+scratch-[^\\/]+[\\/]+src/,
+            /node_modules[\\/]+@scratch[\\/]+[^\\/]+[\\/]+src/,
             /node_modules[\\/]+pify/,
             /node_modules[\\/]+@vernier[\\/]+godirect/
         ],
@@ -69,31 +69,23 @@ module.exports = makeConfig(
                 template: generateIndexFile(template),
                 minify: false,
             }),
-            new CopyWebpackPlugin([
-                {
-                    from: path.join(getModulePath('scratch-blocks'), 'media'),
-                    to: 'static/blocks-media/default'
-                },
-                {
-                    from: path.join(getModulePath('scratch-blocks'), 'media'),
-                    to: 'static/blocks-media/high-contrast'
-                },
-                {
-                    from: path.join(getModulePath('scratch-gui'),
-                        'src', 'lib', 'themes', 'high-contrast', 'blocks-media'),
-                    to: 'static/blocks-media/high-contrast',
-                    force: true
-                },
-                {
-                    from: 'extension-worker.{js,js.map}',
-                    context: path.join(getModulePath('scratch-vm'), 'dist', 'web')
-                },
-                {
-                    from: path.join(getModulePath('scratch-gui'), 'src', 'lib', 'libraries', '*.json'),
-                    to: 'static/libraries',
-                    flatten: true
-                }
-            ])
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: path.join(getModulePath('@scratch/scratch-gui'), 'static'),
+                        to: 'static'
+                    },
+                    {
+                        from: 'extension-worker.{js,js.map}',
+                        context: getModulePath('@scratch/scratch-gui')
+                    },
+                    {
+                        from: path.join(getModulePath('@scratch/scratch-gui'), 'libraries', '*.json'),
+                        to: 'static/libraries',
+                        flatten: true
+                    },
+                ]
+            }),
         ]
     }
 );

@@ -9,7 +9,7 @@ const libraries = require('./lib/libraries');
 
 const ASSET_HOST = 'cdn.assets.scratch.mit.edu';
 const NUM_SIMULTANEOUS_DOWNLOADS = 5;
-const OUT_PATH = path.resolve('static', 'assets');
+const OUT_PATH = path.resolve('static', 'fetched');
 
 
 const describe = function (object) {

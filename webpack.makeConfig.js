@@ -7,11 +7,6 @@ const electronPath = require('electron');
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 
-// PostCss
-const autoprefixer = require('autoprefixer');
-const postcssImport = require('postcss-import');
-const postcssVars = require('postcss-simple-vars');
-
 const isProduction = (process.env.NODE_ENV === 'production');
 
 const electronVersion = childProcess.execSync(`${electronPath} --version`, {encoding: 'utf8'}).trim();
@@ -33,7 +28,6 @@ const makeConfig = function (defaultConfig, options) {
         ]
     };
 
-    const sourceFileTest = options.useReact ? /\.jsx?$/ : /\.js$/;
     if (options.useReact) {
         babelOptions.presets = babelOptions.presets.concat('@babel/preset-react');
         babelOptions.plugins.push(['react-intl', {
@@ -61,49 +55,55 @@ const makeConfig = function (defaultConfig, options) {
     }
 
     const config = merge.smart(defaultConfig, {
-        devtool: 'cheap-module-eval-source-map',
+        devtool: 'cheap-module-source-map',
         mode: isProduction ? 'production' : 'development',
         module: {
             rules: [
                 {
-                    test: sourceFileTest,
+                    test: options.useReact ? /\.jsx?$/ : /\.js$/,
                     include: options.babelPaths,
                     loader: 'babel-loader',
                     options: babelOptions
                 },
-                { // coped from scratch-gui
+                {
+
                     test: /\.css$/,
-                    use: [{
-                        loader: 'style-loader'
-                    }, {
-                        loader: 'css-loader',
-                        options: {
-                            modules: true,
-                            importLoaders: 1,
-                            localIdentName: '[name]_[local]_[hash:base64:5]',
-                            camelCase: true
-                        }
-                    }, {
-                        loader: 'postcss-loader',
-                        options: {
-                            ident: 'postcss',
-                            plugins: function () {
-                                return [
-                                    postcssImport,
-                                    postcssVars,
-                                    autoprefixer
-                                ];
+                    use: [
+                        {
+                            loader: 'style-loader'
+                        },
+                        {
+                            loader: 'css-loader',
+                            options: {
+                                modules: {
+                                    localIdentName: '[name]_[local]_[hash:base64:5]',
+                                    exportLocalsConvention: 'camelCase'
+                                },
+                                importLoaders: 1,
+                                esModule: false
                             }
-                        }
-                    }]
+                        },
+                        {
+                            loader: 'postcss-loader',
+                            options: {
+                                postcssOptions: {
+                                    plugins: [
+                                        'postcss-import',
+                                        'postcss-simple-vars',
+                                        'autoprefixer'
+                                    ]
+                                }
+                            }
+                        },
+                    ]
                 },
                 {
                     test: /\.(svg|png|wav|gif|jpg)$/,
-                    loader: 'file-loader',
-                    options: {
-                        outputPath: 'static/assets/'
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'static/assets/[name].[hash][ext]'
                     }
-                },
+                },         
                 {
                     test: /\.hex$/,
                     use: [{
@@ -126,14 +126,9 @@ const makeConfig = function (defaultConfig, options) {
         resolve: {
             cacheWithContext: false,
             symlinks: false,
-            alias: {
-                // act like scratch-gui has this line in its package.json:
-                //   "browser": "./src/index.js"
-                'scratch-gui$': path.resolve(__dirname, 'node_modules', 'scratch-gui', 'src', 'index.js'),
-            },
             // attempt to resolve file extensions in this order
             // (allows leaving off the extension when importing)
-            extensions: [".js", ".json", ".node", ".css"],
+            extensions: [".js", ".jsx", ".json", ".node", ".css"],
         }
     });
 

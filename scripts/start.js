@@ -29,27 +29,25 @@ const startRenderer = async () => {
     console.log(chalk.cyan('Starting Webpack Dev Server...'));
 
     const compiler = webpack(rendererConfig);
-    const server = new WebpackDevServer(compiler, {
-        hot: true,
-        compress: true,
-        port: PORT,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        historyApiFallback: true
-    });
+    const server = new WebpackDevServer(
+        {
+            hot: true,
+            compress: true,
+            port: PORT,
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            historyApiFallback: true
+        },
+        compiler
+    );
 
-    return new Promise((resolve, reject) => {
-        server.listen(PORT, 'localhost', (err) => {
-            if (err) {
-                console.error(chalk.red('Failed to start Webpack Dev Server:', err));
-                reject(err);
-            } else {
-                console.log(chalk.green(`Renderer is running at http://localhost:${PORT}`));
-                resolve();
-            }
-        });
-    });
-};
-
+    try {
+        await server.start();
+        console.log(chalk.green(`Renderer is running at http://localhost:${PORT}`));
+    } catch (err) {
+        console.error(chalk.red('Failed to start Webpack Dev Server:', err));
+        throw err;
+    }
+}
 
 const startElectron = async () => {
     console.log(chalk.cyan('Starting Electron...'));

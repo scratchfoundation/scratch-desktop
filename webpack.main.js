@@ -20,6 +20,7 @@ module.exports = makeConfig(
         output: {
             filename: '[name].js',
             chunkFilename: '[name].bundle.js',
+            assetModuleFilename: 'static/assets/[name].[hash][ext]',
             libraryTarget: 'commonjs2',
             path: path.resolve(__dirname, "dist/main")
         },

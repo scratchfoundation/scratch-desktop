@@ -7,7 +7,7 @@ publish: # empty provider list = don't publish
 files:
   - dist/**
   - package.json
-extraResources:
+extraResources: # copy the downloaded static assets to make sure they are available for the artifact
   - from: static/
     to: static/
     filter:
