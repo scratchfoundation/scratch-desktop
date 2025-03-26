@@ -85,7 +85,7 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
  * @returns {string} - an absolute URL as a string
  */
 const makeFullUrl = (url, search = null) => {
-    const baseUrl =  (isDevelopment ? 
+    const baseUrl = (isDevelopment ?
         `http://localhost:${PORT}/` :
         `file://${path.join(__dirname, "../renderer")}/`
     );

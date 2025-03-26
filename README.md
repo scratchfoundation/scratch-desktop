@@ -5,6 +5,7 @@ Scratch 3.0 as a standalone desktop application
 ## Developer Instructions
 
 ### Releasing a new version
+# TODO: Update readme once scratch-desktop uses scratch-gui from an npm package
 
 Let's assume that you want to make a new release, version `3.999.0`, corresponding to `scratch-gui` version
 `0.1.0-prerelease.20yymmdd`.
