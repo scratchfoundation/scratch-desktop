@@ -53,7 +53,7 @@
     "eslint-config-scratch": "9.0.9",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-react": "7.37.4",
-    "fs-extra": "9.1.0",
+    "fs-extra": "11.3.0",
     "intl": "1.2.5",
     "lodash.bindall": "4.4.0",
     "lodash.defaultsdeep": "4.6.1",
