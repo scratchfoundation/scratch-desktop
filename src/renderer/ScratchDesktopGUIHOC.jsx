@@ -117,6 +117,7 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
                 onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}
                 onUpdateProjectTitle={this.handleUpdateProjectTitle}
+                platform="DESKTOP"
 
                 // allow passed-in props to override any of the above
                 {...childProps}
