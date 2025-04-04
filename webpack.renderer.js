@@ -84,6 +84,11 @@ module.exports = makeConfig(
                         to: 'static/libraries',
                         flatten: true
                     },
+                    {
+                        context: getModulePath('@scratch/scratch-gui'),
+                        from: 'chunks/fetch-worker.*.{js,js.map}',
+                        noErrorOnMissing: true
+                    }
                 ]
             }),
         ]
