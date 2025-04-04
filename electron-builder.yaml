@@ -5,7 +5,8 @@ appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch 3"
 publish: # empty provider list = don't publish
 files:
-  - dist/**
+  - dist/main/
+  - dist/renderer/
   - package.json
 extraResources: # copy the downloaded static assets to make sure they are available for the artifact
   - from: static/
