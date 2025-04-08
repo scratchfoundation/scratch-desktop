@@ -6,6 +6,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 
 import {
+    GUIComponent,
     LoadingStates,
     onFetchedProjectData,
     onLoadedProject,
@@ -98,7 +99,6 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
                 canEditTitle
                 canModifyCloudData={false}
                 canSave={false}
-                isScratchDesktop
                 onClickAbout={[
                     {
                         title: 'About',
@@ -134,8 +134,7 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
         onLoadingStarted: PropTypes.func,
         onRequestNewProject: PropTypes.func,
         onTelemetrySettingsClicked: PropTypes.func,
-        // TODO: Expose this type / find where it is exposed from scratch-gui
-        vm: PropTypes.object
+        vm: GUIComponent.WrappedComponent.propTypes.vm
     };
     const mapStateToProps = state => {
         const loadingState = state.scratchGui.projectState.loadingState;
