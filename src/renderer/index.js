@@ -34,4 +34,4 @@ routeModulePromise.then(routeModule => {
     const appTarget = document.getElementById('app');
     const routeElement = routeModule.default;
     ReactDOM.render(routeElement, appTarget);
-}).catch(error => log.error("Error rendering app: ", error));
+}).catch(error => log.error('Error rendering app: ', error));

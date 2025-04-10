@@ -1,4 +1,4 @@
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 const chalk = require('chalk');
@@ -8,22 +8,20 @@ const rendererConfig = require('../webpack.renderer.js');
 
 const PORT = process.env.PORT || 8601;
 
-const buildRenderer = () => {
-    return new Promise((resolve, reject) => {
-        console.log(chalk.cyan('Building renderer process...'));
+const buildRenderer = () => new Promise((resolve, reject) => {
+    console.log(chalk.cyan('Building renderer process...'));
 
-        const compiler = webpack(rendererConfig);
-        compiler.run((err, stats) => {
-            if (err || stats.hasErrors()) {
-                console.error(chalk.red('Renderer build failed:', err || stats.toString()));
-                reject(err || new Error('Renderer build failed.'));
-            } else {
-                console.log(chalk.green('Renderer built successfully!'));
-                resolve();
-            }
-        });
+    const compiler = webpack(rendererConfig);
+    compiler.run((err, stats) => {
+        if (err || stats.hasErrors()) {
+            console.error(chalk.red('Renderer build failed:', err || stats.toString()));
+            reject(err || new Error('Renderer build failed.'));
+        } else {
+            console.log(chalk.green('Renderer built successfully!'));
+            resolve();
+        }
     });
-};
+});
 
 const startRenderer = async () => {
     console.log(chalk.cyan('Starting Webpack Dev Server...'));
@@ -34,7 +32,7 @@ const startRenderer = async () => {
             hot: true,
             compress: true,
             port: PORT,
-            headers: { 'Access-Control-Allow-Origin': '*' },
+            headers: {'Access-Control-Allow-Origin': '*'},
             historyApiFallback: true
         },
         compiler
@@ -47,12 +45,12 @@ const startRenderer = async () => {
         console.error(chalk.red('Failed to start Webpack Dev Server:', err));
         throw err;
     }
-}
+};
 
 const startElectron = async () => {
     console.log(chalk.cyan('Starting Electron...'));
 
-    await waitOn({ resources: [`http://localhost:${PORT}`] });
+    await waitOn({resources: [`http://localhost:${PORT}`]});
 
     spawn('electron', ['.'], {
         stdio: 'inherit',
@@ -60,7 +58,7 @@ const startElectron = async () => {
     });
 };
 
-const start = async () => {
+const start = () => {
     console.log(chalk.green('Building main process...'));
 
     const mainProcess = spawn('npm', ['run', 'compile:main'], {
@@ -68,7 +66,7 @@ const start = async () => {
         shell: true
     });
 
-    mainProcess.on('exit', async (code) => {
+    mainProcess.on('exit', async code => {
         if (code === 0) {
             console.log(chalk.green('Main process built successfully!'));
 

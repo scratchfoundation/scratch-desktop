@@ -87,7 +87,7 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
 const makeFullUrl = (url, search = null) => {
     const baseUrl = (isDevelopment ?
         `http://localhost:${PORT}/` :
-        `file://${path.join(__dirname, "../renderer")}/`
+        `file://${path.join(__dirname, '../renderer')}/`
     );
     const fullUrl = new URL(url, baseUrl);
     if (search) {
@@ -469,7 +469,7 @@ const initialProjectDataPromise = (async () => {
         const projectData = await promisify(fs.readFile)(projectPath, null);
         return projectData;
     } catch (e) {
-        log.error(`Error loading project data: ${e}`)
+        log.error(`Error loading project data: ${e}`);
         dialog.showMessageBox(_windows.main, {
             type: 'error',
             title: 'Failed to load project',

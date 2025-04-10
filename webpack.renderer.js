@@ -1,7 +1,7 @@
 const path = require('path');
-const fsExtra = require("fs-extra");
+const fsExtra = require('fs-extra');
 
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -9,49 +9,51 @@ const makeConfig = require('./webpack.makeConfig.js');
 
 const getModulePath = moduleName => path.dirname(require.resolve(`${moduleName}`));
 
-function generateIndexFile(template) {
-	let html = template;
+const generateIndexFile = template => {
+    let html = template;
 
-	html = html.replace("</head>", '<script>require("source-map-support/source-map-support.js").install()</script></head>')
+    html = html.replace(
+        '</head>', '<script>require("source-map-support/source-map-support.js").install()</script></head>'
+    );
 
-	const filePath = path.join("dist", ".renderer-index-template.html");
-	fsExtra.outputFileSync(filePath, html);
-	return `!!html-loader?minimize=false&attributes=false!${filePath}`
-}
+    const filePath = path.join('dist', '.renderer-index-template.html');
+    fsExtra.outputFileSync(filePath, html);
+    return `!!html-loader?minimize=false&attributes=false!${filePath}`;
+};
 
-let template = fsExtra.readFileSync("src/renderer/index.html", {encoding: "utf8"});
+const template = fsExtra.readFileSync('src/renderer/index.html', {encoding: 'utf8'});
 
 module.exports = makeConfig(
     {
-        target: "electron-renderer",
+        target: 'electron-renderer',
         entry: {
             renderer: './src/renderer/index.js'
         },
-        context : path.resolve(__dirname),
+        context: path.resolve(__dirname),
         externals: [
             'source-map-support',
             'electron',
-            'webpack',
+            'webpack'
         ],
         output: {
             filename: '[name].js',
             assetModuleFilename: 'static/assets/[name].[hash][ext]',
             chunkFilename: '[name].bundle.js',
             libraryTarget: 'commonjs2',
-            path: path.resolve(__dirname, "dist/renderer"),
+            path: path.resolve(__dirname, 'dist/renderer')
         },
-        module: { 
+        module: {
             rules: [
                 {
                     test: /\.node$/,
-                    use: "node-loader"
+                    use: 'node-loader'
                 },
                 {
                     test: /\.(html)$/,
-                    use: { "loader": "html-loader" }
-                },
+                    use: {loader: 'html-loader'}
+                }
             ]
-        },
+        }
     },
     {
         name: 'renderer',
@@ -65,9 +67,9 @@ module.exports = makeConfig(
         ],
         plugins: [
             new HtmlWebpackPlugin({
-                filename: "index.html",
+                filename: 'index.html',
                 template: generateIndexFile(template),
-                minify: false,
+                minify: false
             }),
             new CopyWebpackPlugin({
                 patterns: [
@@ -90,7 +92,7 @@ module.exports = makeConfig(
                         noErrorOnMissing: true
                     }
                 ]
-            }),
+            })
         ]
     }
 );

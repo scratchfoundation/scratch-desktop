@@ -94,7 +94,7 @@ const makeConfig = function (defaultConfig, options) {
                                     ]
                                 }
                             }
-                        },
+                        }
                     ]
                 },
                 {
@@ -103,7 +103,7 @@ const makeConfig = function (defaultConfig, options) {
                     generator: {
                         filename: 'static/assets/[name].[hash][ext]'
                     }
-                },         
+                },
                 {
                     test: /\.hex$/,
                     use: [{
@@ -120,15 +120,17 @@ const makeConfig = function (defaultConfig, options) {
                 filename: '[file].map'
             }),
             new webpack.DefinePlugin({
-                __static: isProduction ? 'process.resourcesPath + "/static"' : JSON.stringify(path.resolve(process.cwd(), 'static')),
-            }),
+                __static: isProduction ?
+                    'process.resourcesPath + "/static"' :
+                    JSON.stringify(path.resolve(process.cwd(), 'static'))
+            })
         ].concat(options.plugins || []),
         resolve: {
             cacheWithContext: false,
             symlinks: false,
             // attempt to resolve file extensions in this order
             // (allows leaving off the extension when importing)
-            extensions: [".js", ".jsx", ".json", ".node", ".css"],
+            extensions: ['.js', '.jsx', '.json', '.node', '.css']
         }
     });
 

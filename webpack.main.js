@@ -4,11 +4,11 @@ const makeConfig = require('./webpack.makeConfig.js');
 
 module.exports = makeConfig(
     {
-        target: "electron-main",
+        target: 'electron-main',
         entry: {
             main: './src/main/index.js'
         },
-        context : path.resolve(__dirname),
+        context: path.resolve(__dirname),
         externals: [
             'source-map-support',
             'electron',
@@ -22,10 +22,10 @@ module.exports = makeConfig(
             chunkFilename: '[name].bundle.js',
             assetModuleFilename: 'static/assets/[name].[hash][ext]',
             libraryTarget: 'commonjs2',
-            path: path.resolve(__dirname, "dist/main")
+            path: path.resolve(__dirname, 'dist/main')
         },
-        module: { rules: [] },
-        node: { __dirname: false, __filename: false }
+        module: {rules: []},
+        node: {__dirname: false, __filename: false}
     },
     {
         name: 'main',
