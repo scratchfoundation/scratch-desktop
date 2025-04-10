@@ -86,11 +86,15 @@ module.exports = makeConfig(
                         to: 'static/libraries',
                         flatten: true
                     },
-                    {
-                        context: getModulePath('@scratch/scratch-gui'),
-                        from: 'chunks/fetch-worker.*.{js,js.map}',
-                        noErrorOnMissing: true
-                    }
+                    // This still results in a missing fetch worker error, because the fetch-worker
+                    // is attempted to be resolved on an absolute path (e.g. file:///chunks/fetch-worker..)
+                    // That is still fine, because we don't need the fetch-worker to retrieve information.
+                    // TODO: For a long term fix, change how the fetch-worker is resolved in `scratch-storage`
+                    // {
+                    //     context: getModulePath('@scratch/scratch-gui'),
+                    //     from: 'chunks/fetch-worker.*.{js,js.map}',
+                    //     noErrorOnMissing: true
+                    // }
                 ]
             })
         ]
