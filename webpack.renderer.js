@@ -82,7 +82,7 @@ module.exports = makeConfig(
                         context: getModulePath('@scratch/scratch-gui')
                     },
                     {
-                        from: path.join(getModulePath('@scratch/scratch-gui'), 'libraries', '*.json'),
+                        from: path.join(getModulePath('@scratch/scratch-gui'), 'libraries'),
                         to: 'static/libraries',
                         flatten: true
                     },
