@@ -85,7 +85,7 @@ module.exports = makeConfig(
                         from: path.join(getModulePath('@scratch/scratch-gui'), 'libraries'),
                         to: 'static/libraries',
                         flatten: true
-                    },
+                    }
                     // This still results in a missing fetch worker error, because the fetch-worker
                     // is attempted to be resolved on an absolute path (e.g. file:///chunks/fetch-worker..)
                     // That is still fine, because we don't need the fetch-worker to retrieve information.
