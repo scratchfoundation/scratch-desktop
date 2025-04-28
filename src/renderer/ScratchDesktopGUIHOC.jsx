@@ -4,22 +4,20 @@ import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
-import GUIComponent from 'scratch-gui/src/components/gui/gui.jsx';
 
 import {
+    GUIComponent,
     LoadingStates,
     onFetchedProjectData,
     onLoadedProject,
     defaultProjectId,
     requestNewProject,
     requestProjectUpload,
-    setProjectId
-} from 'scratch-gui/src/reducers/project-state';
-import {
+    setProjectId,
     openLoadingProject,
     closeLoadingProject,
     openTelemetryModal
-} from 'scratch-gui/src/reducers/modals';
+} from '@scratch/scratch-gui';
 
 import ElectronStorageHelper from '../common/ElectronStorageHelper';
 
@@ -101,7 +99,6 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
                 canEditTitle
                 canModifyCloudData={false}
                 canSave={false}
-                isScratchDesktop
                 onClickAbout={[
                     {
                         title: 'About',
@@ -120,6 +117,7 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
                 onShowPrivacyPolicy={showPrivacyPolicy}
                 onStorageInit={this.handleStorageInit}
                 onUpdateProjectTitle={this.handleUpdateProjectTitle}
+                platform="DESKTOP"
 
                 // allow passed-in props to override any of the above
                 {...childProps}
@@ -136,7 +134,6 @@ const ScratchDesktopGUIHOC = function (WrappedComponent) {
         onLoadingStarted: PropTypes.func,
         onRequestNewProject: PropTypes.func,
         onTelemetrySettingsClicked: PropTypes.func,
-        // using PropTypes.instanceOf(VM) here will cause prop type warnings due to VM mismatch
         vm: GUIComponent.WrappedComponent.propTypes.vm
     };
     const mapStateToProps = state => {

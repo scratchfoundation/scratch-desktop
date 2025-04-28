@@ -1,11 +1,11 @@
 import {app, ipcMain} from 'electron';
 import defaultsDeep from 'lodash.defaultsdeep';
-import {version} from '../../package.json';
+import packageJson from '../../package.json';
 
 import TelemetryClient from './telemetry/TelemetryClient';
 
 const EVENT_TEMPLATE = {
-    version,
+    version: packageJson.version,
     projectName: '',
     language: '',
     metadata: {

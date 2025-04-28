@@ -4,6 +4,15 @@ directories:
 appId: edu.mit.scratch.scratch-desktop
 productName: "Scratch 3"
 publish: # empty provider list = don't publish
+files:
+  - dist/main/
+  - dist/renderer/
+  - package.json
+extraResources: # copy the downloaded static assets to make sure they are available for the artifact
+  - from: static/
+    to: static/
+    filter:
+      - "**/*"
 mac:
   category: public.app-category.education
   entitlements: buildResources/entitlements.mac.plist
@@ -45,3 +54,12 @@ appx:
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
   artifactName: "Scratch ${version} Setup.${ext}"
+linux:
+  target: AppImage
+  executableName: scratch-desktop
+  # Currently Linux builds are supported only for development and have
+  # not been tested in a production environment.
+  category: development
+  # Ensure sandbox permissions are set
+  asarUnpack:
+    - chrome-sandbox

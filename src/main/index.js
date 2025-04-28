@@ -9,7 +9,7 @@ import {getFilterForExtension} from './FileFilters';
 import telemetry from './ScratchDesktopTelemetry';
 import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
-import {productName, version} from '../../package.json';
+import packageJson from '../../package.json';
 
 // suppress deprecation warning; this will be the default in Electron 9
 app.allowRendererProcessReuse = true;
@@ -20,7 +20,6 @@ telemetry.appWasOpened();
 const defaultSize = {width: 1280, height: 800}; // good for MAS screenshots
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
-
 const devToolKey = ((process.platform === 'darwin') ?
     { // macOS: command+option+i
         alt: true, // option
@@ -28,7 +27,7 @@ const devToolKey = ((process.platform === 'darwin') ?
         meta: true, // command
         shift: false,
         code: 'KeyI'
-    } : { // Windows: control+shift+i
+    } : { // Windows / linux: control+shift+i
         alt: false,
         control: true,
         meta: false, // Windows key
@@ -39,6 +38,7 @@ const devToolKey = ((process.platform === 'darwin') ?
 
 // global window references prevent them from being garbage-collected
 const _windows = {};
+const PORT = process.env.PORT || 8601;
 
 // enable connecting to Scratch Link even if we DNS / Internet access is not available
 // this must happen BEFORE the app ready event!
@@ -86,8 +86,8 @@ const displayPermissionDeniedWarning = (browserWindow, permissionType) => {
  */
 const makeFullUrl = (url, search = null) => {
     const baseUrl = (isDevelopment ?
-        `http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}/` :
-        `file://${__dirname}/`
+        `http://localhost:${PORT}/` :
+        `file://${path.join(__dirname, '../renderer')}/`
     );
     const fullUrl = new URL(url, baseUrl);
     if (search) {
@@ -214,7 +214,7 @@ const createAboutWindow = () => {
         height: 400,
         parent: _windows.main,
         search: 'route=about',
-        title: `About ${productName}`
+        title: `About ${packageJson.productName}`
     });
     return window;
 };
@@ -225,7 +225,7 @@ const createPrivacyWindow = () => {
         height: _windows.main.height * 0.8,
         parent: _windows.main,
         search: 'route=privacy',
-        title: `${productName} Privacy Policy`
+        title: `${packageJson.productName} Privacy Policy`
     });
     return window;
 };
@@ -288,7 +288,7 @@ const createMainWindow = () => {
     const window = createWindow({
         width: defaultSize.width,
         height: defaultSize.height,
-        title: `${productName} ${version}` // something like "Scratch 3.14"
+        title: `${packageJson.productName} ${packageJson.version}` // something like "Scratch 3.14"
     });
     const webContents = window.webContents;
 
@@ -359,7 +359,7 @@ const createMainWindow = () => {
 
     webContents.on('will-prevent-unload', ev => {
         const choice = dialog.showMessageBoxSync(window, {
-            title: productName,
+            title: packageJson.productName,
             type: 'question',
             message: 'Leave Scratch?',
             detail: 'Any unsaved changes will be lost.',
@@ -416,7 +416,6 @@ app.on('ready', () => {
             const {default: installExtension, ...devToolsExtensions} = importedModule;
             const extensionsToInstall = [
                 devToolsExtensions.REACT_DEVELOPER_TOOLS,
-                devToolsExtensions.REACT_PERF,
                 devToolsExtensions.REDUX_DEVTOOLS
             ];
             for (const extension of extensionsToInstall) {
@@ -470,6 +469,7 @@ const initialProjectDataPromise = (async () => {
         const projectData = await promisify(fs.readFile)(projectPath, null);
         return projectData;
     } catch (e) {
+        log.error(`Error loading project data: ${e}`);
         dialog.showMessageBox(_windows.main, {
             type: 'error',
             title: 'Failed to load project',
