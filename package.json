@@ -57,7 +57,7 @@
     "eslint": "8.57.1",
     "eslint-config-scratch": "9.0.9",
     "eslint-plugin-import": "2.31.0",
-    "eslint-plugin-react": "7.37.4",
+    "eslint-plugin-react": "7.37.5",
     "fs-extra": "9.1.0",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "5.6.3",
