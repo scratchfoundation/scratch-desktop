@@ -72,7 +72,7 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           PYTHON_PATH: ${{ matrix.os == 'macos-latest' && '/Users/runner/.pyenv/versions/2.7.18/bin/python'}}
-        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == true && 'dist' || 'distDev' }}
+        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }}
       - name: Zip MAS-Dev build
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: |
