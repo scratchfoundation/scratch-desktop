@@ -65,7 +65,7 @@
     "lodash.bindall": "4.4.0",
     "lodash.defaultsdeep": "4.6.1",
     "lodash.omit": "4.4.0",
-    "mini-css-extract-plugin": "1.6.2",
+    "mini-css-extract-plugin": "2.9.2",
     "minilog": "3.1.0",
     "minimist": "1.2.8",
     "mkdirp": "1.0.4",
