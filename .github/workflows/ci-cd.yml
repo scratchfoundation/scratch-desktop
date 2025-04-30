@@ -23,7 +23,9 @@ jobs:
       run:
         shell: bash
     env:
-        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'develop' }}
+        # This is a temporary workaround. We're currently having issues signing windows builds
+        # due to a change of the security policy (see https://github.com/electron/windows-installer/issues/473)
+        SCRATCH_SHOULD_SIGN: ${{ github.ref_name == 'develop' && matrix.os != 'windows-latest' }}
         AC_USERNAME: ${{ (github.ref_name == 'develop' && secrets.AC_USERNAME) || '' }}
         AC_PASSWORD: ${{ (github.ref_name == 'develop' && secrets.AC_PASSWORD) || '' }}
     steps:
