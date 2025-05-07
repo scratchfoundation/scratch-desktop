@@ -30,6 +30,7 @@ const notarizeMacBuild = async function (context) {
         appPath: `${appOutDir}/${productFilename}.app`,
         appleId,
         appleIdPassword: process.env.AC_PASSWORD || `@keychain:${appleIdKeychainItem}`,
+        teamId: process.env.AC_TEAM_ID || '',
         tool: 'notarytool'
     });
 };
