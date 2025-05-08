@@ -81,9 +81,10 @@ jobs:
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: |
           NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
-          cd dist/mas-dev
+          MAS_DEV_DIR=$(find dist -type d -name "mas-dev*" | head -n 1 | xargs basename)
+          cd dist/${MAS_DEV_DIR}
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
-            Scratch*.app ../mas-dev-${NPM_APP_VERSION}.zip
+            Scratch*.app ../${MAS_DEV_DIR}-${NPM_APP_VERSION}.zip
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         if: matrix.os == 'macos-latest'
@@ -91,7 +92,7 @@ jobs:
           name: macOS
           path: |
             dist/Scratch*.dmg
-            dist/mas/Scratch*.pkg
+            dist/mas-*/Scratch*.pkg
             dist/mas-dev-*.zip
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
