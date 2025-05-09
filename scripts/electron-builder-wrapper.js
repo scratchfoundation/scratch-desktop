@@ -59,6 +59,7 @@ const runBuilder = function (wrapperConfig, target) {
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
+        allArgs.push('--universal');
         if (target.name === 'mas-dev') {
             allArgs.push(`--c.mac.provisioningProfile=${masDevProfile}`);
         }
