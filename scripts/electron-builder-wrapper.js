@@ -60,7 +60,7 @@ const runBuilder = function (wrapperConfig, target) {
     if (target.platform === 'darwin') {
         allArgs.push(`--c.mac.type=${wrapperConfig.mode === 'dist' ? 'distribution' : 'development'}`);
         // this needs to be built on an arm64 mac, in order for the executable to be able
-        // to run on both x86-64 and arm64 architectures. 
+        // to run on both x86-64 and arm64 architectures.
         allArgs.push('--universal');
         if (target.name === 'mas-dev') {
             allArgs.push(`--c.mac.provisioningProfile=${masDevProfile}`);
