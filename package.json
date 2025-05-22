@@ -3,7 +3,7 @@
   "productName": "Scratch",
   "description": "Scratch 3.0 as a self-contained desktop application",
   "author": "Scratch Foundation",
-  "version": "3.30.5",
+  "version": "3.31.0",
   "license": "AGPL-3.0-only",
   "main": "./dist/main/main.js",
   "scripts": {
