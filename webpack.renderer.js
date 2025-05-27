@@ -85,6 +85,12 @@ module.exports = makeConfig(
                         from: path.join(getModulePath('@scratch/scratch-gui'), 'libraries'),
                         to: 'static/libraries',
                         flatten: true
+                    },
+                    {
+                        // We need to copy the chunks for translating tutorial images for
+                        // the tutorial translations to work.
+                        from: path.join(getModulePath('@scratch/scratch-gui'), 'chunks'),
+                        to: 'chunks'
                     }
                     // This still results in a missing fetch worker error, because the fetch-worker
                     // is attempted to be resolved on an absolute path (e.g. file:///chunks/fetch-worker..)
