@@ -49,7 +49,7 @@
     "copy-webpack-plugin": "6.4.1",
     "cross-env": "7.0.3",
     "css-loader": "5.2.7",
-    "electron": "25.9.8",
+    "electron": "37.0.0",
     "electron-builder": "26.0.12",
     "electron-devtools-installer": "3.2.1",
     "electron-notarize": "1.2.2",
