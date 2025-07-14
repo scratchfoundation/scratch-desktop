@@ -83,7 +83,7 @@
     "url-loader": "4.1.1",
     "uuid": "8.3.2",
     "wait-on": "8.0.3",
-    "webpack": "5.100.0",
+    "webpack": "5.100.1",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.2.2",
     "webpack-merge": "4.2.2"
