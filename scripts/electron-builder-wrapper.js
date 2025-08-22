@@ -124,6 +124,14 @@ const calculateTargets = function (wrapperConfig) {
         linuxAppImage: {
             name: 'appimage',
             platform: 'linux'
+        },
+        linuxDeb: {
+            name: 'deb',
+            platform: 'linux'
+        },
+        linuxRpm: {
+            name: 'rpm',
+            platform: 'linux'
         }
     };
     const targets = [];
@@ -154,6 +162,8 @@ const calculateTargets = function (wrapperConfig) {
         break;
     case 'linux':
         targets.push(availableTargets.linuxAppImage);
+        targets.push(availableTargets.linuxDeb);
+        targets.push(availableTargets.linuxRpm);
         break;
     default:
         throw new Error(`Could not determine targets for platform: ${process.platform}`);

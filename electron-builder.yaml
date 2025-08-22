@@ -55,11 +55,20 @@ nsis:
   oneClick: false # allow user to choose per-user or per-machine
   artifactName: "Scratch ${version} Setup.${ext}"
 linux:
-  target: AppImage
+  target:
+    - AppImage
+    - deb
+    - rpm
   executableName: scratch-desktop
   # Currently Linux builds are supported only for development and have
   # not been tested in a production environment.
-  category: development
+  category: Education
   # Ensure sandbox permissions are set
   asarUnpack:
     - chrome-sandbox
+  # DEB package specific configuration
+  icon: buildResources/ScratchDesktop.png
+  synopsis: Scratch 3 Desktop
+  description: Scratch 3.0 as a self-contained desktop application
+  maintainer: "Scratch Foundation <info@scratchfoundation.org>"
+  vendor: "Scratch Foundation"
