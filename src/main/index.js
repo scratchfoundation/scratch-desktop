@@ -321,7 +321,15 @@ const createMainWindow = () => {
                         // The download was canceled or interrupted. Cancel the telemetry event and delete the file.
                         throw new Error(`save ${doneState}`); // "save cancelled" or "save interrupted"
                     }
-                    await fs.move(tempPath, userChosenPath, {overwrite: true});
+                    // fs.move fails on Windows when saving to the root of a drive.
+                    // Work around this by using copyFile and unlink instead.
+                    const destDir = path.dirname(userChosenPath);
+                    if (process.platform === 'win32' && destDir === path.parse(destDir).root) {
+                        await fs.copyFile(tempPath, userChosenPath);
+                        await fs.unlink(tempPath);
+                    } else {
+                        await fs.move(tempPath, userChosenPath, {overwrite: true});
+                    }
                     if (isProjectSave) {
                         const newProjectTitle = path.basename(userChosenPath, extName);
                         webContents.send('setTitleFromSave', {title: newProjectTitle});
