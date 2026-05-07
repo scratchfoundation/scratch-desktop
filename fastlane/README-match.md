@@ -50,3 +50,26 @@ match repo.
    * `bundle exec fastlane match_dev`
 2. If you plan to make builds for release, run:
    * `bundle exec fastlane match_dist`
+
+## Nuking & Regenerating Certs
+
+When a certificate has expired, been revoked, or is otherwise invalid, Match keeps trying to use the stale file from storage. The fix is to nuke and regenerate.
+
+Nuking revokes certificates in the Apple Developer portal **and** deletes them from the match storage repo. Anyone else on the team using these certs will need to re-pull after a fresh `match_dev` / `match_dist`. Coordinate before running.
+
+1. To nuke development certificates:
+   * `bundle exec fastlane nuke_dev`
+2. To nuke App Store distribution certificates (and the `mac_installer_distribution` installer companion):
+   * `bundle exec fastlane nuke_dist`
+
+After nuking, re-run `match_dev` / `match_dist` to regenerate fresh certs.
+
+`nuke_dist` passes `additional_cert_types: "mac_installer_distribution"` so the installer companion is revoked alongside the App Store distribution cert. Without that, the companion ends up orphaned in match storage and breaks the next `match_dist` run.
+
+### Developer ID certs need manual cleanup
+
+`match_nuke` cannot currently revoke `developer_id` or `developer_id_installer` certificates (see [fastlane/fastlane#21147](https://github.com/fastlane/fastlane/issues/21147)). When you need to reset those:
+
+1. Revoke the **Developer ID Application** and **Developer ID Installer** certificates in the Apple Developer portal: <https://developer.apple.com/account/resources/certificates/list>.
+2. Delete the corresponding cert files (`.cer`, `.p12`) from the match storage repo, under the `certs/developer_id_application/` and `certs/developer_id_installer/` directories.
+3. Re-run `match_dist` to generate fresh certs.
