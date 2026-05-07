@@ -67,7 +67,7 @@ jobs:
       - name: Fastlane
         env:
             GIT_URL: ${{ secrets.FL_GIT_URL }}
-            STORAGE_MODE: ${{secrets.FL_STORAGE_MODE}}
+            STORAGE_MODE: ${{vars.FL_STORAGE_MODE}}
             MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: bundle exec fastlane circleci
