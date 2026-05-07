@@ -16,6 +16,13 @@
 default_platform(:mac)
 
 platform :mac do
+  before_all do
+    # Authenticate with App Store Connect using an API Team Key when the
+    # standard env vars are present. Match (and any other actions that
+    # support :api_key) will pick the key up automatically via lane_context.
+    app_store_connect_api_key if ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"].to_s != ""
+  end
+
   desc "Use Fastlane Match to install development certificates"
   lane :match_dev do
     match(type: "development", platform: "macos", output_path: "build", readonly: is_ci)

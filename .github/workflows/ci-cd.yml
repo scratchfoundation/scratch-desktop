@@ -67,8 +67,12 @@ jobs:
       - name: Fastlane
         env:
             GIT_URL: ${{ secrets.FL_GIT_URL }}
-            STORAGE_MODE: ${{vars.FL_STORAGE_MODE}}
+            STORAGE_MODE: ${{ vars.FL_STORAGE_MODE }}
             MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+            APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ vars.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+            APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+            APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+            APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: 'true'
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
         run: bundle exec fastlane circleci
       - name: Build

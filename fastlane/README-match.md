@@ -23,6 +23,27 @@ To initialize Fastlane Match:
 
 ...yep, that's it.
 
+## Authentication
+
+Match authenticates with Apple via an App Store Connect API Team Key.
+Three environment variables drive this:
+
+| Variable | What it is |
+| --- | --- |
+| `APP_STORE_CONNECT_API_KEY_KEY_ID` | The Key ID shown in App Store Connect (short string). |
+| `APP_STORE_CONNECT_API_KEY_ISSUER_ID` | The team's Issuer ID (UUID). |
+| `APP_STORE_CONNECT_API_KEY_KEY_FILEPATH` *or* `APP_STORE_CONNECT_API_KEY_KEY` | The path to your `.p8` file *or* its base64-encoded contents. |
+
+When using `_KEY` (base64), also set `APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64=true`.
+
+In CI these are wired up from GitHub Actions `vars` (the IDs) and `secrets` (the
+key contents). Locally, the easiest pattern is a `fastlane/.env` file (gitignored)
+pointing `APP_STORE_CONNECT_API_KEY_KEY_FILEPATH` at your downloaded `.p8`.
+
+If the Key ID env var is empty, Match falls back to whatever auth Apple's
+tooling can find — useful only for read-only operations against an existing
+match repo.
+
 ## Obtaining & Updating Certs
 
 1. If you plan to make and internally share development builds for testing purposes, run:
