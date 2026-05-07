@@ -8,6 +8,11 @@ thumbs.db
 /node_modules
 npm-*
 
+# Local environment
+.env
+.env.local
+.env.*.local
+
 # Testing
 /.nyc_output
 /coverage

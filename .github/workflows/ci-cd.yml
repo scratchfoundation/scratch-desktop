@@ -59,13 +59,18 @@ jobs:
         uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
             ssh-private-key: ${{ secrets.FASTLANE_ACCESS_KEY }}
+      - name: Setup Ruby
+        if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+        with:
+            bundler-cache: true
       - name: Fastlane
         env:
             GIT_URL: ${{ secrets.FL_GIT_URL }}
             STORAGE_MODE: ${{secrets.FL_STORAGE_MODE}}
             MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
-        run: fastlane circleci
+        run: bundle exec fastlane circleci
       - name: Build
         timeout-minutes: 30 # macOS notarization can take a while
         env:
