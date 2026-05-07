@@ -85,7 +85,7 @@ jobs:
             STORAGE_MODE: ${{ vars.FL_STORAGE_MODE }}
             MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         if: matrix.os == 'macos-latest' && env.SCRATCH_SHOULD_SIGN == 'true'
-        run: bundle exec fastlane circleci
+        run: bundle exec fastlane prepare_signing
       - name: Build
         timeout-minutes: 30 # macOS notarization can take a while
         env:

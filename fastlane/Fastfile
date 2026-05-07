@@ -34,9 +34,9 @@ platform :mac do
     match(type: "developer_id", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "developer_id_installer")
   end
 
-  desc "Prepare for a CircleCI signed build"
-  lane :circleci do
-    setup_circle_ci
+  desc "Prepare for a signed CI build"
+  lane :prepare_signing do
+    setup_ci
     match_dev
     match_dist
   end
