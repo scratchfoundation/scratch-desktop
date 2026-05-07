@@ -10,18 +10,27 @@ If you plan to only run your builds locally for your own debug purposes, you don
 
 If you don't have access to a Fastlane Match storage repository or bucket, you don't need Fastlane Match.
 
-## Initial Configuration
+## Configuration
 
-The `Matchfile` containing settings for Fastlane Match includes private information about our storage, so it's set to be ignored by `git`.
+The `Matchfile` is committed to this repository. Storage and authentication settings are read from environment variables (see [Storage](#storage) and [Authentication](#authentication) below), so the `Matchfile` itself contains no secrets.
 
-This means that you'll need to initialize Fastlane Match yourself when you clone this repository in a new place.
+## Storage
 
-To initialize Fastlane Match:
+The match repo's contents live in a separate git repo. Three
+environment variables configure access:
 
-1. Enter this repository's base directory (not the `fastlane` subdirectory)
-2. Run `bundle exec fastlane match init` and answer the questions
+| Variable | What it is |
+| --- | --- |
+| `GIT_URL` | URL of the match storage repo. |
+| `STORAGE_MODE` | Match storage mode. Set to `git` for this repo. |
+| `MATCH_PASSWORD` | Password fastlane match uses to encrypt stored certs. |
 
-...yep, that's it.
+`GIT_URL` and `STORAGE_MODE` are mandatory: the `Matchfile` calls
+`ENV.fetch` on both and exits if either is missing. `MATCH_PASSWORD` is
+required whenever you pull or update certs.
+
+In CI, `GIT_URL` and `MATCH_PASSWORD` come from GitHub Actions `secrets`
+and `STORAGE_MODE` from `vars`. Locally, set them in `fastlane/.env`.
 
 ## Authentication
 
