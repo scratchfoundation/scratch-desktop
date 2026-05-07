@@ -65,12 +65,12 @@ const runBuilder = function (wrapperConfig, target) {
         if (target.name === 'mas-dev') {
             allArgs.push(`--c.mac.provisioningProfile=${masDevProfile}`);
         }
-        if (wrapperConfig.doSign) {
-            // really this is "notarize only if we also sign"
-            allArgs.push('--c.afterSign=scripts/afterSign.js');
-        } else {
+        if (!wrapperConfig.doSign) {
             allArgs.push('--c.mac.identity=null');
         }
+        // When signing, electron-builder notarizes via @electron/notarize when
+        // APPLE_API_KEY / APPLE_API_KEY_ID / APPLE_API_ISSUER are present in
+        // the environment.
     }
     if (!wrapperConfig.doPackage) {
         allArgs.push('--dir', '--c.compression=store');
