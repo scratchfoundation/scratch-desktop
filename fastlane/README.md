@@ -31,13 +31,29 @@ Use Fastlane Match to install development certificates
 
 Use Fastlane Match to install distribution certificates
 
-### mac circleci
+### mac nuke_dev
 
 ```sh
-[bundle exec] fastlane mac circleci
+[bundle exec] fastlane mac nuke_dev
 ```
 
-Prepare for a CircleCI signed build
+Revoke and remove all development certificates from Apple and the match storage
+
+### mac nuke_dist
+
+```sh
+[bundle exec] fastlane mac nuke_dist
+```
+
+Revoke and remove App Store distribution certificates (and the installer companion)
+
+### mac prepare_signing
+
+```sh
+[bundle exec] fastlane mac prepare_signing
+```
+
+Prepare for a signed CI build
 
 ----
 
