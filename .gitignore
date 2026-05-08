@@ -8,6 +8,11 @@ thumbs.db
 /node_modules
 npm-*
 
+# Local environment
+.env
+.env.local
+.env.*.local
+
 # Testing
 /.nyc_output
 /coverage
@@ -27,7 +32,6 @@ npm-*
 /locale
 
 # Fastlane
-## **/fastlane/Matchfile
 **/fastlane/report.xml
 **/fastlane/Preview.html
 **/fastlane/screenshots

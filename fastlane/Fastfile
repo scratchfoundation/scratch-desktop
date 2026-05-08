@@ -16,6 +16,13 @@
 default_platform(:mac)
 
 platform :mac do
+  before_all do
+    # Authenticate with App Store Connect using an API Team Key when the
+    # standard env vars are present. Match (and any other actions that
+    # support :api_key) will pick the key up automatically via lane_context.
+    app_store_connect_api_key if ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"].to_s != ""
+  end
+
   desc "Use Fastlane Match to install development certificates"
   lane :match_dev do
     match(type: "development", platform: "macos", output_path: "build", readonly: is_ci)
@@ -27,9 +34,27 @@ platform :mac do
     match(type: "developer_id", platform: "macos", output_path: "build", readonly: is_ci, additional_cert_types: "developer_id_installer")
   end
 
-  desc "Prepare for a CircleCI signed build"
-  lane :circleci do
-    setup_circle_ci
+  desc "Revoke and remove all development certificates from Apple and the match storage"
+  lane :nuke_dev do
+    match_nuke(type: "development", platform: "macos")
+  end
+
+  # `match nuke` only revokes the cert types it is told about, so we add
+  # mac_installer_distribution to keep the installer companion from being
+  # orphaned in the match storage repo and breaking the next match_dist run.
+  #
+  # This covers the App Store half of match_dist only. match_nuke can't
+  # currently revoke developer_id or developer_id_installer certs (see
+  # fastlane/fastlane#21147); those need manual cleanup, documented in
+  # fastlane/README-match.md.
+  desc "Revoke and remove App Store distribution certificates (and the installer companion)"
+  lane :nuke_dist do
+    match_nuke(type: "appstore", platform: "macos", additional_cert_types: "mac_installer_distribution")
+  end
+
+  desc "Prepare for a signed CI build"
+  lane :prepare_signing do
+    setup_ci
     match_dev
     match_dist
   end
