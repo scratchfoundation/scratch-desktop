@@ -13,12 +13,12 @@ const PrivacyElement = () => (
                 href="https://scratch.mit.edu/download"
                 target="_blank"
                 rel="noopener noreferrer"
-            >Scratch App</a>&rdquo;), how we use, process, and share it, and what we&apos;re doing to keep it safe. It
+            title="Scratch App">Scratch App</a>&rdquo;), how we use, process, and share it, and what we&apos;re doing to keep it safe. It
             also tells you about your rights and choices with respect to your Personal Information, and how you can <a
                 href="https://scratch.mit.edu/contact-us/"
                 target="_blank"
                 rel="noopener noreferrer"
-            >contact us</a> if you have any questions or concerns.
+            title="Contact us">contact us</a> if you have any questions or concerns.
         </p>
         <h2>What Information Does Scratch Collect About Me?</h2>
         <p>
@@ -46,14 +46,14 @@ const PrivacyElement = () => (
                     href="https://scratch.mit.edu/research"
                     target="_blank"
                     rel="noopener noreferrer"
-                >Research page</a>.
+                title="Research page">Research page</a>.
             </li>
             <li>
                 <b>Legal</b> - We may use your Information to enforce our <a
                     href="https://scratch.mit.edu/terms_of_use"
                     target="_blank"
                     rel="noopener noreferrer"
-                >Terms of Use</a>, to defend our legal rights, and to comply with our legal obligations and internal
+                title="Terms of Use">Terms of Use</a>, to defend our legal rights, and to comply with our legal obligations and internal
                 policies. We may do this by analyzing your use of the Scratch App.
             </li>
         </ul>
@@ -94,18 +94,18 @@ const PrivacyElement = () => (
             </li>
             <li>
                 <b>Legal</b> - If required to do so by law or in the good faith belief that such action is appropriate:
-                (a) under applicable law, including laws outside your country of residence; (b) to comply with legal
-                process; (c) to respond to requests from public and government authorities, such as school, school
+                (A) under applicable law, including laws outside your country of residence; (B) to comply with legal
+                process; (C) to respond to requests from public and government authorities, such as school, school
                 districts, and law enforcement, including public and government authorities outside your country of
-                residence; (d) to enforce our terms and conditions; (e) to protect our operations or those of any of
-                our affiliates; (f) to protect our rights, privacy, safety, or property, and/or that of our affiliates,
-                you, or others; and (g) to allow us to pursue available remedies or limit the damages that we may
+                residence; (D) to enforce our terms and conditions; (E) to protect our operations or those of any of
+                our affiliates; (F) to protect our rights, privacy, safety, or property, and/or that of our affiliates,
+                you, or others; and (G) to allow us to pursue available remedies or limit the damages that we may
                 sustain.
             </li>
         </ul>
-        <h2>Children and Student Privacy</h2>
+        <h2>Children And Student Privacy</h2>
         <p>
-            The Scratch Foundation is a 501(c)(3) nonprofit organization. As such, the Children&apos;s Online Privacy
+            The Scratch Foundation is a 501(C)(3) nonprofit organization. As such, the Children&apos;s Online Privacy
             Protection Act (COPPA) does not apply to Scratch. Nevertheless, Scratch takes children&apos;s privacy
             seriously. Scratch collects only minimal information from its users, and only uses and discloses
             information to provide the services and for limited other purposes, such as research, as described in this
@@ -130,8 +130,8 @@ const PrivacyElement = () => (
             </li>
             <li>
                 <b>Objection</b> – You may object to (this means &ldquo;ask us to stop&rdquo;) any use of your
-                Information that is not (i) processed to comply with a legal obligation, (ii) necessary to do what is
-                provided in a contract between Scratch and you, or (iii) if we have a compelling reason to do so (such
+                Information that is not (I) processed to comply with a legal obligation, (II) necessary to do what is
+                provided in a contract between Scratch and you, or (III) if we have a compelling reason to do so (such
                 as, to ensure safety and security in our online community). If you do object, we will work with you to
                 find a reasonable solution.
             </li>
@@ -145,12 +145,12 @@ const PrivacyElement = () => (
                     href="mailto:help@scratch.mit.edu"
                     target="_blank"
                     rel="noopener noreferrer"
-                >help@scratch.mit.edu</a> for assistance.
+                title="help@scratch.mit.edu">help@scratch.mit.edu</a> for assistance.
             </li>
             <li>
                 <b>Restriction Of Processing</b> - You may request that we restrict processing of your Information
-                while we are processing a request relating to (i) the accuracy of your Information, (ii) the lawfulness
-                of the processing of your Information, or (iii) our legitimate interests to process this Information.
+                while we are processing a request relating to (I) the accuracy of your Information, (II) the lawfulness
+                of the processing of your Information, or (III) our legitimate interests to process this Information.
                 You may also request that we restrict processing of your Information if you wish to use the Information
                 for litigation purposes.
             </li>
@@ -170,7 +170,7 @@ const PrivacyElement = () => (
                 href="mailto:help@scratch.mit.edu"
                 target="_blank"
                 rel="noopener noreferrer"
-            >help@scratch.mit.edu</a> for assistance.
+            title="help@scratch.mit.edu">help@scratch.mit.edu</a> for assistance.
         </p>
         <h2>Data Retention</h2>
         <p>
@@ -217,7 +217,7 @@ const PrivacyElement = () => (
                 href="mailto:help@scratch.mit.edu"
                 target="_blank"
                 rel="noopener noreferrer"
-            >help@scratch.mit.edu</a> or via mail at:
+            title="help@scratch.mit.edu">help@scratch.mit.edu</a> or via mail at:
         </p>
         <div className="vcard">
             <div className="org">Scratch Foundation</div>
