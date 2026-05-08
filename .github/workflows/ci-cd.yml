@@ -39,17 +39,11 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
-      - name: Install Python 2.7
-        if: matrix.os == 'macos-latest'
-        run: |
-            brew install pyenv
-            pyenv install 2.7.18
       - name: Build
         timeout-minutes: 30
         env:
           # TODO: fix whatever is causing excessive memory usage during build
           NODE_OPTIONS: --max-old-space-size=4096
-          PYTHON_PATH: ${{ matrix.os == 'macos-latest' && '/Users/runner/.pyenv/versions/2.7.18/bin/python'}}
         run: npm run distDev
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
@@ -127,11 +121,6 @@ jobs:
           EOF
       - name: Install NPM dependencies
         run: npm ci
-      - name: Install Python 2.7
-        if: matrix.os == 'macos-latest'
-        run: |
-            brew install pyenv
-            pyenv install 2.7.18
       - name: Setup Keys for Fastlane
         if: matrix.os == 'macos-latest'
         uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
@@ -168,7 +157,6 @@ jobs:
           # both expressions evaluate to '' until Windows signing is re-enabled.
           WIN_CSC_LINK: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_LINK || '' }}
           WIN_CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
-          PYTHON_PATH: ${{ matrix.os == 'macos-latest' && '/Users/runner/.pyenv/versions/2.7.18/bin/python'}}
         run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }}
       - name: Zip MAS-Dev build
         if: matrix.os == 'macos-latest'
