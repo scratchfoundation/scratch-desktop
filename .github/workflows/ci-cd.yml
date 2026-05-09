@@ -46,13 +46,13 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
         run: npm run distDev
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: matrix.os == 'macos-latest'
         with:
           name: macOS-unsigned
           path: dist/Scratch*.dmg
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: matrix.os == 'windows-latest'
         with:
           name: Windows-unsigned
@@ -166,7 +166,7 @@ jobs:
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-universal-${NPM_APP_VERSION}.zip
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: matrix.os == 'macos-latest'
         with:
           name: macOS-signed
@@ -175,7 +175,7 @@ jobs:
             dist/mas-universal/Scratch*.pkg
             dist/mas-dev-universal-*.zip
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: matrix.os == 'windows-latest'
         with:
           name: Windows-installer
