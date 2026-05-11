@@ -53,7 +53,7 @@
     "electron-builder": "26.8.1",
     "electron-devtools-installer": "3.2.1",
     "electron-store": "8.2.0",
-    "eslint": "8.57.1",
+    "eslint": "10.3.0",
     "eslint-config-scratch": "9.0.9",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-react": "7.37.5",
