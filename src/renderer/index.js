@@ -3,7 +3,7 @@
 
 import {ipcRenderer} from 'electron';
 
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import log from '../common/log.js';
 
 ipcRenderer.on('ready-to-show', () => {
@@ -33,5 +33,6 @@ case 'usb':
 routeModulePromise.then(routeModule => {
     const appTarget = document.getElementById('app');
     const routeElement = routeModule.default;
-    ReactDOM.render(routeElement, appTarget);
+    const root = createRoot(appTarget);
+    root.render(routeElement);
 }).catch(error => log.error('Error rendering app: ', error));
