@@ -11,9 +11,6 @@ import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
 import packageJson from '../../package.json';
 
-// suppress deprecation warning; this will be the default in Electron 9
-app.allowRendererProcessReuse = true;
-
 telemetry.appWasOpened();
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
@@ -166,6 +163,11 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
     return callback(true);
 };
 
+// Protocols safe to hand to the OS via shell.openExternal. Anything else
+// (file:, javascript:, custom URI handlers, ...) is blocked to limit what an
+// in-renderer `window.open` can launch.
+const ALLOWED_EXTERNAL_PROTOCOLS = ['http:', 'https:', 'mailto:'];
+
 const createWindow = ({search = null, url = 'index.html', ...browserWindowOptions}) => {
     const window = new BrowserWindow({
         useContentSize: true,
@@ -194,9 +196,17 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
         }
     });
 
-    webContents.on('new-window', (event, newWindowUrl) => {
-        shell.openExternal(newWindowUrl);
-        event.preventDefault();
+    webContents.setWindowOpenHandler(({url: newWindowUrl}) => {
+        let protocol = '';
+        try {
+            protocol = new URL(newWindowUrl).protocol;
+        } catch { /* invalid URL leaves protocol empty, which won't match the allowlist */ }
+        if (ALLOWED_EXTERNAL_PROTOCOLS.includes(protocol)) {
+            shell.openExternal(newWindowUrl).catch(err => log.error('shell.openExternal failed:', err));
+        } else {
+            log.warn(`Blocked window.open: ${newWindowUrl}`);
+        }
+        return {action: 'deny'};
     });
 
     const fullUrl = makeFullUrl(url, search);
