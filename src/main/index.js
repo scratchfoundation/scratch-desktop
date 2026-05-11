@@ -11,9 +11,6 @@ import MacOSMenu from './MacOSMenu';
 import log from '../common/log.js';
 import packageJson from '../../package.json';
 
-// suppress deprecation warning; this will be the default in Electron 9
-app.allowRendererProcessReuse = true;
-
 telemetry.appWasOpened();
 
 // const defaultSize = {width: 1096, height: 715}; // minimum
@@ -194,9 +191,9 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
         }
     });
 
-    webContents.on('new-window', (event, newWindowUrl) => {
+    webContents.setWindowOpenHandler(({url: newWindowUrl}) => {
         shell.openExternal(newWindowUrl);
-        event.preventDefault();
+        return {action: 'deny'};
     });
 
     const fullUrl = makeFullUrl(url, search);
