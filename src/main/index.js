@@ -163,6 +163,11 @@ const handlePermissionRequest = async (webContents, permission, callback, detail
     return callback(true);
 };
 
+// Protocols safe to hand to the OS via shell.openExternal. Anything else
+// (file:, javascript:, custom URI handlers, ...) is blocked to limit what an
+// in-renderer `window.open` can launch.
+const ALLOWED_EXTERNAL_PROTOCOLS = ['http:', 'https:', 'mailto:'];
+
 const createWindow = ({search = null, url = 'index.html', ...browserWindowOptions}) => {
     const window = new BrowserWindow({
         useContentSize: true,
@@ -192,7 +197,15 @@ const createWindow = ({search = null, url = 'index.html', ...browserWindowOption
     });
 
     webContents.setWindowOpenHandler(({url: newWindowUrl}) => {
-        shell.openExternal(newWindowUrl);
+        let protocol = '';
+        try {
+            protocol = new URL(newWindowUrl).protocol;
+        } catch { /* invalid URL leaves protocol empty, which won't match the allowlist */ }
+        if (ALLOWED_EXTERNAL_PROTOCOLS.includes(protocol)) {
+            shell.openExternal(newWindowUrl).catch(err => log.error('shell.openExternal failed:', err));
+        } else {
+            log.warn(`Blocked window.open: ${newWindowUrl}`);
+        }
         return {action: 'deny'};
     });
 
