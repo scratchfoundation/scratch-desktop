@@ -404,7 +404,7 @@ if (process.platform === 'win32') {
     const devToolsExtensionsPath = path.join(appUserDataPath, 'DevTools Extensions');
     try {
         fs.unlinkSync(devToolsExtensionsPath);
-    } catch (_) {
+    } catch {
         // don't complain if the file doesn't exist
     }
 }

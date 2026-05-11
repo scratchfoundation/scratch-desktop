@@ -21,7 +21,7 @@
     "dist": "npm run clean && npm run fetch && npm run build:dist",
     "distDev": "npm run clean && npm run fetch && npm run build:dev",
     "test": "npm run test:lint",
-    "test:lint": "eslint --cache --color --ext .jsx,.js ."
+    "test:lint": "eslint --cache --color ."
   },
   "repository": {
     "type": "git",
@@ -53,10 +53,8 @@
     "electron-builder": "26.8.1",
     "electron-devtools-installer": "3.2.1",
     "electron-store": "8.2.0",
-    "eslint": "8.57.1",
-    "eslint-config-scratch": "9.0.9",
-    "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-react": "7.37.5",
+    "eslint": "9.39.4",
+    "eslint-config-scratch": "14.1.19",
     "fs-extra": "9.1.0",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "5.6.7",
