@@ -1,10 +1,31 @@
+import {net} from 'electron';
 import ElectronStore from 'electron-store';
-import nets from 'nets';
 import * as os from 'os';
 import {
     v1 as uuidv1, // semi-persistent client ID
     v4 as uuidv4 // random ID
 } from 'uuid';
+
+/**
+ * Minimal `nets`-shaped wrapper around Electron's `net.request`. Calls
+ * `callback(err)` on transport error, or `callback(null, {statusCode})` when
+ * the response is complete. The response body is drained and discarded since
+ * this client only cares about status codes.
+ * @param {object} opts - {method, url, headers, body}
+ * @param {function(Error?, {statusCode: number}=): void} callback - completion callback
+ */
+const httpRequest = (opts, callback) => {
+    const request = net.request({method: opts.method, url: opts.url, headers: opts.headers});
+    request.on('response', response => {
+        response.on('data', () => {}); // drain so 'end' fires
+        response.on('end', () => callback(null, {statusCode: response.statusCode}));
+    });
+    request.on('error', err => callback(err));
+    if (opts.body) {
+        request.write(opts.body);
+    }
+    request.end();
+};
 
 /**
  * Basic telemetry event data. These fields are filled automatically by the `addEvent` call.
@@ -260,7 +281,7 @@ class TelemetryClient {
             const packetInfo = this._packetQueue.shift();
             ++packetInfo.attempts;
             const packet = packetInfo.packet;
-            nets({
+            httpRequest({
                 body: JSON.stringify(packet),
                 headers: {'Content-Type': 'application/json'},
                 method: 'POST',
@@ -288,7 +309,7 @@ class TelemetryClient {
      * Check if the telemetry service is available
      */
     _updateNetworkStatus () {
-        nets({
+        httpRequest({
             method: 'GET',
             url: this._serverURL
         }, (err, res) => {
