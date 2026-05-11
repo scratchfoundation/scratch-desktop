@@ -1,4 +1,4 @@
-import {net} from 'electron';
+import {app, net} from 'electron';
 import ElectronStore from 'electron-store';
 import * as os from 'os';
 import {
@@ -10,21 +10,26 @@ import {
  * Minimal `nets`-shaped wrapper around Electron's `net.request`. Calls
  * `callback(err)` on transport error, or `callback(null, {statusCode})` when
  * the response is complete. The response body is drained and discarded since
- * this client only cares about status codes.
+ * this client only cares about status codes. Waits for `app.whenReady()`
+ * before dispatching, because `net.request` throws if used pre-ready and
+ * the TelemetryClient constructor may schedule requests before that point.
  * @param {object} opts - {method, url, headers, body}
  * @param {function(Error?, {statusCode: number}=): void} callback - completion callback
  */
 const httpRequest = (opts, callback) => {
-    const request = net.request({method: opts.method, url: opts.url, headers: opts.headers});
-    request.on('response', response => {
-        response.on('data', () => {}); // drain so 'end' fires
-        response.on('end', () => callback(null, {statusCode: response.statusCode}));
-    });
-    request.on('error', err => callback(err));
-    if (opts.body) {
-        request.write(opts.body);
-    }
-    request.end();
+    app.whenReady().then(() => {
+        const request = net.request({method: opts.method, url: opts.url, headers: opts.headers});
+        request.on('response', response => {
+            response.on('data', () => {}); // drain so 'end' fires
+            response.on('end', () => callback(null, {statusCode: response.statusCode}));
+        });
+        request.on('error', err => callback(err));
+        if (opts.body) {
+            request.write(opts.body);
+        }
+        request.end();
+    })
+        .catch(err => callback(err));
 };
 
 /**
