@@ -423,16 +423,17 @@ if (process.platform === 'win32') {
 app.on('ready', () => {
     if (isDevelopment) {
         import('electron-devtools-installer').then(importedModule => {
-            const {default: installExtension, ...devToolsExtensions} = importedModule;
-            const extensionsToInstall = [
-                devToolsExtensions.REACT_DEVELOPER_TOOLS,
-                devToolsExtensions.REDUX_DEVTOOLS
-            ];
+            // v4 publishes `installExtension` as a named export; v3 published
+            // it as the default export. Use the named export.
+            const {installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS} = importedModule;
+            const extensionsToInstall = [REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS];
             for (const extension of extensionsToInstall) {
                 // WARNING: depending on a lot of things including the version of Electron `installExtension` might
                 // return a promise that never resolves, especially if the extension is already installed.
                 installExtension(extension).then(
-                    extensionName => log(`Installed dev extension: ${extensionName}`),
+                    // v3 resolved with a string name; v4 resolves with an Electron
+                    // Extension object. Read `.name` rather than relying on toString.
+                    installed => log(`Installed dev extension: ${installed.name}`),
                     errorMessage => log.error(`Error installing dev extension: ${errorMessage}`)
                 );
             }
