@@ -43,15 +43,9 @@ const httpRequest = (opts, callback) => {
  */
 
 /**
-  * Default telemetry service URLs
-  */
-const TelemetryServerURL = Object.freeze({
-    staging: 'http://scratch-telemetry-staging.us-east-1.elasticbeanstalk.com/',
-    production: 'https://telemetry.scratch.mit.edu/'
-});
-const DefaultServerURL = (
-    process.env.NODE_ENV === 'production' ? TelemetryServerURL.production : TelemetryServerURL.staging
-);
+ * Default telemetry service URL. Production and staging both target the same endpoint.
+ */
+const DefaultServerURL = 'https://telemetry.scratch.mit.edu/';
 
 /**
  * Default name for persistent configuration & queue storage
