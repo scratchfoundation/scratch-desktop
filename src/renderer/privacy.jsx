@@ -50,11 +50,11 @@ const PrivacyElement = () => (
             </li>
             <li>
                 <b>Legal</b> - We may use your Information to enforce our <a
-                    href="https://scratch.mit.edu/terms_of_use"
+                    href="https://mitscratch.freshdesk.com/en/support/solutions/articles/4000219182-scratch-terms-of-service"
                     target="_blank"
                     rel="noopener noreferrer"
-                >Terms of Use</a>, to defend our legal rights, and to comply with our legal obligations and internal
-                policies. We may do this by analyzing your use of the Scratch App.
+                >Terms of Service</a>, to defend our legal rights, and to comply with our legal obligations and
+                internal policies. We may do this by analyzing your use of the Scratch App.
             </li>
         </ul>
         <h2>What Are The Legal Grounds For Processing Your Information?</h2>
@@ -223,10 +223,10 @@ const PrivacyElement = () => (
             <div className="org">Scratch Foundation</div>
             <div className="fn">ATTN: Privacy Policy</div>
             <div className="adr">
-                <div className="street-address">201 South Street</div>
-                <span className="locality">Boston</span>, <span className="region">MA</span> <span
+                <div className="street-address">459 Columbus Avenue Unit #1112</div>
+                <span className="locality">New York</span>, <span className="region">NY</span> <span
                     className="postal-code"
-                >02111</span>
+                >10024</span>
             </div>
         </div>
     </div>
