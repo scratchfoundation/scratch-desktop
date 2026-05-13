@@ -39,7 +39,7 @@
     "@babel/plugin-transform-optional-chaining": "7.28.6",
     "@babel/preset-env": "7.29.5",
     "@babel/preset-react": "7.28.5",
-    "@scratch/scratch-gui": "13.7.1",
+    "@scratch/scratch-gui": "13.7.4-svg",
     "async": "3.2.6",
     "autoprefixer": "10.5.0",
     "babel-eslint": "10.1.0",
