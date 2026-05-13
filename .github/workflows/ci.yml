@@ -1,0 +1,61 @@
+name: CI
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.head_ref || github.ref }}'
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          cache: 'npm'
+          node-version-file: '.nvmrc'
+      - name: Debug info
+        run: |
+          cat <<EOF
+          Node version: $(node --version)
+          NPM version: $(npm --version)
+          GitHub ref: ${{ github.ref }}
+          GitHub head ref: ${{ github.head_ref }}
+          Working directory: $(pwd)
+          EOF
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Test
+        run: npm run test
+      - name: Build
+        timeout-minutes: 30
+        env:
+          # TODO: fix whatever is causing excessive memory usage during build
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run distDev
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: matrix.os == 'macos-latest'
+        with:
+          name: macOS-unsigned
+          path: dist/Scratch*.dmg
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: matrix.os == 'windows-latest'
+        with:
+          name: Windows-unsigned
+          path: |
+            dist/Scratch*.appx
+            dist/Scratch*.exe
