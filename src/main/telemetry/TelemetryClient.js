@@ -1,10 +1,48 @@
+import {app, net} from 'electron';
 import ElectronStore from 'electron-store';
-import nets from 'nets';
 import * as os from 'os';
 import {
     v1 as uuidv1, // semi-persistent client ID
     v4 as uuidv4 // random ID
 } from 'uuid';
+
+/**
+ * Minimal `nets`-shaped wrapper around Electron's `net.request`. Calls
+ * `callback(err)` on transport or response-stream error, or
+ * `callback(null, {statusCode})` when the response is complete. The
+ * response body is drained and discarded since this client only cares
+ * about status codes. The callback fires at most once, so callers can
+ * rely on it as a single completion seam.
+ *
+ * Waits for `app.whenReady()` before dispatching, because `net.request`
+ * throws if used pre-ready and the TelemetryClient constructor may
+ * schedule requests before that point.
+ * @param {object} opts - {method, url, headers, body}
+ * @param {function(Error?, {statusCode: number}=): void} callback - completion callback
+ */
+const httpRequest = (opts, callback) => {
+    let settled = false;
+    const done = (err, res) => {
+        if (settled) return;
+        settled = true;
+        callback(err, res);
+    };
+    app.whenReady().then(() => {
+        const request = net.request({method: opts.method, url: opts.url, headers: opts.headers});
+        request.on('response', response => {
+            response.on('data', () => {}); // drain so 'end' fires
+            response.on('end', () => done(null, {statusCode: response.statusCode}));
+            response.on('error', err => done(err));
+            response.on('aborted', () => done(new Error('response aborted')));
+        });
+        request.on('error', err => done(err));
+        if (opts.body) {
+            request.write(opts.body);
+        }
+        request.end();
+    })
+        .catch(err => done(err));
+};
 
 /**
  * Basic telemetry event data. These fields are filled automatically by the `addEvent` call.
@@ -17,15 +55,9 @@ import {
  */
 
 /**
-  * Default telemetry service URLs
-  */
-const TelemetryServerURL = Object.freeze({
-    staging: 'http://scratch-telemetry-staging.us-east-1.elasticbeanstalk.com/',
-    production: 'https://telemetry.scratch.mit.edu/'
-});
-const DefaultServerURL = (
-    process.env.NODE_ENV === 'production' ? TelemetryServerURL.production : TelemetryServerURL.staging
-);
+ * Default telemetry service URL. Production and staging both target the same endpoint.
+ */
+const DefaultServerURL = 'https://telemetry.scratch.mit.edu/';
 
 /**
  * Default name for persistent configuration & queue storage
@@ -260,7 +292,7 @@ class TelemetryClient {
             const packetInfo = this._packetQueue.shift();
             ++packetInfo.attempts;
             const packet = packetInfo.packet;
-            nets({
+            httpRequest({
                 body: JSON.stringify(packet),
                 headers: {'Content-Type': 'application/json'},
                 method: 'POST',
@@ -288,7 +320,7 @@ class TelemetryClient {
      * Check if the telemetry service is available
      */
     _updateNetworkStatus () {
-        nets({
+        httpRequest({
             method: 'GET',
             url: this._serverURL
         }, (err, res) => {
