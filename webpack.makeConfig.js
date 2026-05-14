@@ -139,6 +139,11 @@ const makeConfig = function (defaultConfig, options) {
         config.plugins.push(new webpack.ProgressPlugin());
     }
 
+    // The debug-config write below assumes `dist/` exists. webpack.renderer.js
+    // happens to create it as a side effect of fs-extra.outputFileSync before
+    // makeConfig runs, but webpack.main.js does not. Make this step robust to
+    // caller order (matters when run-p starts both webpacks in parallel).
+    fs.mkdirSync('dist', {recursive: true});
     fs.writeFileSync(
         `dist/webpack.${options.name}.js`,
         `module.exports = ${util.inspect(config, {depth: null})};\n`
