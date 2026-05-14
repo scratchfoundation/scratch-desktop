@@ -20,8 +20,8 @@
     "build:dir": "cross-env NODE_ENV=production npm run compile && npm run doBuild -- --mode=dir",
     "build:dist": "cross-env NODE_ENV=production npm run compile && npm run doBuild -- --mode=dist",
     "doBuild": "node ./scripts/electron-builder-wrapper.js",
-    "dist": "npm run clean && npm run fetch && npm run build:dist",
-    "distDev": "npm run clean && npm run fetch && npm run build:dev",
+    "dist": "npm run clean && npm run fetch && npm run build:dist --",
+    "distDev": "npm run clean && npm run fetch && npm run build:dev --",
     "test": "npm run test:lint",
     "test:lint": "eslint --cache --color ."
   },
