@@ -1,6 +1,9 @@
 /**
  * @overview This script runs `electron-builder` with special management of code signing configuration on Windows.
  * Running this script with no command line parameters should build all targets for the current platform.
+ * Pass `--target=<short-name>` to build exactly one target instead of the platform default set; the matrix in
+ * `release-candidate.yml` uses this to fan a multi-target serial pass out into one runner per target. Valid short
+ * names: `mas`, `mas-dev`, `dmg`, `appx`, `nsis`.
  * On Windows, make sure to set CSC_* or WIN_CSC_* environment variables or the NSIS build will fail.
  * On Mac, the CSC_* variables are optional but will be respected if present.
  * See also: https://www.electron.build/code-signing
@@ -126,6 +129,29 @@ const calculateTargets = function (wrapperConfig) {
             platform: 'linux'
         }
     };
+    // --target=<short-name> overrides the platform default and builds exactly
+    // one target. Used by the release-candidate matrix to fan a multi-target
+    // serial pass out into one runner per target. Bypasses the doSign/profile
+    // skips below: the matrix dispatcher is asserting "build this and only
+    // this", so a missing prerequisite should fail loudly rather than be
+    // silently skipped.
+    if (wrapperConfig.target) {
+        const targetsByShortName = {
+            'mas': availableTargets.macAppStore,
+            'mas-dev': availableTargets.macAppStoreDev,
+            'dmg': availableTargets.macDirectDownload,
+            'appx': availableTargets.microsoftStore,
+            'nsis': availableTargets.windowsDirectDownload
+        };
+        const selected = targetsByShortName[wrapperConfig.target];
+        if (!selected) {
+            throw new Error(
+                `Unknown --target value: "${wrapperConfig.target}". ` +
+                `Valid values: ${Object.keys(targetsByShortName).join(', ')}.`
+            );
+        }
+        return [selected];
+    }
     const targets = [];
     switch (process.platform) {
     case 'win32':
@@ -165,11 +191,15 @@ const parseArgs = function () {
     const scriptArgs = process.argv.slice(2); // remove `node` and `this-script.js`
     const builderArgs = [];
     let mode = 'dev'; // default
+    let target = null; // null = use platform-default target set
 
     for (const arg of scriptArgs) {
         const modeSplit = arg.split(/--mode(\s+|=)/);
+        const targetSplit = arg.split(/--target(\s+|=)/);
         if (modeSplit.length === 3) {
             mode = modeSplit[2];
+        } else if (targetSplit.length === 3) {
+            target = targetSplit[2];
         } else {
             builderArgs.push(arg);
         }
@@ -196,14 +226,15 @@ const parseArgs = function () {
         builderArgs,
         doPackage, // false = build to directory
         doSign,
-        mode
+        mode,
+        target,
+        targets: null // filled in by main() after calculateTargets()
     };
 };
 
 const main = function () {
     const wrapperConfig = parseArgs();
 
-    // TODO: allow user to specify targets? We could theoretically build NSIS on Mac, for example.
     wrapperConfig.targets = calculateTargets(wrapperConfig);
 
     for (const target of wrapperConfig.targets) {
