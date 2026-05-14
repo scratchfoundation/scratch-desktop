@@ -27,12 +27,35 @@ jobs:
       contents: read
     strategy:
       # Don't cancel sibling matrix cells when one fails; let each one
-      # finish so we get artifacts and full failure signal from every OS.
+      # finish so we get artifacts and full failure signal from every cell.
       fail-fast: false
       matrix:
-        os:
-          - macos-latest
-          - windows-latest
+        # One cell per build target. Splitting macOS targets across three
+        # runners parallelizes Apple notarization waits, which is the
+        # dominant wall-clock cost on this workflow. Windows targets are
+        # split so an appx-only failure doesn't lose the nsis artifact
+        # (and vice versa).
+        include:
+          - os: macos-latest
+            target: mas-dev
+            artifact-name: macOS-mas-dev
+            artifact-path: dist/mas-dev-universal-*.zip
+          - os: macos-latest
+            target: mas
+            artifact-name: macOS-mas
+            artifact-path: dist/mas-universal/Scratch*.pkg
+          - os: macos-latest
+            target: dmg
+            artifact-name: macOS-dmg
+            artifact-path: dist/Scratch*.dmg
+          - os: windows-latest
+            target: appx
+            artifact-name: Windows-appx
+            artifact-path: dist/Scratch*.appx
+          - os: windows-latest
+            target: nsis
+            artifact-name: Windows-nsis
+            artifact-path: dist/Scratch*.exe
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -139,28 +162,16 @@ jobs:
             '' }}
           WIN_CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_KEY_PASSWORD
             || '' }}
-        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }}
+        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }} -- --target=${{ matrix.target }}
       - name: Zip MAS-Dev build
-        if: matrix.os == 'macos-latest'
+        if: matrix.target == 'mas-dev'
         run: |
           NPM_APP_VERSION="`node -pe "require('./package.json').version"`"
           cd dist/mas-dev-universal
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-universal-${NPM_APP_VERSION}.zip
-      - name: Upload macOS artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        if: matrix.os == 'macos-latest'
         with:
-          name: macOS-signed
-          path: |
-            dist/Scratch*.dmg
-            dist/mas-universal/Scratch*.pkg
-            dist/mas-dev-universal-*.zip
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        if: matrix.os == 'windows-latest'
-        with:
-          name: Windows-installer
-          path: |
-            dist/Scratch*.appx
-            dist/Scratch*.exe
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}
