@@ -9,6 +9,15 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # Point electron's and electron-builder's download caches at predictable,
+  # workspace-relative paths so actions/cache can hit them consistently
+  # across runner OSes. Without this we'd be chasing platform-default cache
+  # locations (~/Library/Caches on macOS, %LOCALAPPDATA% on Windows) with
+  # per-OS path expressions.
+  ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
+  ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+
 jobs:
   ci:
     strategy:
@@ -26,6 +35,20 @@ jobs:
         with:
           cache: 'npm'
           node-version-file: '.nvmrc'
+      - name: Cache electron prebuilt binary
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: .cache/electron
+          key: ${{ runner.os }}-electron-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-
+      - name: Cache electron-builder tools
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: .cache/electron-builder
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
       - name: Debug info
         run: |
           cat <<EOF
@@ -37,6 +60,17 @@ jobs:
           EOF
       - name: Install NPM dependencies
         run: npm ci
+      - name: Cache media library assets
+        # Keyed on the installed scratch-gui's package.json (after npm ci has
+        # placed it under node_modules), not on the project's package-lock.json.
+        # The asset set is determined entirely by the scratch-gui version;
+        # unrelated dep bumps shouldn't bust this cache.
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: static/fetched
+          key: media-${{ hashFiles('node_modules/@scratch/scratch-gui/package.json') }}
+          restore-keys: |
+            media-
       - name: Test
         run: npm run test
       - name: Build
