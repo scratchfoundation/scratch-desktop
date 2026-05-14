@@ -21,6 +21,9 @@ env:
 jobs:
   ci:
     strategy:
+      # Don't cancel sibling matrix cells when one fails; let each one
+      # finish so we get artifacts and full failure signal from every OS.
+      fail-fast: false
       matrix:
         os:
           - macos-latest
