@@ -2,6 +2,10 @@
 
 Scratch 3.0 as a standalone desktop application
 
+## Documentation
+
+- [Windows build matrix](docs/windows-build-matrix.md) — which {target × arch} combinations we ship for Windows and why
+
 ## Developer Instructions
 
 ### Releasing a new version
