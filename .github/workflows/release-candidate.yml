@@ -4,6 +4,7 @@ name: Release Candidate
 # verify that CI is green for the chosen ref before clicking. Gated by
 # the 'release-candidate' GitHub Environment, which must be configured
 # with required reviewers under Settings -> Environments.
+run-name: "Release Candidate: ${{ github.ref_name }} @ ${{ github.sha }}"
 on:
   workflow_dispatch:
 
