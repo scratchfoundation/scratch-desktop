@@ -84,23 +84,33 @@ jobs:
             media-
       - name: Test
         run: npm run test
-      - name: Build
+      # Each platform builds one representative installer on PR-time CI so non-developer
+      # teammates can grab and try the latest from any PR. The full multi-arch matrix
+      # only runs on release-candidate dispatch where the artifacts actually ship.
+      - name: Build macOS DMG
+        if: matrix.os == 'macos-latest'
         timeout-minutes: 30
         env:
           # TODO: fix whatever is causing excessive memory usage during build
           NODE_OPTIONS: --max-old-space-size=4096
-        run: npm run distDev
+        run: npm run distDev -- --target=dmg
+      - name: Build Windows NSIS x64
+        if: matrix.os == 'windows-latest'
+        timeout-minutes: 30
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run distDev -- --target=nsis-x64
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: matrix.os == 'macos-latest'
         with:
           name: macOS-unsigned
           path: dist/Scratch*.dmg
-      - name: Upload Windows artifacts
+          compression-level: 0
+      - name: Upload Windows NSIS x64
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: matrix.os == 'windows-latest'
         with:
-          name: Windows-unsigned
-          path: |
-            dist/Scratch*.appx
-            dist/Scratch*.exe
+          name: Windows-NSIS-x64
+          path: "dist/Scratch *x64 Setup.exe"
+          compression-level: 0

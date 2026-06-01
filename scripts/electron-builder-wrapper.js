@@ -135,6 +135,12 @@ const calculateTargets = function (wrapperConfig) {
             name: 'nsis:ia32 nsis:x64 nsis:arm64 msi:x64',
             platform: 'win32'
         },
+        windowsNsisX64: {
+            // Single representative installer for PR-time CI — the smallest build that still
+            // produces something a non-developer teammate can install and try on Windows x64.
+            name: 'nsis:x64',
+            platform: 'win32'
+        },
         linuxAppImage: {
             name: 'appimage',
             platform: 'linux'
@@ -154,7 +160,8 @@ const calculateTargets = function (wrapperConfig) {
             'appx': availableTargets.microsoftStore,
             'nsis': availableTargets.windowsDirectDownload,
             'msi': availableTargets.windowsManagedDeployment,
-            'installers': availableTargets.windowsInstallers
+            'installers': availableTargets.windowsInstallers,
+            'nsis-x64': availableTargets.windowsNsisX64
         };
         const selected = targetsByShortName[wrapperConfig.target];
         if (!selected) {
