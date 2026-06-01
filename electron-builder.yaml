@@ -55,7 +55,16 @@ appx:
   artifactName: "Scratch ${version} ${arch}.${ext}"
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
-  artifactName: "Scratch ${version} Setup.${ext}"
+  artifactName: "Scratch ${version} ${arch} Setup.${ext}"
+msi:
+  # perMachine + HKLM registration is required for Group Policy / SCCM / Intune deployment.
+  perMachine: true
+  oneClick: false
+  # upgradeCode is a stable GUID that ties future MSIs to past installations: future versions
+  # upgrade in place rather than installing alongside earlier ones. Sourced from a repository
+  # Variable so a fork generates and uses its own GUID rather than inheriting ours.
+  upgradeCode: "${env.MSI_UPGRADE_CODE}"
+  artifactName: "Scratch ${version} ${arch}.${ext}"
 linux:
   target: AppImage
   executableName: scratch-desktop

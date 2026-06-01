@@ -117,11 +117,22 @@ const calculateTargets = function (wrapperConfig) {
             platform: 'darwin'
         },
         microsoftStore: {
-            name: 'appx:ia32 appx:x64',
+            name: 'appx:ia32 appx:x64 appx:arm64',
             platform: 'win32'
         },
         windowsDirectDownload: {
-            name: 'nsis:ia32',
+            name: 'nsis:ia32 nsis:x64 nsis:arm64',
+            platform: 'win32'
+        },
+        windowsManagedDeployment: {
+            name: 'msi:x64',
+            platform: 'win32'
+        },
+        windowsInstallers: {
+            // Combined pass: every Windows target that should be code-signed.
+            // AppX intentionally lives in its own pass because it must not be signed at build time
+            // (the Microsoft Store re-signs during certification).
+            name: 'nsis:ia32 nsis:x64 nsis:arm64 msi:x64',
             platform: 'win32'
         },
         linuxAppImage: {
@@ -141,7 +152,9 @@ const calculateTargets = function (wrapperConfig) {
             'mas-dev': availableTargets.macAppStoreDev,
             'dmg': availableTargets.macDirectDownload,
             'appx': availableTargets.microsoftStore,
-            'nsis': availableTargets.windowsDirectDownload
+            'nsis': availableTargets.windowsDirectDownload,
+            'msi': availableTargets.windowsManagedDeployment,
+            'installers': availableTargets.windowsInstallers
         };
         const selected = targetsByShortName[wrapperConfig.target];
         if (!selected) {
@@ -155,9 +168,10 @@ const calculateTargets = function (wrapperConfig) {
     const targets = [];
     switch (process.platform) {
     case 'win32':
-        // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
+        // Two passes: AppX intentionally unsigned (the Microsoft Store re-signs during cert),
+        // everything else signed in a single pass.
         targets.push(availableTargets.microsoftStore);
-        targets.push(availableTargets.windowsDirectDownload);
+        targets.push(availableTargets.windowsInstallers);
         break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.

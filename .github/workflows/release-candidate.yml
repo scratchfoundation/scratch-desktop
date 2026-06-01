@@ -32,9 +32,10 @@ jobs:
       matrix:
         # One cell per build target. Splitting macOS targets across three
         # runners parallelizes Apple notarization waits, which is the
-        # dominant wall-clock cost on this workflow. Windows targets are
-        # split so an appx-only failure doesn't lose the nsis artifact
-        # (and vice versa).
+        # dominant wall-clock cost on this workflow. Windows is split
+        # into AppX (unsigned, Store-bound) and installers (NSIS + MSI,
+        # signed) — keeping AppX separate so a signing failure on the
+        # installers doesn't lose the Store artifact.
         include:
           - os: macos-latest
             target: mas-dev
@@ -53,9 +54,11 @@ jobs:
             artifact-name: Windows-appx
             artifact-path: dist/Scratch*.appx
           - os: windows-latest
-            target: nsis
-            artifact-name: Windows-nsis
-            artifact-path: dist/Scratch*.exe
+            target: installers
+            artifact-name: Windows-installers
+            artifact-path: |
+              dist/Scratch*.exe
+              dist/Scratch*.msi
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -74,6 +77,7 @@ jobs:
       APPX_IDENTITY_NAME: ${{ vars.APPX_IDENTITY_NAME }}
       APPX_PUBLISHER: ${{ vars.APPX_PUBLISHER }}
       APPX_PUBLISHER_DISPLAY_NAME: ${{ vars.APPX_PUBLISHER_DISPLAY_NAME }}
+      MSI_UPGRADE_CODE: ${{ vars.MSI_UPGRADE_CODE }}
       # App Store Connect API key — fastlane and electron-builder read
       # different env var names but use the same credentials. The .p8
       # file path (APPLE_API_KEY / APP_STORE_CONNECT_API_KEY_KEY_FILEPATH)
