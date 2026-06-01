@@ -19,9 +19,9 @@ mac:
   extendInfo:
     ITSAppUsesNonExemptEncryption: false
     NSCameraUsageDescription: >-
-        This app requires camera access when using the video sensing blocks.
+      This app requires camera access when using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
-        This app requires microphone access when recording sounds or detecting loudness.
+      This app requires microphone access when recording sounds or detecting loudness.
   gatekeeperAssess: true
   hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
@@ -47,9 +47,11 @@ win:
     - appx
     - nsis
 appx:
-  identityName: ScratchFoundation.ScratchDesktop
-  publisherDisplayName: "Scratch Foundation"
-  publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
+  # Organization-specific identifiers come from environment variables so a fork can build
+  # without colliding with our published artifacts. See README for required env vars.
+  identityName: "${env.APPX_IDENTITY_NAME}"
+  publisherDisplayName: "${env.APPX_PUBLISHER_DISPLAY_NAME}"
+  publisher: "${env.APPX_PUBLISHER}"
   artifactName: "Scratch ${version} ${arch}.${ext}"
 nsis:
   oneClick: false # allow user to choose per-user or per-machine

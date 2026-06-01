@@ -68,6 +68,12 @@ jobs:
       # through the build (so we get an installer artifact) but skips
       # the signing step.
       SCRATCH_SHOULD_SIGN: ${{ matrix.os != 'windows-latest' }}
+      # Organization-specific identifiers used by electron-builder.yaml's ${env.X}
+      # interpolation. Kept in repo Variables so a fork builds with its own values
+      # (or fails loudly if unset) rather than colliding with our published artifacts.
+      APPX_IDENTITY_NAME: ${{ vars.APPX_IDENTITY_NAME }}
+      APPX_PUBLISHER: ${{ vars.APPX_PUBLISHER }}
+      APPX_PUBLISHER_DISPLAY_NAME: ${{ vars.APPX_PUBLISHER_DISPLAY_NAME }}
       # App Store Connect API key — fastlane and electron-builder read
       # different env var names but use the same credentials. The .p8
       # file path (APPLE_API_KEY / APP_STORE_CONNECT_API_KEY_KEY_FILEPATH)

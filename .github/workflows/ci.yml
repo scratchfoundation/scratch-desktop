@@ -32,6 +32,13 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      # Organization-specific identifiers used by electron-builder.yaml's ${env.X}
+      # interpolation. Kept in repo Variables so a fork builds with its own values
+      # (or fails loudly if unset) rather than colliding with our published artifacts.
+      APPX_IDENTITY_NAME: ${{ vars.APPX_IDENTITY_NAME }}
+      APPX_PUBLISHER: ${{ vars.APPX_PUBLISHER }}
+      APPX_PUBLISHER_DISPLAY_NAME: ${{ vars.APPX_PUBLISHER_DISPLAY_NAME }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
