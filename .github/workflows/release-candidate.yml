@@ -39,26 +39,14 @@ jobs:
         include:
           - os: macos-latest
             target: mas-dev
-            artifact-name: macOS-mas-dev
-            artifact-path: dist/mas-dev-universal-*.zip
           - os: macos-latest
             target: mas
-            artifact-name: macOS-mas
-            artifact-path: dist/mas-universal/Scratch*.pkg
           - os: macos-latest
             target: dmg
-            artifact-name: macOS-dmg
-            artifact-path: dist/Scratch*.dmg
           - os: windows-latest
             target: appx
-            artifact-name: Windows-appx
-            artifact-path: dist/Scratch*.appx
           - os: windows-latest
             target: installers
-            artifact-name: Windows-installers
-            artifact-path: |
-              dist/Scratch*.exe
-              dist/Scratch*.msi
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -180,8 +168,76 @@ jobs:
           cd dist/mas-dev-universal
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-universal-${NPM_APP_VERSION}.zip
-      - name: Upload artifact
+      # One artifact per build output, so each cell uploads only what it produced.
+      # The 'installers' cell builds NSIS x3 + MSI in one pass and uploads them as four
+      # separate artifacts; the 'appx' cell builds three AppX archs and uploads three.
+      - name: Upload macOS mas-dev
+        if: matrix.target == 'mas-dev'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.artifact-path }}
+          name: macOS-mas-dev
+          path: dist/mas-dev-universal-*.zip
+          compression-level: 0
+      - name: Upload macOS mas
+        if: matrix.target == 'mas'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macOS-mas
+          path: dist/mas-universal/Scratch*.pkg
+          compression-level: 0
+      - name: Upload macOS dmg
+        if: matrix.target == 'dmg'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macOS-dmg
+          path: dist/Scratch*.dmg
+          compression-level: 0
+      - name: Upload Windows AppX ia32
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-ia32
+          path: "dist/Scratch *ia32.appx"
+          compression-level: 0
+      - name: Upload Windows AppX x64
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-x64
+          path: "dist/Scratch *x64.appx"
+          compression-level: 0
+      - name: Upload Windows AppX arm64
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-arm64
+          path: "dist/Scratch *arm64.appx"
+          compression-level: 0
+      - name: Upload Windows NSIS ia32
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-ia32
+          path: "dist/Scratch *ia32 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows NSIS x64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-x64
+          path: "dist/Scratch *x64 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows NSIS arm64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-arm64
+          path: "dist/Scratch *arm64 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows MSI x64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-MSI-x64
+          path: "dist/Scratch *x64.msi"
+          compression-level: 0
