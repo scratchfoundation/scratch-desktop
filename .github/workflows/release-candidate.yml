@@ -53,13 +53,6 @@ jobs:
       run:
         shell: bash
     env:
-      # Temporary workaround: Windows signing is currently broken due to
-      # a security-policy change. See
-      # https://github.com/electron/windows-installer/issues/473
-      # While this is true, the release-candidate job still runs Windows
-      # through the build (so we get an installer artifact) but skips
-      # the signing step.
-      SCRATCH_SHOULD_SIGN: ${{ matrix.os != 'windows-latest' }}
       # Organization-specific identifiers used by electron-builder.yaml's ${env.X}
       # interpolation. Kept in repo Variables so a fork builds with its own values
       # (or fails loudly if unset) rather than colliding with our published artifacts.
@@ -154,14 +147,21 @@ jobs:
         timeout-minutes: 30 # macOS notarization can take a while
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          # Only expose Windows code-signing secrets to runs that will use them.
-          # SCRATCH_SHOULD_SIGN is currently false on Windows (temporary workaround above);
-          # both expressions evaluate to '' until Windows signing is re-enabled.
-          WIN_CSC_LINK: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_LINK ||
-            '' }}
-          WIN_CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_KEY_PASSWORD
-            || '' }}
-        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }} -- --target=${{ matrix.target }}
+          # Azure Artifact Signing config for electron-builder's win.azureSignOptions, scoped to the
+          # installers cell — the only one that signs with Azure. Gating per-cell (rather than at job
+          # level) keeps the credentials out of the env of cells that don't sign: the macOS targets
+          # and the AppX cell (which ships unsigned for the Store to re-sign).
+          AZURE_SIGNING_ENDPOINT: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_ENDPOINT || '' }}
+          AZURE_SIGNING_ACCOUNT_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_ACCOUNT_NAME || '' }}
+          AZURE_SIGNING_PROFILE_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_PROFILE_NAME || '' }}
+          AZURE_SIGNING_PUBLISHER_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_PUBLISHER_NAME || '' }}
+          # electron-builder validates a complete Azure.Identity EnvironmentCredential set before
+          # signing — it does not fall through to the az-CLI session, so OIDC alone isn't sufficient
+          # and a client secret is required.
+          AZURE_TENANT_ID: ${{ matrix.target == 'installers' && secrets.AZURE_TENANT_ID || '' }}
+          AZURE_CLIENT_ID: ${{ matrix.target == 'installers' && secrets.AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ matrix.target == 'installers' && secrets.AZURE_CLIENT_SECRET || '' }}
+        run: npm run dist -- --target=${{ matrix.target }}
       - name: Zip MAS-Dev build
         if: matrix.target == 'mas-dev'
         run: |

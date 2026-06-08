@@ -46,6 +46,15 @@ win:
   target:
     - appx
     - nsis
+  # AppX is excluded from build-time signing: the Microsoft Store re-signs during
+  # certification with a Store-issued publisher cert, and our build-time cert's
+  # subject would not match the manifest's Publisher attribute.
+  signExts: ["exe", "msi", "!appx", "!appxbundle", "!appxupload"]
+  # azureSignOptions is supplied by scripts/electron-builder-wrapper.js only when
+  # signing is enabled (--mode=dist). Declaring it here would also activate it for
+  # PR CI and local --mode=dev builds, where Azure auth isn't available — and some
+  # signing paths (notably the NSIS uninstaller) ignore signAndEditExecutable, so
+  # gating per-target isn't reliable. Keeping the config off entirely is cleaner.
 appx:
   # Organization-specific identifiers come from environment variables so a fork can build
   # without colliding with our published artifacts. See README for required env vars.
