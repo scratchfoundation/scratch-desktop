@@ -33,9 +33,11 @@ jobs:
       run:
         shell: bash
     env:
-      # Organization-specific identifiers used by electron-builder.yaml's ${env.X}
-      # interpolation. Kept in repo Variables so a fork builds with its own values
-      # (or fails loudly if unset) rather than colliding with our published artifacts.
+      # Organization-specific identifiers. The electron-builder wrapper reads these and injects them
+      # as CLI overrides (--c.appx.*, --c.msi.upgradeCode); electron-builder.yaml's ${env.X}
+      # interpolation only works for filename fields, not these config fields. Kept in repo Variables
+      # so a fork supplies its own values — if one is unset the wrapper omits that override and
+      # electron-builder uses its default, so a fork never builds under our published identity.
       APPX_IDENTITY_NAME: ${{ vars.APPX_IDENTITY_NAME }}
       APPX_PUBLISHER: ${{ vars.APPX_PUBLISHER }}
       APPX_PUBLISHER_DISPLAY_NAME: ${{ vars.APPX_PUBLISHER_DISPLAY_NAME }}

@@ -78,6 +78,24 @@ const runBuilder = function (wrapperConfig, target) {
         // APPLE_API_KEY / APPLE_API_KEY_ID / APPLE_API_ISSUER are present in
         // the environment.
     }
+    if (target.platform === 'win32') {
+        // Organization-specific identifiers. electron-builder only expands ${env.X} macros in
+        // filename fields like artifactName, not in config fields like these, so we inject them as
+        // CLI overrides from the environment. Each is applied whenever its variable is set (a fork
+        // that doesn't set them builds with electron-builder's defaults). Values are double-quoted
+        // so spaces (e.g. a CN= publisher string) survive spawnSync(shell: true) re-tokenization.
+        const idOverrides = {
+            'appx.identityName': childEnvironment.APPX_IDENTITY_NAME,
+            'appx.publisher': childEnvironment.APPX_PUBLISHER,
+            'appx.publisherDisplayName': childEnvironment.APPX_PUBLISHER_DISPLAY_NAME,
+            'msi.upgradeCode': childEnvironment.MSI_UPGRADE_CODE
+        };
+        for (const [key, value] of Object.entries(idOverrides)) {
+            if (value) {
+                allArgs.push(`--c.${key}="${value}"`);
+            }
+        }
+    }
     // Appx-only means every target name in the pass starts with 'appx'. A mixed pass that bundles
     // appx with nsis or msi keeps signing on for the non-appx parts; only the pure-appx case opts
     // out so the Store can re-sign its container with unsigned inner binaries (today's behavior).
