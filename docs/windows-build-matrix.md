@@ -37,18 +37,18 @@ Ships on **all three architectures**. Modern Intune-managed environments — inc
 
 ## How multi-arch builds are produced
 
-`scripts/electron-builder-wrapper.js` is authoritative for which architectures each target builds. Each entry in `availableTargets` uses electron-builder's `<target>:<arch>` CLI syntax, with multiple archs joined by spaces:
+`scripts/electron-builder-wrapper.js` is authoritative for which architectures each target builds. Each entry in `availableTargets` carries a `targets` array of electron-builder target specs; the Windows targets use the `<target>:<arch>` form to pin each architecture:
 
 ```js
-microsoftStore:           { name: 'appx:ia32 appx:x64 appx:arm64',                platform: 'win32' },
-windowsDirectDownload:    { name: 'nsis:ia32 nsis:x64 nsis:arm64',                platform: 'win32' },
-windowsManagedDeployment: { name: 'msi:x64',                                      platform: 'win32' },
-windowsInstallers:        { name: 'nsis:ia32 nsis:x64 nsis:arm64 msi:x64',        platform: 'win32' },
+microsoftStore:           { targets: ['appx:ia32', 'appx:x64', 'appx:arm64'],            platform: 'win32' },
+windowsDirectDownload:    { targets: ['nsis:ia32', 'nsis:x64', 'nsis:arm64'],            platform: 'win32' },
+windowsManagedDeployment: { targets: ['msi:x64'],                                        platform: 'win32' },
+windowsInstallers:        { targets: ['nsis:ia32', 'nsis:x64', 'nsis:arm64', 'msi:x64'], platform: 'win32' },
 ```
 
-This form overrides any per-target `arch:` list in `electron-builder.yaml`. To add or remove an arch from a target, edit the wrapper string.
+The wrapper passes each entry's `targets` to electron-builder's programmatic `build()` API under the platform key (`win`/`mac`/`linux`), which overrides any per-target `arch:` list in `electron-builder.yaml`. To add or remove an arch from a target, edit its `targets` array.
 
-Local `npm run dist` and the release-candidate workflow both build Windows in two passes: AppX in one (intentionally unsigned — the Microsoft Store re-signs during certification), and NSIS + MSI together in `windowsInstallers` (signed in a single electron-builder invocation). The per-format short names (`nsis`, `msi`) remain available for local granular builds.
+Local `npm run dist` and the release-candidate workflow both build Windows in two passes: AppX in one (intentionally unsigned — the Microsoft Store re-signs during certification), and NSIS + MSI together in `windowsInstallers` (signed in a single `build()` call). The per-format short names (`nsis`, `msi`) remain available for local granular builds.
 
 The release-candidate workflow uses `--target=<shortname>` to fan targets out across runners; the mapping from shortname to wrapper entry is in the same file.
 
