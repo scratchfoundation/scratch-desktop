@@ -19,9 +19,9 @@ mac:
   extendInfo:
     ITSAppUsesNonExemptEncryption: false
     NSCameraUsageDescription: >-
-        This app requires camera access when using the video sensing blocks.
+      This app requires camera access when using the video sensing blocks.
     NSMicrophoneUsageDescription: >-
-        This app requires microphone access when recording sounds or detecting loudness.
+      This app requires microphone access when recording sounds or detecting loudness.
   gatekeeperAssess: true
   hardenedRuntime: true
   icon: buildResources/ScratchDesktop.icns
@@ -46,14 +46,36 @@ win:
   target:
     - appx
     - nsis
+  # AppX is excluded from build-time signing: the Microsoft Store re-signs during
+  # certification with a Store-issued publisher cert, and our build-time cert's
+  # subject would not match the manifest's Publisher attribute.
+  signExts: ["exe", "msi", "!appx", "!appxbundle", "!appxupload"]
+  # azureSignOptions is supplied by scripts/electron-builder-wrapper.js only when
+  # signing is enabled (--mode=dist). Declaring it here would also activate it for
+  # PR CI and local --mode=dev builds, where Azure auth isn't available — and some
+  # signing paths (notably the NSIS uninstaller) ignore signAndEditExecutable, so
+  # gating per-target isn't reliable. Keeping the config off entirely is cleaner.
 appx:
-  identityName: ScratchFoundation.ScratchDesktop
-  publisherDisplayName: "Scratch Foundation"
-  publisher: "CN=2EC43DF1-469A-4119-9AB9-568A0A1FF65F"
+  # identityName, publisher, and publisherDisplayName are organization-specific, so a fork can
+  # build without colliding with our published artifacts. They're injected at build time by
+  # scripts/electron-builder-wrapper.js from the APPX_IDENTITY_NAME / APPX_PUBLISHER /
+  # APPX_PUBLISHER_DISPLAY_NAME environment variables. They can't live here directly:
+  # electron-builder only expands ${env.X} in filename fields like artifactName, not in
+  # config fields like these.
   artifactName: "Scratch ${version} ${arch}.${ext}"
 nsis:
   oneClick: false # allow user to choose per-user or per-machine
-  artifactName: "Scratch ${version} Setup.${ext}"
+  artifactName: "Scratch ${version} ${arch} Setup.${ext}"
+msi:
+  # perMachine + HKLM registration is required for Group Policy / SCCM / Intune deployment.
+  perMachine: true
+  oneClick: false
+  # upgradeCode is a stable GUID that ties future MSIs to past installations: future versions
+  # upgrade in place rather than installing alongside earlier ones. It's injected at build time
+  # by scripts/electron-builder-wrapper.js from the MSI_UPGRADE_CODE environment variable, so a
+  # fork uses its own GUID rather than inheriting ours (see the appx note re: ${env.X} only
+  # working in filename fields, not config fields like this one).
+  artifactName: "Scratch ${version} ${arch}.${ext}"
 linux:
   target: AppImage
   executableName: scratch-desktop

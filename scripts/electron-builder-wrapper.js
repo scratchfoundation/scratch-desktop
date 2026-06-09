@@ -3,9 +3,15 @@
  * Running this script with no command line parameters should build all targets for the current platform.
  * Pass `--target=<short-name>` to build exactly one target instead of the platform default set; the matrix in
  * `release-candidate.yml` uses this to fan a multi-target serial pass out into one runner per target. Valid short
- * names: `mas`, `mas-dev`, `dmg`, `appx`, `nsis`.
- * On Windows, make sure to set CSC_* or WIN_CSC_* environment variables or the NSIS build will fail.
- * On Mac, the CSC_* variables are optional but will be respected if present.
+ * names: `mas`, `mas-dev`, `dmg`, `appx`, `nsis`, `msi`, `installers`, `nsis-x64`.
+ * Windows signing uses Azure Artifact Signing. This script injects `win.azureSignOptions` as
+ * electron-builder CLI overrides from the `AZURE_SIGNING_*` environment variables (not via
+ * `electron-builder.yaml`, which would sign every build, including PR CI and local dev). Auth uses an
+ * Azure client secret read by Azure.Identity's EnvironmentCredential (`AZURE_TENANT_ID` /
+ * `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET`, set in `release-candidate.yml`). Signing happens only
+ * in --mode=dist; --mode=dev (the default) and --mode=dir build unsigned.
+ * On Mac, the CSC_* variables are optional; they're respected only for signed (--mode=dist) builds
+ * and stripped otherwise.
  * See also: https://www.electron.build/code-signing
  */
 
@@ -46,18 +52,15 @@ const getPlatformFlag = function () {
  * Run `electron-builder` once to build one or more target(s).
  * @param {object} wrapperConfig - overall configuration object for the wrapper script.
  * @param {object} target - the target to build in this call.
- * If the `target.name` is `'nsis'` then the environment must contain code-signing config (CSC_* or WIN_CSC_*).
- * If the `target.name` is `'appx'` then code-signing config will be stripped from the environment if present.
  */
 const runBuilder = function (wrapperConfig, target) {
-    // the AppX build fails if CSC_* or WIN_CSC_* variables are set
-    const shouldStripCSC = (target.name.indexOf('appx') === 0) || (!wrapperConfig.doSign);
+    // A pass can bundle several space-separated targets (e.g. the installers pass), so parse them once.
+    const targetNames = target.name.trim().split(/\s+/);
+    // Strip CSC_* env vars when any AppX target is in the pass (CSC would conflict with the Store-managed
+    // cert) and for unsigned builds. Windows signing itself now goes through Azure (not CSC), so these
+    // vars are typically absent anyway.
+    const shouldStripCSC = targetNames.some(name => name.startsWith('appx')) || (!wrapperConfig.doSign);
     const childEnvironment = shouldStripCSC ? stripCSC(process.env) : process.env;
-    if (wrapperConfig.doSign &&
-        (target.name.indexOf('nsis') === 0) &&
-        !(childEnvironment.CSC_LINK || childEnvironment.WIN_CSC_LINK)) {
-        throw new Error(`Signing NSIS build requires CSC_LINK or WIN_CSC_LINK`);
-    }
     const platformFlag = getPlatformFlag();
     let allArgs = [platformFlag, target.name];
     if (target.platform === 'darwin') {
@@ -74,6 +77,62 @@ const runBuilder = function (wrapperConfig, target) {
         // When signing, electron-builder notarizes via @electron/notarize when
         // APPLE_API_KEY / APPLE_API_KEY_ID / APPLE_API_ISSUER are present in
         // the environment.
+    }
+    if (target.platform === 'win32') {
+        // Organization-specific identifiers. electron-builder only expands ${env.X} macros in
+        // filename fields like artifactName, not in config fields like these, so we inject them as
+        // CLI overrides from the environment. Each is applied whenever its variable is set (a fork
+        // that doesn't set them builds with electron-builder's defaults). Values are double-quoted
+        // so spaces (e.g. a CN= publisher string) survive spawnSync(shell: true) re-tokenization.
+        const idOverrides = {
+            'appx.identityName': childEnvironment.APPX_IDENTITY_NAME,
+            'appx.publisher': childEnvironment.APPX_PUBLISHER,
+            'appx.publisherDisplayName': childEnvironment.APPX_PUBLISHER_DISPLAY_NAME,
+            'msi.upgradeCode': childEnvironment.MSI_UPGRADE_CODE
+        };
+        for (const [key, value] of Object.entries(idOverrides)) {
+            if (value) {
+                allArgs.push(`--c.${key}="${value}"`);
+            }
+        }
+    }
+    // Appx-only means every target name in the pass starts with 'appx'. A mixed pass that bundles
+    // appx with nsis or msi keeps signing on for the non-appx parts; only the pure-appx case opts
+    // out so the Store can re-sign its container with unsigned inner binaries (today's behavior).
+    const isAppxOnly = targetNames.every(name => name.startsWith('appx'));
+    if (target.platform === 'win32' && wrapperConfig.doSign && !isAppxOnly) {
+        // Supply Azure Artifact Signing config via CLI rather than electron-builder.yaml. Putting it
+        // in YAML would activate signing for every build, including PR CI and local dev where Azure
+        // auth isn't available — and some signing paths (notably the NSIS uninstaller) ignore the
+        // win.signAndEditExecutable flag, so per-target gating isn't reliable. AppX-only passes skip
+        // signing entirely: the Microsoft Store re-signs the outer .appx during certification, and
+        // we want the inner binaries unsigned (electron-builder would otherwise sign them via signExts).
+        // Preflight everything signing needs: the azureSignOptions config (AZURE_SIGNING_*) and the
+        // Azure.Identity credentials electron-builder reads from the environment. Checking the
+        // credentials here turns the opaque "Unable to find valid azure env configuration" failure —
+        // e.g. an expired, rotated, or mis-pasted client secret — into an immediate, named error.
+        const required = [
+            'AZURE_SIGNING_ENDPOINT',
+            'AZURE_SIGNING_ACCOUNT_NAME',
+            'AZURE_SIGNING_PROFILE_NAME',
+            'AZURE_SIGNING_PUBLISHER_NAME',
+            'AZURE_TENANT_ID',
+            'AZURE_CLIENT_ID',
+            'AZURE_CLIENT_SECRET'
+        ];
+        const missing = required.filter(name => !childEnvironment[name]);
+        if (missing.length > 0) {
+            throw new Error(`Azure signing requires env vars: ${missing.join(', ')}`);
+        }
+        // Wrap values in double quotes so spaces (e.g. a multi-word publisherName) survive shell
+        // re-tokenization. spawnSync(shell: true) joins argv with spaces and runs through cmd.exe /
+        // /bin/sh, so any internal whitespace would otherwise become an arg separator.
+        allArgs.push(
+            `--c.win.azureSignOptions.endpoint="${childEnvironment.AZURE_SIGNING_ENDPOINT}"`,
+            `--c.win.azureSignOptions.codeSigningAccountName="${childEnvironment.AZURE_SIGNING_ACCOUNT_NAME}"`,
+            `--c.win.azureSignOptions.certificateProfileName="${childEnvironment.AZURE_SIGNING_PROFILE_NAME}"`,
+            `--c.win.azureSignOptions.publisherName="${childEnvironment.AZURE_SIGNING_PUBLISHER_NAME}"`
+        );
     }
     if (!wrapperConfig.doPackage) {
         allArgs.push('--dir', '--c.compression=store');
@@ -117,11 +176,28 @@ const calculateTargets = function (wrapperConfig) {
             platform: 'darwin'
         },
         microsoftStore: {
-            name: 'appx:ia32 appx:x64',
+            name: 'appx:ia32 appx:x64 appx:arm64',
             platform: 'win32'
         },
         windowsDirectDownload: {
-            name: 'nsis:ia32',
+            name: 'nsis:ia32 nsis:x64 nsis:arm64',
+            platform: 'win32'
+        },
+        windowsManagedDeployment: {
+            name: 'msi:x64',
+            platform: 'win32'
+        },
+        windowsInstallers: {
+            // Combined pass: every Windows target that should be code-signed.
+            // AppX intentionally lives in its own pass because it must not be signed at build time
+            // (the Microsoft Store re-signs during certification).
+            name: 'nsis:ia32 nsis:x64 nsis:arm64 msi:x64',
+            platform: 'win32'
+        },
+        windowsNsisX64: {
+            // Single representative installer for PR-time CI — the smallest build that still
+            // produces something a non-developer teammate can install and try on Windows x64.
+            name: 'nsis:x64',
             platform: 'win32'
         },
         linuxAppImage: {
@@ -141,7 +217,10 @@ const calculateTargets = function (wrapperConfig) {
             'mas-dev': availableTargets.macAppStoreDev,
             'dmg': availableTargets.macDirectDownload,
             'appx': availableTargets.microsoftStore,
-            'nsis': availableTargets.windowsDirectDownload
+            'nsis': availableTargets.windowsDirectDownload,
+            'msi': availableTargets.windowsManagedDeployment,
+            'installers': availableTargets.windowsInstallers,
+            'nsis-x64': availableTargets.windowsNsisX64
         };
         const selected = targetsByShortName[wrapperConfig.target];
         if (!selected) {
@@ -155,9 +234,10 @@ const calculateTargets = function (wrapperConfig) {
     const targets = [];
     switch (process.platform) {
     case 'win32':
-        // Run in two passes so we can skip signing the AppX for distribution through the MS Store.
+        // Two passes: AppX intentionally unsigned (the Microsoft Store re-signs during cert),
+        // everything else signed in a single pass.
         targets.push(availableTargets.microsoftStore);
-        targets.push(availableTargets.windowsDirectDownload);
+        targets.push(availableTargets.windowsInstallers);
         break;
     case 'darwin':
         // Running 'dmg' and 'mas' in the same pass causes electron-builder to skip signing the non-MAS app copy.
