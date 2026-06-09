@@ -4,6 +4,7 @@ name: Release Candidate
 # verify that CI is green for the chosen ref before clicking. Gated by
 # the 'release-candidate' GitHub Environment, which must be configured
 # with required reviewers under Settings -> Environments.
+run-name: "Release Candidate: ${{ github.ref_name }} @ ${{ github.sha }}"
 on:
   workflow_dispatch:
 
@@ -32,42 +33,35 @@ jobs:
       matrix:
         # One cell per build target. Splitting macOS targets across three
         # runners parallelizes Apple notarization waits, which is the
-        # dominant wall-clock cost on this workflow. Windows targets are
-        # split so an appx-only failure doesn't lose the nsis artifact
-        # (and vice versa).
+        # dominant wall-clock cost on this workflow. Windows is split
+        # into AppX (unsigned, Store-bound) and installers (NSIS + MSI,
+        # signed) — keeping AppX separate so a signing failure on the
+        # installers doesn't lose the Store artifact.
         include:
           - os: macos-latest
             target: mas-dev
-            artifact-name: macOS-mas-dev
-            artifact-path: dist/mas-dev-universal-*.zip
           - os: macos-latest
             target: mas
-            artifact-name: macOS-mas
-            artifact-path: dist/mas-universal/Scratch*.pkg
           - os: macos-latest
             target: dmg
-            artifact-name: macOS-dmg
-            artifact-path: dist/Scratch*.dmg
           - os: windows-latest
             target: appx
-            artifact-name: Windows-appx
-            artifact-path: dist/Scratch*.appx
           - os: windows-latest
-            target: nsis
-            artifact-name: Windows-nsis
-            artifact-path: dist/Scratch*.exe
+            target: installers
     runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash
     env:
-      # Temporary workaround: Windows signing is currently broken due to
-      # a security-policy change. See
-      # https://github.com/electron/windows-installer/issues/473
-      # While this is true, the release-candidate job still runs Windows
-      # through the build (so we get an installer artifact) but skips
-      # the signing step.
-      SCRATCH_SHOULD_SIGN: ${{ matrix.os != 'windows-latest' }}
+      # Organization-specific identifiers. The electron-builder wrapper reads these and injects them
+      # as CLI overrides (--c.appx.*, --c.msi.upgradeCode); electron-builder.yaml's ${env.X}
+      # interpolation only works for filename fields, not these config fields. Kept in repo Variables
+      # so a fork supplies its own values — if one is unset the wrapper omits that override and
+      # electron-builder uses its default, so a fork never builds under our published identity.
+      APPX_IDENTITY_NAME: ${{ vars.APPX_IDENTITY_NAME }}
+      APPX_PUBLISHER: ${{ vars.APPX_PUBLISHER }}
+      APPX_PUBLISHER_DISPLAY_NAME: ${{ vars.APPX_PUBLISHER_DISPLAY_NAME }}
+      MSI_UPGRADE_CODE: ${{ vars.MSI_UPGRADE_CODE }}
       # App Store Connect API key — fastlane and electron-builder read
       # different env var names but use the same credentials. The .p8
       # file path (APPLE_API_KEY / APP_STORE_CONNECT_API_KEY_KEY_FILEPATH)
@@ -155,14 +149,21 @@ jobs:
         timeout-minutes: 30 # macOS notarization can take a while
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          # Only expose Windows code-signing secrets to runs that will use them.
-          # SCRATCH_SHOULD_SIGN is currently false on Windows (temporary workaround above);
-          # both expressions evaluate to '' until Windows signing is re-enabled.
-          WIN_CSC_LINK: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_LINK ||
-            '' }}
-          WIN_CSC_KEY_PASSWORD: ${{ matrix.os == 'windows-latest' && env.SCRATCH_SHOULD_SIGN == 'true' && secrets.WIN_CSC_KEY_PASSWORD
-            || '' }}
-        run: npm run ${{ env.SCRATCH_SHOULD_SIGN == 'true' && 'dist' || 'distDev' }} -- --target=${{ matrix.target }}
+          # Azure Artifact Signing config for electron-builder's win.azureSignOptions, scoped to the
+          # installers cell — the only one that signs with Azure. Gating per-cell (rather than at job
+          # level) keeps the credentials out of the env of cells that don't sign: the macOS targets
+          # and the AppX cell (which ships unsigned for the Store to re-sign).
+          AZURE_SIGNING_ENDPOINT: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_ENDPOINT || '' }}
+          AZURE_SIGNING_ACCOUNT_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_ACCOUNT_NAME || '' }}
+          AZURE_SIGNING_PROFILE_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_PROFILE_NAME || '' }}
+          AZURE_SIGNING_PUBLISHER_NAME: ${{ matrix.target == 'installers' && vars.AZURE_SIGNING_PUBLISHER_NAME || '' }}
+          # electron-builder validates a complete Azure.Identity EnvironmentCredential set before
+          # signing — it does not fall through to the az-CLI session, so OIDC alone isn't sufficient
+          # and a client secret is required.
+          AZURE_TENANT_ID: ${{ matrix.target == 'installers' && secrets.AZURE_TENANT_ID || '' }}
+          AZURE_CLIENT_ID: ${{ matrix.target == 'installers' && secrets.AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ matrix.target == 'installers' && secrets.AZURE_CLIENT_SECRET || '' }}
+        run: npm run dist -- --target=${{ matrix.target }}
       - name: Zip MAS-Dev build
         if: matrix.target == 'mas-dev'
         run: |
@@ -170,8 +171,170 @@ jobs:
           cd dist/mas-dev-universal
           ditto -v -c -k --sequesterRsrc --keepParent --zlibCompressionLevel 9 \
             Scratch*.app ../mas-dev-universal-${NPM_APP_VERSION}.zip
-      - name: Upload artifact
+      # Signature checks run before upload and gate the job: a bad signature fails the cell
+      # (and skips its uploads) rather than publishing an artifact we only think is signed.
+      # These catch regressions automatically; they don't replace on-device checks (SmartScreen
+      # reputation, the UAC publisher string, ARM64 native execution), which still need real hardware.
+      - name: Verify Windows signatures
+        if: matrix.target == 'installers'
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $signtool) { Write-Host '::error::signtool.exe not found on runner'; exit 1 }
+          $files = @(Get-ChildItem -Path dist -Filter 'Scratch *Setup.exe') +
+                   @(Get-ChildItem -Path dist -Filter 'Scratch *.msi')
+          if (-not $files) { Write-Host '::error::No signed installers found to verify'; exit 1 }
+          $failed = $false
+          foreach ($f in $files) {
+            # Authoritative Authenticode check: validity + trust chain + any RFC3161 timestamp.
+            $out = & $signtool.FullName verify /pa /v $f.FullName 2>&1 | Out-String
+            Write-Host $out
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::signtool verify failed for $($f.Name)"; $failed = $true; continue }
+            # Signer must be us, not a stray or test certificate.
+            $sig = Get-AuthenticodeSignature -FilePath $f.FullName
+            $signer = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { '(none)' }
+            if ($signer -notmatch 'Scratch Foundation') { Write-Host "::error::$($f.Name) signed by unexpected certificate: $signer"; $failed = $true; continue }
+            # A timestamp lets the signature outlive the cert. RFC3161 timestamps don't always populate
+            # TimeStamperCertificate, so warn (not fail) if neither it nor signtool's output shows one.
+            if (-not $sig.TimeStamperCertificate -and $out -notmatch 'imestamp') { Write-Host "::warning::$($f.Name) may not be timestamped" }
+            Write-Host "OK: $($f.Name) verified (signer=$signer)"
+          }
+          if ($failed) { exit 1 }
+      - name: Verify AppX is unsigned
+        if: matrix.target == 'appx'
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path dist -Filter 'Scratch *.appx'
+          if (-not $files) { Write-Host '::error::No AppX packages found to verify'; exit 1 }
+          $failed = $false
+          foreach ($f in $files) {
+            # AppX must stay unsigned: the Microsoft Store re-signs during certification, and a
+            # build-time signature here would mean signExts/our wrapper gating regressed.
+            $sig = Get-AuthenticodeSignature -FilePath $f.FullName
+            if ($sig.Status -ne 'NotSigned') { Write-Host "::error::$($f.Name) is unexpectedly signed (status=$($sig.Status))"; $failed = $true }
+            else { Write-Host "OK: $($f.Name) is unsigned as expected" }
+          }
+          if ($failed) { exit 1 }
+      - name: Verify macOS notarization
+        if: matrix.target == 'dmg'
+        run: |
+          DMG="`ls dist/Scratch*.dmg | head -n1`"
+          if [ -z "$DMG" ]; then echo "::error::No dmg found to verify"; exit 1; fi
+          echo "Verifying $DMG"
+          # electron-builder notarizes and staples the .app, then builds the DMG from it; the DMG
+          # container itself is not stapled (and never has been in our releases). So verify the .app
+          # inside — that's what Gatekeeper checks when a user launches, and what carries the ticket.
+          MOUNT="`hdiutil attach "$DMG" -nobrowse -readonly | tail -n1 | sed 's|.*\(/Volumes/\)|\1|'`"
+          if [ -z "$MOUNT" ]; then echo "::error::Failed to mount $DMG"; exit 1; fi
+          trap 'hdiutil detach "$MOUNT" -quiet || true' EXIT
+          APP="`ls -d "$MOUNT"/*.app | head -n1`"
+          if [ -z "$APP" ]; then echo "::error::No .app found inside $DMG"; exit 1; fi
+          echo "Verifying $APP"
+          # Notarization ticket must be stapled so Gatekeeper passes without a network round-trip.
+          xcrun stapler validate "$APP"
+          # Gatekeeper assessment: would a user's Mac allow launching this app?
+          spctl --assess --type execute --verbose=2 "$APP"
+      - name: Verify MAS signature
+        if: matrix.target == 'mas'
+        run: |
+          PKG="`ls dist/mas-universal/Scratch*.pkg 2>/dev/null | head -n1`"
+          if [ -z "$PKG" ]; then echo "::error::No MAS pkg found to verify"; exit 1; fi
+          echo "Verifying $PKG"
+          # MAS builds ARE signed at build time, with Apple App Store distribution certs — unlike
+          # AppX, which ships unsigned for the Microsoft Store. Confirm the pkg is signed here, where
+          # a broken signing/match setup is fixable, rather than letting it surface only at App Store
+          # Connect upload. spctl --assess is intentionally not used: MAS distribution certs are not
+          # Gatekeeper-valid for direct execution, so a correct MAS build fails spctl by design.
+          SIG="`pkgutil --check-signature "$PKG" 2>&1 || true`"
+          echo "$SIG"
+          echo "$SIG" | grep -q "Status: signed" || { echo "::error::$PKG is not validly signed"; exit 1; }
+      - name: Verify mas-dev signature
+        if: matrix.target == 'mas-dev'
+        run: |
+          APP="`ls -d dist/mas-dev-universal/Scratch*.app 2>/dev/null | head -n1`"
+          if [ -z "$APP" ]; then echo "::error::No mas-dev .app found to verify"; exit 1; fi
+          echo "Verifying $APP"
+          # A Mac App Store build is sandboxed: it only launches with a valid signature AND an
+          # embedded development provisioning profile authorizing the test device. If either is
+          # missing the .app won't run locally — and macOS reports only an opaque "damaged" error,
+          # so the cause is far easier to find here than after download. (No spctl/notarization
+          # check: mas-dev is signed with a development cert, not notarized, so it never passes
+          # Gatekeeper assessment — running it requires a registered device, not this gate.)
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dvv "$APP" 2>&1 | grep -i authority || true
+          test -f "$APP/Contents/embedded.provisionprofile" \
+            || { echo "::error::$APP has no embedded provisioning profile; it will not launch on a test device"; exit 1; }
+      # One artifact per build output, so each cell uploads only what it produced.
+      # The 'installers' cell builds NSIS x3 + MSI in one pass and uploads them as four
+      # separate artifacts; the 'appx' cell builds three AppX archs and uploads three.
+      - name: Upload macOS mas-dev
+        if: matrix.target == 'mas-dev'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.artifact-path }}
+          name: macOS-mas-dev
+          path: dist/mas-dev-universal-*.zip
+          compression-level: 0
+      - name: Upload macOS mas
+        if: matrix.target == 'mas'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macOS-mas
+          path: dist/mas-universal/Scratch*.pkg
+          compression-level: 0
+      - name: Upload macOS dmg
+        if: matrix.target == 'dmg'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macOS-dmg
+          path: dist/Scratch*.dmg
+          compression-level: 0
+      - name: Upload Windows AppX ia32
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-ia32
+          path: "dist/Scratch *ia32.appx"
+          compression-level: 0
+      - name: Upload Windows AppX x64
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-x64
+          path: "dist/Scratch *x64.appx"
+          compression-level: 0
+      - name: Upload Windows AppX arm64
+        if: matrix.target == 'appx'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-AppX-arm64
+          path: "dist/Scratch *arm64.appx"
+          compression-level: 0
+      - name: Upload Windows NSIS ia32
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-ia32
+          path: "dist/Scratch *ia32 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows NSIS x64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-x64
+          path: "dist/Scratch *x64 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows NSIS arm64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-NSIS-arm64
+          path: "dist/Scratch *arm64 Setup.exe"
+          compression-level: 0
+      - name: Upload Windows MSI x64
+        if: matrix.target == 'installers'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: Windows-MSI-x64
+          path: "dist/Scratch *x64.msi"
+          compression-level: 0

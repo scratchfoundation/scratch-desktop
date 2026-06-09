@@ -2,6 +2,10 @@
 
 Scratch 3.0 as a standalone desktop application
 
+## Documentation
+
+- [Windows build matrix](docs/windows-build-matrix.md) — which {target × arch} combinations we ship for Windows and why
+
 ## Developer Instructions
 
 ### Releasing a new version
@@ -56,27 +60,19 @@ other changes which might affect the media libraries.
 
 `npm run dist`
 
-Node that on macOS this will require installing various certificates.
+Note that on macOS this will require installing various certificates.
 
-#### Signing the NSIS installer (Windows, non-store)
+#### Code signing (Windows)
 
-*This section is relevant only to members of the Scratch Team.*
+For an unsigned local build, use `npm run distDev` (it needs no signing configuration). `npm run dist` is the
+signed release build; on Windows it requires Azure Artifact Signing credentials, so in practice it runs only in CI.
 
-By default all Windows installers are unsigned. An APPX package for the Microsoft Store shouldn't be signed: it will
-be signed automatically as part of the store submission process. On the other hand, the non-Store NSIS installer
-should be signed.
-
-To generate a signed NSIS installer:
-
-1. Acquire our latest digital signing certificate and save it on your computer as a `p12` file.
-2. Set `WIN_CSC_LINK` to the path to your certificate file. For maximum compatibility I use forward slashes.
-   - CMD: `set WIN_CSC_LINK=C:/Users/You/Somewhere/Certificate.p12`
-   - PowerShell: `$env:WIN_CSC_LINK = "C:/Users/You/Somewhere/Certificate.p12"`
-3. Set `WIN_CSC_KEY_PASSWORD` to the password string associated with your P12 file.
-   - CMD: `set WIN_CSC_KEY_PASSWORD=superSecret`
-   - PowerShell: `$env:WIN_CSC_KEY_PASSWORD = "superSecret"`
-4. Build the NSIS installer only: building the APPX installer will fail if these environment variables are set.
-   - `npm run dist -- -w nsis`
+Signed Windows builds are produced only in CI. The
+[`release-candidate`](.github/workflows/release-candidate.yml) workflow signs the NSIS and MSI installers with
+Azure Artifact Signing, and leaves the Store AppX unsigned because the Microsoft Store re-signs it during
+certification. (The earlier `WIN_CSC_LINK` / `WIN_CSC_KEY_PASSWORD` certificate flow has been removed.) See the
+[Windows build matrix](docs/windows-build-matrix.md) for the full set of shipping artifacts and how each is
+produced.
 
 #### Workaround for code signing issue in macOS
 
