@@ -18,7 +18,7 @@ const UsbElement = () => {
         ipcRenderer.on('usb-device-list', listener);
 
         return () => ipcRenderer.removeListener('usb-device-list', listener);
-    }, []);
+    }, [selectedDeviceId]);
 
     const selectHandler = deviceId => () => {
         setSelectedDeviceId(deviceId);
