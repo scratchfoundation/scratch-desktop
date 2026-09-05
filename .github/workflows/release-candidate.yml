@@ -83,14 +83,14 @@ jobs:
           cache: 'npm'
           node-version-file: '.nvmrc'
       - name: Cache electron prebuilt binary
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: .cache/electron
           key: ${{ runner.os }}-electron-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-electron-
       - name: Cache electron-builder tools
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: .cache/electron-builder
           key: ${{ runner.os }}-electron-builder-${{ hashFiles('package-lock.json') }}
@@ -112,7 +112,7 @@ jobs:
         # placed it under node_modules), not on the project's package-lock.json.
         # The asset set is determined entirely by the scratch-gui version;
         # unrelated dep bumps shouldn't bust this cache.
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: static/fetched
           key: media-${{ hashFiles('node_modules/@scratch/scratch-gui/package.json') }}
