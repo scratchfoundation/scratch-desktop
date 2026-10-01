@@ -75,7 +75,7 @@ jobs:
       # Pin the checkout to the SHA that was current when this workflow
       # was dispatched. Without this, actions/checkout defaults to the
       # tip of the selected ref, which could move during the run.
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
