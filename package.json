@@ -44,7 +44,6 @@
     "@scratch/scratch-gui": "13.7.4-svg",
     "async": "3.2.6",
     "autoprefixer": "10.6.1",
-    "babel-eslint": "10.1.0",
     "babel-loader": "9.2.1",
     "babel-plugin-react-intl": "7.9.4",
     "chalk": "4.1.2",
@@ -85,8 +84,5 @@
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.2.6",
     "webpack-merge": "4.2.2"
-  },
-  "resolutions": {
-    "upath": "1.2.0"
   }
 }
