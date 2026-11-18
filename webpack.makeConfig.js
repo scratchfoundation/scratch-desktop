@@ -55,7 +55,9 @@ const makeConfig = function (defaultConfig, options) {
     }
 
     const config = merge.smart(defaultConfig, {
-        devtool: 'cheap-module-source-map',
+        // Source maps come from the explicit SourceMapDevToolPlugin below. Setting `devtool` as well would
+        // register a second instance emitting the same .map filenames, which webpack rejects as a conflict.
+        devtool: false,
         mode: isProduction ? 'production' : 'development',
         module: {
             rules: [
@@ -117,7 +119,10 @@ const makeConfig = function (defaultConfig, options) {
         },
         plugins: [
             new webpack.SourceMapDevToolPlugin({
-                filename: '[file].map'
+                filename: '[file].map',
+                // match the previous 'cheap-module-source-map' devtool: line-only mappings to original source
+                columns: false,
+                module: true
             }),
             new webpack.DefinePlugin({
                 __static: isProduction ?
