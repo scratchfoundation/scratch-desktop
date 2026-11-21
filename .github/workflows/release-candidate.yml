@@ -135,7 +135,7 @@ jobs:
           echo "APP_STORE_CONNECT_API_KEY_KEY_FILEPATH=$KEY_PATH" >> "$GITHUB_ENV"
       - name: Setup Ruby
         if: matrix.os == 'macos-latest'
-        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        uses: ruby/setup-ruby@20eb24b0d509e2b9ed9b6d42ddfeb992915e0564 # v1.341.0
         with:
           bundler-cache: true
       - name: Fastlane
