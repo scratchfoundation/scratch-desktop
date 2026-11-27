@@ -44,7 +44,7 @@
     "@scratch/scratch-gui": "13.7.4-svg",
     "async": "3.2.6",
     "autoprefixer": "10.7.0",
-    "babel-eslint": "10.1.0",
+    "@babel/eslint-parser": "7.11.0",
     "babel-loader": "9.2.1",
     "babel-plugin-react-intl": "7.9.4",
     "chalk": "4.1.2",
