@@ -58,7 +58,7 @@
     "eslint": "9.39.5",
     "eslint-config-scratch": "14.1.97",
     "fs-extra": "9.1.0",
-    "html-loader": "0.5.5",
+    "html-loader": "5.1.0",
     "html-webpack-plugin": "5.6.8",
     "intl": "1.2.5",
     "lodash.bindall": "4.4.0",
